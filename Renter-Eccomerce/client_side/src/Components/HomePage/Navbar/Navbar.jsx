@@ -26,7 +26,7 @@ export const TopNavbar = () => {
       {/* Navbar */}
       <div
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
-          isSticky ? "bg-white shadow-md" : "bg-white/10 backdrop-blur-xl"
+          isSticky ? "bg-white shadow-lg" : "bg-white/10 backdrop-blur-xl"
         }`}
       >
         <div className="flex items-center justify-between h-16 max-w-screen-xl mx-auto px-4">
@@ -34,34 +34,28 @@ export const TopNavbar = () => {
           <div className="flex items-center">
             <Link to={"/"}>
               <h1 className="text-2xl font-bold">
-                <span className="text-gray-500">Re</span>nter
+                <span className="text-gray-700">Re</span>nter
               </h1>
             </Link>
           </div>
 
           {/* Centered Navigation Links */}
           <div className="hidden md:flex flex-grow justify-center space-x-8">
-            {/* <Link
-              to="/"
-              className="px-5 py-3 rounded-md hover:bg-gray-200 font-semibold text-black-600"
-            >
-              Home
-            </Link> */}
             <Link
               to="/mens"
-              className="px-5 py-3 rounded-md hover:bg-gray-200 font-medium text-black-600"
+              className="px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
             >
               Mens
             </Link>
             <Link
               to="/womens"
-              className="px-5 py-3 rounded-md hover:bg-gray-200 font-medium text-black-600"
+              className="px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
             >
               Womens
             </Link>
             <Link
               to="/kids"
-              className="px-5 py-3 rounded-md hover:bg-gray-200 font-medium text-black-600"
+              className="px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
             >
               Kids
             </Link>
@@ -69,15 +63,18 @@ export const TopNavbar = () => {
 
           {/* Icons (User and Cart) */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/login" className="text-gray-700 hover:text-blue-700">
+            <Link
+              to="/login"
+              className="text-gray-700 hover:text-blue-700 transition-all duration-300"
+            >
               <span className="text-lg font-medium">
                 <LuUserRound className="w-6 h-6" strokeWidth={2.5} />
               </span>
             </Link>
 
             <Link
-              to="/cart"
-              className="text-gray-700 hover:text-blue-700 relative"
+              to="/productCart/:_id"
+              className="text-gray-700 hover:text-blue-700 relative transition-all duration-300"
             >
               <span className="text-lg font-medium">
                 <PiShoppingCartSimpleBold
@@ -93,7 +90,7 @@ export const TopNavbar = () => {
 
           {/* Mobile Toggle Button */}
           <button
-            className="flex md:hidden p-2 rounded-md bg-gray-200 text-black hover:bg-gray-400"
+            className="flex md:hidden p-2 rounded-md bg-gray-200 text-black hover:bg-gray-400 transition-all duration-300"
             onClick={toggleDrawer}
           >
             <svg
@@ -123,7 +120,7 @@ export const TopNavbar = () => {
         <div className="fixed top-0 right-0 w-64 h-full bg-white shadow-lg p-4">
           {/* Close Button */}
           <button
-            className="mb-4 p-2 rounded-md bg-gray-200 text-black hover:bg-gray-400"
+            className="mb-4 p-2 rounded-md bg-gray-200 text-black hover:bg-gray-400 transition-all duration-300"
             onClick={toggleDrawer}
           >
             <IoMdClose />
@@ -131,38 +128,37 @@ export const TopNavbar = () => {
 
           {/* Drawer Links */}
           <div className="space-y-4">
-            
             <Link
               to="/mens"
-              className="block px-5 py-3 rounded-md hover:bg-gray-200 font-medium text-gray-600"
+              className="block px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
               onClick={toggleDrawer}
             >
               Mens
             </Link>
             <Link
               to="/womens"
-              className="block px-5 py-3 rounded-md hover:bg-gray-200 font-medium text-gray-600"
+              className="block px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
               onClick={toggleDrawer}
             >
               Womens
             </Link>
             <Link
               to="/kids"
-              className="block px-5 py-3 rounded-md hover:bg-gray-200 font-medium text-gray-600"
+              className="block px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
               onClick={toggleDrawer}
             >
               Kids
             </Link>
             <Link
               to="/login"
-              className="block px-5 py-3 rounded-md hover:bg-gray-200 font-medium text-gray-600"
+              className="block px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
               onClick={toggleDrawer}
             >
               <LuUserRound className="w-6 h-6" strokeWidth={2.5} />
             </Link>
             <Link
               to="/cart"
-              className="block px-5 py-3 rounded-md hover:bg-gray-200 font-medium text-gray-600"
+              className="block px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
               onClick={toggleDrawer}
             >
               <PiShoppingCartSimpleBold className="w-6 h-6" strokeWidth={1.5} />
