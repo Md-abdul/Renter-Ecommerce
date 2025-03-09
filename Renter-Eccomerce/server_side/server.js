@@ -1,6 +1,6 @@
 const express = require("express");
 const Signuprouter = require("./Routes/userRoutes");
-
+const cors = require("cors");
 const connectDB = require("./database");
 const { ProductRoutes } = require("./Routes/productRoutes");
 
@@ -8,7 +8,7 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-
+app.use(cors());
 // Connect to the database
 connectDB();
 
