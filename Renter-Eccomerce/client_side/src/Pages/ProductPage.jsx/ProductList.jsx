@@ -10,6 +10,7 @@ const ProductList = ({ category }) => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12); // Number of items per page
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const navigate = useNavigate();
   const { addToCart } = useCart();
 
@@ -64,31 +65,39 @@ const ProductList = ({ category }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 w-[90%]">
       {/* Search and Sort Section */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <div className="relative w-full md:w-96">
-          <input
-            type="text"
-            placeholder="Search products..."
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent shadow-sm"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Search
-            className="absolute left-3 top-2.5 text-slate-500"
-            size={20}
-          />
+        <div className="relative flex items-center">
+          <div
+            className={`transition-all duration-300 ease-in-out overflow-hidden ${
+              isSearchExpanded ? "w-64" : "w-0"
+            }`}
+          >
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="w-full pl-10 pr-4 py-2 bg-white/70 backdrop-blur-sm border border-yellow-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent shadow-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <button
+            onClick={() => setIsSearchExpanded(!isSearchExpanded)}
+            className="p-2 bg-white/70 backdrop-blur-sm rounded-full shadow-md hover:bg-gray-100 transition-all duration-300 ml-2"
+          >
+            <Search className="text-gray-500" size={20} />
+          </button>
         </div>
         <button
           onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors shadow-md"
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black rounded-lg hover:from-yellow-500 hover:to-yellow-600 transition-all duration-300 shadow-md hover:shadow-lg"
         >
           {sortOrder === "asc" ? (
             <>
@@ -108,7 +117,7 @@ const ProductList = ({ category }) => {
           <div
             key={product._id}
             onClick={() => handleProductClick(product._id)}
-            className="relative bg-white rounded-lg overflow-hidden cursor-pointer transform hover:scale-105 transition-transform duration-300 shadow-xl hover:shadow-2xl border border-slate-200"
+            className="relative bg-white/70 backdrop-blur-sm rounded-lg overflow-hidden cursor-pointer transform hover:scale-105 transition-transform duration-300 shadow-2xl hover:shadow-3xl border border-gray-200/50"
           >
             {/* Product Image */}
             <div className="relative w-full h-72 overflow-hidden rounded-t-lg">
@@ -121,13 +130,13 @@ const ProductList = ({ category }) => {
 
             {/* Discount Badge */}
             {product.discount > 0 && (
-              <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+              <div className="absolute top-4 right-4 bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold shadow-md">
                 {product.discount}% OFF
               </div>
             )}
 
             {/* Wishlist Button */}
-            <button className="absolute top-4 left-4 bg-white p-2 rounded-full shadow-md hover:bg-gray-100">
+            <button className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-md hover:bg-gray-100 transition-all duration-300">
               <Heart size={20} className="text-gray-600 hover:text-red-500" />
             </button>
 
@@ -141,7 +150,7 @@ const ProductList = ({ category }) => {
               </p>
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-lg font-bold text-teal-600">
+                  <span className="text-lg font-bold text-yellow-600">
                     ₹{product.offerPrice}
                   </span>
                   {product.discount > 0 && (
@@ -185,9 +194,9 @@ const ProductList = ({ category }) => {
               onClick={() => handlePageChange(page)}
               className={`px-4 py-2 text-sm font-medium ${
                 currentPage === page
-                  ? "bg-teal-500 text-white"
-                  : "bg-white text-teal-500 hover:bg-teal-50"
-              } border border-teal-500 rounded-md mx-1 transition-colors`}
+                  ? "bg-gradient-to-r from-yellow-400 to-yellow-500 text-black"
+                  : "bg-white text-yellow-500 hover:bg-yellow-50"
+              } border border-yellow-500 rounded-md mx-1 transition-all duration-300`}
             >
               {page}
             </button>

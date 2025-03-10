@@ -22,14 +22,16 @@ const CartPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-8 text-gray-800">Shopping Cart</h1>
+      <div className="flex justify-center mb-8">
+        <h1 className="text-3xl font-bold text-black">Shopping Cart</h1>
+      </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        <div className="lg:w-2/3">
+        <div className="lg:w-2/3 space-y-4">
           {cart.map((item) => (
             <div
               key={item._id}
-              className="flex flex-col sm:flex-row items-center gap-4 border-b py-4 hover:bg-gray-50 transition duration-200 ease-in-out"
+              className="flex flex-col sm:flex-row items-center gap-4 border border-gray-300 bg-gray-100 p-4 rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-1 duration-200"
             >
               <img
                 src={item.image[0].imageUrl}
@@ -38,11 +40,11 @@ const CartPage = () => {
               />
 
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-800">
+                <h3 className="text-lg font-semibold text-black">
                   {item.title}
                 </h3>
                 <div className="flex items-center mt-2">
-                  <span className="text-lg font-bold text-blue-600">
+                  <span className="text-lg font-bold text-yellow-600">
                     ₹{item.offerPrice}
                   </span>
                   <span className="ml-2 text-sm text-gray-500 line-through">
@@ -59,26 +61,26 @@ const CartPage = () => {
                       Math.max(1, (item.quantity || 1) - 1)
                     )
                   }
-                  className="p-1 rounded-full hover:bg-gray-100 transition duration-200 ease-in-out"
+                  className="p-2 rounded-full bg-gray-200 hover:bg-yellow-500 hover:text-white transition duration-200"
                 >
-                  <Minus size={20} className="text-gray-600" />
+                  <Minus size={20} />
                 </button>
-                <span className="w-8 text-center text-gray-700">
+                <span className="w-8 text-center text-black font-semibold">
                   {item.quantity || 1}
                 </span>
                 <button
                   onClick={() =>
                     updateQuantity(item._id, (item.quantity || 1) + 1)
                   }
-                  className="p-1 rounded-full hover:bg-gray-100 transition duration-200 ease-in-out"
+                  className="p-2 rounded-full bg-gray-200 hover:bg-yellow-500 hover:text-white transition duration-200"
                 >
-                  <Plus size={20} className="text-gray-600" />
+                  <Plus size={20} />
                 </button>
               </div>
 
               <button
                 onClick={() => removeFromCart(item._id)}
-                className="text-red-500 hover:text-red-600 p-2 transition duration-200 ease-in-out"
+                className="text-red-500 hover:text-red-600 p-2 transition duration-200"
               >
                 <Trash2 size={20} />
               </button>
@@ -87,31 +89,31 @@ const CartPage = () => {
         </div>
 
         <div className="lg:w-1/3">
-          <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-100">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">
+          <div className="bg-gray-100 rounded-lg shadow-lg p-6 border border-gray-300">
+            <h2 className="text-xl font-semibold mb-4 text-black">
               Order Summary
             </h2>
 
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="text-gray-800">₹{getTotalPrice()}</span>
+                <span className="text-black">₹{getTotalPrice()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Shipping</span>
-                <span className="text-gray-800">Free</span>
+                <span className="text-black">Free</span>
               </div>
               <div className="border-t pt-3">
                 <div className="flex justify-between font-semibold">
-                  <span className="text-gray-800">Total</span>
-                  <span className="text-gray-800">₹{getTotalPrice()}</span>
+                  <span className="text-black">Total</span>
+                  <span className="text-black">₹{getTotalPrice()}</span>
                 </div>
               </div>
             </div>
 
             <button
               onClick={() => navigate("/checkout")}
-              className="mt-6 w-full bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 shadow-md hover:bg-blue-700 transition duration-200 ease-in-out"
+              className="mt-6 w-full bg-yellow-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-yellow-700 transition duration-200"
             >
               Proceed to Checkout
             </button>

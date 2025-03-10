@@ -1,16 +1,16 @@
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { IoMdClose } from "react-icons/io";
 import { Link } from "react-router-dom";
 import { LuUserRound } from "react-icons/lu";
 import { PiShoppingCartSimpleBold } from "react-icons/pi";
+import navdata from "./NavbarLinks"; // Import navdata from NavbarLinks.jsx
 
 export const TopNavbar = () => {
-  const [isOpen, setIsOpen] = useState(false); // State for mobile drawer
-  const [isSticky, setIsSticky] = useState(false); // State for sticky navbar
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSticky, setIsSticky] = useState(false);
 
-  const toggleDrawer = () => setIsOpen(!isOpen); // Toggle mobile drawer
+  const toggleDrawer = () => setIsOpen(!isOpen);
 
-  // Handle scroll for sticky navbar
   useEffect(() => {
     const handleScroll = () => {
       setIsSticky(window.scrollY > 0);
@@ -20,6 +20,8 @@ export const TopNavbar = () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
+  const navData = navdata(); // Call the navdata function
 
   return (
     <div className="font-poppins">
@@ -41,24 +43,15 @@ export const TopNavbar = () => {
 
           {/* Centered Navigation Links */}
           <div className="hidden md:flex flex-grow justify-center space-x-8">
-            <Link
-              to="/mens"
-              className="px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
-            >
-              Mens
-            </Link>
-            <Link
-              to="/womens"
-              className="px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
-            >
-              Womens
-            </Link>
-            <Link
-              to="/kids"
-              className="px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
-            >
-              Kids
-            </Link>
+            {navData[0].subItems.map((item) => (
+              <Link
+                key={item.id}
+                to={item.link}
+                className="px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
 
           {/* Icons (User and Cart) */}
@@ -82,9 +75,6 @@ export const TopNavbar = () => {
                   strokeWidth={1.5}
                 />
               </span>
-              {/* <span className="absolute -top-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                .
-              </span> */}
             </Link>
           </div>
 
@@ -128,41 +118,16 @@ export const TopNavbar = () => {
 
           {/* Drawer Links */}
           <div className="space-y-4">
-            <Link
-              to="/mens"
-              className="block px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
-              onClick={toggleDrawer}
-            >
-              Mens
-            </Link>
-            <Link
-              to="/womens"
-              className="block px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
-              onClick={toggleDrawer}
-            >
-              Womens
-            </Link>
-            <Link
-              to="/kids"
-              className="block px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
-              onClick={toggleDrawer}
-            >
-              Kids
-            </Link>
-            <Link
-              to="/login"
-              className="block px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
-              onClick={toggleDrawer}
-            >
-              <LuUserRound className="w-6 h-6" strokeWidth={2.5} />
-            </Link>
-            <Link
-              to="/cart"
-              className="block px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
-              onClick={toggleDrawer}
-            >
-              <PiShoppingCartSimpleBold className="w-6 h-6" strokeWidth={1.5} />
-            </Link>
+            {navData[0].subItems.map((item) => (
+              <Link
+                key={item.id}
+                to={item.link}
+                className="block px-5 py-3 rounded-md hover:bg-gray-100 font-medium text-gray-700 transition-all duration-300 hover:shadow-md hover:border hover:border-gray-200"
+                onClick={toggleDrawer}
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>
