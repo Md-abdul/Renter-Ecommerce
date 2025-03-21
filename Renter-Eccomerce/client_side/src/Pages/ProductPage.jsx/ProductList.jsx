@@ -83,16 +83,16 @@ const ProductList = ({ category }) => {
             <input
               type="text"
               placeholder="Search products..."
-              className="w-full pl-10 pr-4 py-2 bg-white/70 backdrop-blur-sm border border-yellow-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent shadow-sm"
+              className="w-full pl-10 pr-4 py-2 bg-white/70 backdrop-blur-sm border border-yellow-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border shadow-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <button
             onClick={() => setIsSearchExpanded(!isSearchExpanded)}
-            className="p-2 bg-white/70 backdrop-blur-sm rounded-full shadow-md hover:bg-gray-100 transition-all duration-300 ml-2"
+            className="p-2 bg-yellow-400 backdrop-blur-sm rounded-full shadow-md hover:bg-gray-100 transition-all duration-300 ml-2"
           >
-            <Search className="text-gray-500" size={20} />
+            <Search className="text-gray-900" size={20} />
           </button>
         </div>
         <button
@@ -126,6 +126,9 @@ const ProductList = ({ category }) => {
                 alt={product.title}
                 className="w-full h-full object-cover object-center"
               />
+              <button className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-yellow-400 text-black px-6 py-2 rounded-lg font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                Quick View
+              </button>
             </div>
 
             {/* Discount Badge */}
@@ -202,6 +205,28 @@ const ProductList = ({ category }) => {
             </button>
           ))}
         </nav>
+      </div>
+
+      <div className="bg-black text-white py-20 mt-8">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold mb-4 text-yellow-400">
+            Stay in Style
+          </h2>
+          <p className="text-zinc-400 mb-8 max-w-2xl mx-auto">
+            Subscribe to our newsletter and get 10% off your first purchase plus
+            stay up to date with the latest collections and exclusive offers.
+          </p>
+          <div className="flex max-w-md mx-auto">
+            <input
+              type="email"
+              placeholder="Enter your email"
+              className="flex-1 px-4 py-3 rounded-l-lg bg-zinc-800 text-white placeholder-zinc-400 border-zinc-700 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            />
+            <button className="bg-yellow-400 text-black px-6 py-3 rounded-r-lg font-semibold hover:bg-yellow-300 transition-colors">
+              Subscribe
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

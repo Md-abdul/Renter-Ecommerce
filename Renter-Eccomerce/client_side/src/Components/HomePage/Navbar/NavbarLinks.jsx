@@ -22,7 +22,25 @@ const navdata = () => {
           label: "Kids",
           link: "/kids",
           icon: "fa fa-kids"
-        }
+        },
+        {
+          id: "storeLocator",
+          label: "Store Locator",
+          link: "/sotrelocator",
+          icon: "fa fa-kids"
+        },
+        {
+          id: "contact",
+          label: "Contact",
+          link: "/contactpage",
+          icon: "fa fa-kids"
+        },
+        {
+          id: "about",
+          label: "About",
+          link: "/aboutpage",
+          icon: "fa fa-kids"
+        },
       ]
     }
   ];

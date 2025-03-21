@@ -5,7 +5,7 @@ import Cards from "./HomePage/Crousel/Cards";
 const HomePage = () => {
   return (
     <div>
-      <Cards />
+      {/* <Cards /> */}
       <ProductCard />
     </div>
   );
