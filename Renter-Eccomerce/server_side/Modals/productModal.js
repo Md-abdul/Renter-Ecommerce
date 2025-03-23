@@ -23,6 +23,7 @@ const ProductSchema = new mongoose.Schema({
     enum: ["mens", "womens", "kids"],
     default: "general",
   },
+  //quanitity should be there 
 });
 
 const Product = mongoose.model("products", ProductSchema);
