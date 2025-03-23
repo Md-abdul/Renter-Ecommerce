@@ -17,7 +17,7 @@ export const ProductProvider = ({ children }) => {
         setProducts(data);
         setLoading(false);
       } catch (err) {
-        setError("Failed to fetch products");
+        setError(err);
         setLoading(false);
       }
     };

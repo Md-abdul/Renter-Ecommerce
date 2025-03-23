@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { IoMdClose } from "react-icons/io";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LuUserRound } from "react-icons/lu";
 import { PiShoppingCartSimpleBold } from "react-icons/pi";
+import { useDispatch, useSelector } from "react-redux";
+import { LogoutUsers } from "../../../Redux/Users/action"; // Import the logout action
+import { toast } from "react-toastify";
 import navdata from "./NavbarLinks"; // Import navdata from NavbarLinks.jsx
 
 export const TopNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { isAuth, token } = useSelector((state) => state.UsersReducer); // Get the auth state from Redux
+  const [userName, setUserName] = useState("");
 
   const toggleDrawer = () => setIsOpen(!isOpen);
 
@@ -20,6 +27,32 @@ export const TopNavbar = () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
+  // Fetch user details from localStorage or token
+  useEffect(() => {
+    if (isAuth && token) {
+      const user = JSON.parse(localStorage.getItem("user")); // Get user details from localStorage
+      if (user) {
+        setUserName(user.name);
+      }
+    } else {
+      setUserName(""); // Clear user name if not authenticated
+    }
+  }, [isAuth, token]); // Re-run this effect when isAuth or token changes
+
+  const handleLogout = () => {
+    dispatch(LogoutUsers());
+    toast.success("Logged out successfully");
+    navigate("/login"); // Redirect to login page after logout
+  };
+
+  const handleCartClick = () => {
+    if (!isAuth) {
+      toast.error("Please login first to access the cart.");
+    } else {
+      navigate("/productCart/:_id"); // Navigate to the cart page if the user is logged in
+    }
+  };
 
   const navData = navdata(); // Call the navdata function
 
@@ -56,18 +89,32 @@ export const TopNavbar = () => {
 
           {/* Icons (User and Cart) */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link
-              to="/login"
-              className="text-gray-700 hover:text-blue-700 transition-all duration-300"
-            >
-              <span className="text-lg font-medium">
-                <LuUserRound className="w-6 h-6" strokeWidth={2.5} />
-              </span>
-            </Link>
+            {isAuth ? (
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-700 font-medium">
+                  Welcome {userName}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all duration-300"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="text-gray-700 hover:text-yellow-400 transition-all duration-300"
+              >
+                <span className="text-lg font-medium">
+                  <LuUserRound className="w-6 h-6" strokeWidth={2.5} />
+                </span>
+              </Link>
+            )}
 
-            <Link
-              to="/productCart/:_id"
-              className="text-gray-700 hover:text-blue-700 relative transition-all duration-300"
+            <button
+              onClick={handleCartClick}
+              className="text-gray-700 hover:text-yellow-400 relative transition-all duration-300"
             >
               <span className="text-lg font-medium">
                 <PiShoppingCartSimpleBold
@@ -75,7 +122,7 @@ export const TopNavbar = () => {
                   strokeWidth={1.5}
                 />
               </span>
-            </Link>
+            </button>
           </div>
 
           {/* Mobile Toggle Button */}
@@ -103,7 +150,7 @@ export const TopNavbar = () => {
 
       {/* Mobile Drawer */}
       <div
-        className={`fixed inset-0 bg-black bg-opacity-25 z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-0 bg-opacity-25 z-50 transform transition-transform duration-500 ease-in-out ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >

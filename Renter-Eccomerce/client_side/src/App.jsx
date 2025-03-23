@@ -3,7 +3,6 @@ import React from "react";
 import { TopNavbar } from "./Components/HomePage/Navbar/Navbar";
 import AllRoutes from "./Routes/AllRoutes";
 import Footer from "./Components/HomePage/Footer/Footer";
-// import Cards from "./Components/HomePage/Crousel/Cards";
 
 function App() {
   return (
