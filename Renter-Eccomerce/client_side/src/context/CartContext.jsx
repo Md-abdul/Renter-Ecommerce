@@ -1,9 +1,12 @@
+// src/context/CartContext.jsx
+
 import React, { createContext, useContext, useState } from 'react';
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
+  const [cartCount, setCartCount] = useState(0);
 
   const addToCart = (product) => {
     setCart(prevCart => {
@@ -17,10 +20,12 @@ export const CartProvider = ({ children }) => {
       }
       return [...prevCart, { ...product, quantity: 1 }];
     });
+    setCartCount(prevCount => prevCount + 1);
   };
 
   const removeFromCart = (productId) => {
     setCart(prevCart => prevCart.filter(item => item._id !== productId));
+    setCartCount(prevCount => prevCount - 1);
   };
 
   const updateQuantity = (productId, quantity) => {
@@ -30,10 +35,12 @@ export const CartProvider = ({ children }) => {
         item._id === productId ? { ...item, quantity } : item
       )
     );
+    setCartCount(prevCount => prevCount + quantity - 1);
   };
 
   const clearCart = () => {
     setCart([]);
+    setCartCount(0);
   };
 
   const getTotalItems = () => {
@@ -52,6 +59,7 @@ export const CartProvider = ({ children }) => {
     clearCart,
     getTotalItems,
     getTotalPrice,
+    cartCount // Add this line to expose the cart count
   };
 
   return (

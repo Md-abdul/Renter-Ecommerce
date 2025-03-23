@@ -8,6 +8,9 @@ import LoginPage from "../Pages/LoginPage";
 import SignupPage from "../Pages/Signup";
 import { StoreLocator } from "../Pages/ExtraPages/StoreLocator";
 import PrivateRoutes from "./PrivateRoutes";
+import StoreLocator from "../Pages/StoreLocator/StoreLocator";
+import AboutPage from "../Pages/Contact_About/About";
+import ContactPage from "../Pages/Contact_About/contact";
 
 const AllRoutes = () => {
   return (
@@ -29,6 +32,14 @@ const AllRoutes = () => {
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/productCart/" element={<CartPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
+
+      <Route path="/sotrelocator" element={<StoreLocator />} />
+      <Route path="/aboutpage" element={<AboutPage />} />
+      <Route path="/contactpage" element={<ContactPage />} />
+      {/* <Route path="/login" element={<AuthPage />} />
+      <Route path="/signup" element={<AuthPage />} /> */}
       <Route path="/*" element={<HomePage />} />
     </Routes>
   );

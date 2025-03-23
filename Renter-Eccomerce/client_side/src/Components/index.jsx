@@ -8,6 +8,7 @@ const HomePage = () => {
     <div>
       <Cards />
       <RecommendedSlider />
+      {/* <Cards /> */}
       <ProductCard />
     </div>
   );
