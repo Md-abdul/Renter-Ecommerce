@@ -6,14 +6,9 @@ import { PiShoppingCartSimpleBold } from "react-icons/pi";
 import { useDispatch, useSelector } from "react-redux";
 import { LogoutUsers } from "../../../Redux/Users/action"; // Import the logout action
 import { toast } from "react-toastify";
-import navdata from "./NavbarLinks"; // Import navdata from NavbarLinks.jsx
+import navdata from "./NavbarLinks"; 
+import { useCart } from "../../../context/CartContext"; // Import Cart Context
 
-// import { Link, useLocation } from "react-router-dom"; // Import useLocation
-// import { LuUserRound } from "react-icons/lu";
-// import { PiShoppingCartSimpleBold } from "react-icons/pi";
-// import { useCart } from "../../../context/CartContext"; // Import Cart Context
-// import navdata from "./NavbarLinks";
-// >>>>>>> d929decf5a15a3e715a262e02e6328ba62a1cd1f
 
 export const TopNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,7 +18,7 @@ export const TopNavbar = () => {
   const { isAuth, token } = useSelector((state) => state.UsersReducer); // Get the auth state from Redux
   const [userName, setUserName] = useState("");
   const { getTotalItems } = useCart(); // Get total items in cart
-  const location = useLocation(); // Get current location
+  const location = useNavigate(); // Get current location
 
   const toggleDrawer = () => setIsOpen(!isOpen);
 
@@ -63,10 +58,7 @@ export const TopNavbar = () => {
     }
   };
 
-  const navData = navdata(); // Call the navdata function
-
-//   const navData = navdata();
-// >>>>>>> d929decf5a15a3e715a262e02e6328ba62a1cd1f
+  const navData = navdata(); 
 
   return (
     <div className="font-poppins">
@@ -135,15 +127,8 @@ export const TopNavbar = () => {
                 />
               </span>
             </button>
-=======
-            <Link
-              to="/login"
-              className="text-gray-700 hover:text-blue-700 transition-all duration-300"
-            >
-              <LuUserRound className="w-6 h-6" strokeWidth={2.5} />
-            </Link>
 
-            <Link
+            {/* <Link
               to="/productCart/"
               className="relative text-gray-700 hover:text-blue-700 transition-all duration-300"
             >
@@ -153,7 +138,7 @@ export const TopNavbar = () => {
                   {getTotalItems()}
                 </span>
               )}
-            </Link>
+            </Link> */}
           </div>
 
           <button

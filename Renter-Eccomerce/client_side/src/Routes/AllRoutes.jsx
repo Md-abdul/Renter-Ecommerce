@@ -6,7 +6,7 @@ import CartPage from "../Pages/ProductPage.jsx/CartPage";
 import CheckoutPage from "../Pages/ProductPage.jsx/CheckoutPage";
 import LoginPage from "../Pages/LoginPage";
 import SignupPage from "../Pages/Signup";
-import { StoreLocator } from "../Pages/ExtraPages/StoreLocator";
+// import { StoreLocator } from "../Pages/ExtraPages/StoreLocator";
 import PrivateRoutes from "./PrivateRoutes";
 import StoreLocator from "../Pages/StoreLocator/StoreLocator";
 import AboutPage from "../Pages/Contact_About/About";

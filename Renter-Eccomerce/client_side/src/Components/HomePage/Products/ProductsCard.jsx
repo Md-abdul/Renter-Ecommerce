@@ -217,7 +217,7 @@ const ProductCard = () => {
       </div>
 
       {/* Categories */}
-      <div className="container mx-auto px-4 py-16">
+      {/* <div className="container mx-auto px-4 py-16">
         <h2 className="text-4xl font-bold mb-12 text-center text-gray-800">
           Shop by Category
         </h2>
@@ -257,10 +257,10 @@ const ProductCard = () => {
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* Featured Products */}
-      <div className="bg-white py-16 shadow-lg">
+      {/* <div className="bg-white py-16 shadow-lg">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold mb-12 text-center text-gray-800">
             New Arrivals
@@ -307,10 +307,10 @@ const ProductCard = () => {
             ))}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Newsletter Section */}
-      <div className="bg-black py-20 mt-6 shadow-lg">
+      {/* <div className="bg-black py-20 mt-6 shadow-lg">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-4 text-white">
             Stay in Style
@@ -330,7 +330,7 @@ const ProductCard = () => {
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

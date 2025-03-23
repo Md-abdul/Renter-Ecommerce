@@ -23,12 +23,7 @@ const navdata = () => {
           link: "/kids",
           icon: "fa fa-kids"
         },
-        {
-          id: "Store Locater",
-          label: "Store Locator",
-          link: "/storelocator",
-          icon: "fa fa-kids"
-        },
+        
         {
           id: "storeLocator",
           label: "Store Locator",

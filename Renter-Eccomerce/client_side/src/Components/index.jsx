@@ -6,8 +6,8 @@ import RecommendedSlider from "./HomePage/Crousel/RecommendedSlider";
 const HomePage = () => {
   return (
     <div>
-      <Cards />
-      <RecommendedSlider />
+      {/* <Cards />
+      <RecommendedSlider /> */}
       {/* <Cards /> */}
       <ProductCard />
     </div>
