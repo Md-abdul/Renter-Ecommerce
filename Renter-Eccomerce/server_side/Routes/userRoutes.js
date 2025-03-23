@@ -15,7 +15,7 @@ const TOKEN_EXPIRY = "24h"; // Token expires in 24 hours
 // Signup Route
 UserRoutes.post("/signup", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, address, phoneNumber, cart  } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
@@ -31,7 +31,7 @@ UserRoutes.post("/signup", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Save user
-    const newUser = new User({ name, email, password: hashedPassword });
+    const newUser = new User({ name, email, password: hashedPassword,address , phoneNumber, cart });
     await newUser.save();
 
     return res.status(201).json({ message: "User registered successfully" });
