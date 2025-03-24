@@ -11,6 +11,7 @@ import PrivateRoutes from "./PrivateRoutes";
 import StoreLocator from "../Pages/StoreLocator/StoreLocator";
 import AboutPage from "../Pages/Contact_About/About";
 import ContactPage from "../Pages/Contact_About/contact";
+import AdminDashboard from "../Admin/AdminDashboard ";
 
 const AllRoutes = () => {
   return (
@@ -38,9 +39,17 @@ const AllRoutes = () => {
       <Route path="/sotrelocator" element={<StoreLocator />} />
       <Route path="/aboutpage" element={<AboutPage />} />
       <Route path="/contactpage" element={<ContactPage />} />
-      {/* <Route path="/login" element={<AuthPage />} />
-      <Route path="/signup" element={<AuthPage />} /> */}
       <Route path="/*" element={<HomePage />} />
+
+      {/* admin routes */}
+      <Route
+        path="/adminDashboard"
+        element={
+          // <PrivateRoutes>
+          <AdminDashboard />
+          // </PrivateRoutes>
+        }
+      />
     </Routes>
   );
 };

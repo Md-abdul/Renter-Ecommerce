@@ -11,6 +11,7 @@ import {
 } from "./actionType";
 
 const API_URL = "http://localhost:5000/api/user";
+const ADMIN_API_URL = "http://localhost:5000/api/admin/login";
 
 export const signIn = (userData) => async (dispatch) => {
   dispatch({ type: LOGIN_REQUEST });
@@ -26,7 +27,7 @@ export const signIn = (userData) => async (dispatch) => {
   } catch (error) {
     console.error("Sign In Error:", error);
     dispatch({ type: LOGIN_ERROR });
-    toast.error(error.response?.data?.message || "Login failed");
+    // toast.error(error.response?.data?.message || "Login failed");
     return false; // Return false indicating login failure
   }
 };
@@ -52,4 +53,24 @@ export const LogoutUsers = () => (dispatch) => {
   localStorage.removeItem("token");
   localStorage.removeItem("user"); // Remove user details from localStorage
   dispatch({ type: LOGOUT });
+};
+
+export const adminLogin = (adminData) => async (dispatch) => {
+  dispatch({ type: "ADMIN_LOGIN_REQUEST" });
+  try {
+    // Send a POST request to the server for admin login
+    const response = await axios.post(`${ADMIN_API_URL}`, adminData);
+    const token = response.data.token; // Assuming the server returns a token
+    const admin = response.data.admin; // Assuming the server returns admin details
+
+    dispatch({ type: "ADMIN_LOGIN_SUCCESS", payload: token });
+    localStorage.setItem("adminToken", token);
+    localStorage.setItem("admin", JSON.stringify(admin)); // Store admin details in localStorage
+    toast.success("Admin login successful");
+    return true; // Return true indicating successful admin login
+  } catch (error) {
+    dispatch({ type: "ADMIN_LOGIN_ERROR" });
+    toast.error(error.response?.data?.message || "Admin login failed");
+    return false; // Return false indicating admin login failure
+  }
 };

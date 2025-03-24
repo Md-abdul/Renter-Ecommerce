@@ -1,19 +1,42 @@
+// import "./App.css";
+// import React from "react";
+// import { TopNavbar } from "./Components/HomePage/Navbar/Navbar";
+// import AllRoutes from "./Routes/AllRoutes";
+// import Footer from "./Components/HomePage/Footer/Footer";
+// import ProductCard from "./Components/HomePage/Products/ProductsCard";
+
+// function App() {
+//   return (
+//     <React.Fragment>
+//       <TopNavbar />
+//       <div style={{ marginTop: "50px" }}>
+//         <AllRoutes />
+//       </div>
+//       <Footer />
+//     </React.Fragment>
+//   );
+// }
+
+// export default App;
+
 import "./App.css";
 import React from "react";
+import { useSelector } from "react-redux";
 import { TopNavbar } from "./Components/HomePage/Navbar/Navbar";
 import AllRoutes from "./Routes/AllRoutes";
 import Footer from "./Components/HomePage/Footer/Footer";
-import ProductCard from "./Components/HomePage/Products/ProductsCard";
-// import Cards from "./Components/HomePage/Crousel/Cards";
 
 function App() {
+  const isAdmin = useSelector((state) => state?.UsersReducer.isAdmin); // Ensure this matches your Redux state structure
+  console.log(isAdmin);
+
   return (
     <React.Fragment>
-      <TopNavbar />
+      {!isAdmin && <TopNavbar />}
       <div style={{ marginTop: "50px" }}>
         <AllRoutes />
       </div>
-      <Footer />
+      {!isAdmin && <Footer />}
     </React.Fragment>
   );
 }
