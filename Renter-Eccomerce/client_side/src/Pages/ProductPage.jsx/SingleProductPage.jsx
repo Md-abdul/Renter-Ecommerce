@@ -10,7 +10,7 @@ const SingleProductPage = () => {
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState("");
   const [loading, setLoading] = useState(true);
-  const [showToast, setShowToast] = useState(false); // State to control toast visibility
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -30,13 +30,6 @@ const SingleProductPage = () => {
     };
     fetchProduct();
   }, [_id]);
-
-  // Function to handle adding to cart and showing toast
-  const handleAddToCart = (product) => {
-    addToCart(product);
-    setShowToast(true); // Show toast
-    setTimeout(() => setShowToast(false), 3000); // Hide toast after 3 seconds
-  };
 
   if (loading) {
     return (
@@ -123,7 +116,10 @@ const SingleProductPage = () => {
         {/* Buttons */}
         <div className="flex gap-4 mt-6">
           <button
-            onClick={() => handleAddToCart(product)} // Use handleAddToCart
+            onClick={() => {
+              console.log("Adding to cart:", product._id);
+              addToCart(product);
+            }}
             className="flex-1 bg-yellow-500 text-black px-6 py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg transition hover:bg-yellow-600 hover:scale-105"
           >
             <ShoppingCart size={20} />

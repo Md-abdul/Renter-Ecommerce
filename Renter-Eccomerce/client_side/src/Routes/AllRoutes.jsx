@@ -23,7 +23,7 @@ const AllRoutes = () => {
       <Route path="/storelocator" element={<StoreLocator />} />
       <Route path="/product/:_id" element={<SingleProductPage />} />
       <Route
-        path="/productCart/:_id"
+        path="/productCart"
         element={
           <PrivateRoutes>
             <CartPage />

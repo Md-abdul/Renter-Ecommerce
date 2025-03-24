@@ -54,7 +54,7 @@ export const TopNavbar = () => {
     if (!isAuth) {
       toast.error("Please login first to access the cart.");
     } else {
-      navigate("/productCart/:_id"); // Navigate to the cart page if the user is logged in
+      navigate("/productCart"); // Navigate to the cart page if the user is logged in
     }
   };
 
