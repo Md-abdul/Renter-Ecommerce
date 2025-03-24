@@ -5,6 +5,7 @@ const { ProductRoutes } = require("./Routes/productRoutes");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const { UserRoutes } = require("./Routes/userRoutes");
+const { adminRoutes } = require("./Routes/adminRoutes");
 
 const app = express();
 dotenv.config();
@@ -13,7 +14,6 @@ dotenv.config();
 app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
-
 
 // Connect to the database
 connectDB();
@@ -25,6 +25,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/products", ProductRoutes);
 app.use("/api/user", UserRoutes);
+app.use("/api/admin", adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
