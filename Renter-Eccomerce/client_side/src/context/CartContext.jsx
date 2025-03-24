@@ -1,78 +1,115 @@
-// src/context/CartContext.jsx
-
-import React, { createContext, useContext, useState } from 'react';
-
+import React, { createContext, useContext, useEffect, useState } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
-  const [cartCount, setCartCount] = useState(0);
 
-  const addToCart = (product) => {
-    setCart(prevCart => {
-      const existingProduct = prevCart.find(item => item._id === product._id);
-      if (existingProduct) {
-        return prevCart.map(item =>
-          item._id === product._id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
+  const fetchCart = async () => {
+    try {
+      console.log("Fetching cart...");
+      const response = await axios.get("http://localhost:5000/api/user/get-cart", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+
+      console.log("Cart response:", response.data);
+
+      const cartData = response.data.cart;
+      const productIds = Object.keys(cartData);
+
+      // Fetch details for each product in the cart
+      const productDetails = await Promise.all(
+        productIds.map(async (id) => {
+          const productRes = await axios.get(`http://localhost:5000/api/products/${id}`);
+          return { ...productRes.data, quantity: cartData[id] };
+        })
+      );
+
+      setCart(productDetails);
+    } catch (error) {
+      console.error("Error fetching cart:", error.response?.data || error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  // Add product to cart
+  const addToCart = async (product) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please log in to add products to your cart.");
+        return;
       }
-      return [...prevCart, { ...product, quantity: 1 }];
-    });
-    setCartCount(prevCount => prevCount + 1);
+
+      console.log("Adding product to cart:", product._id);
+
+      const response = await axios.post(
+        "http://localhost:5000/api/user/add-to-cart",
+        { productId: product._id, quantity: 1 },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log("Add to cart response:", response.data);
+
+      if (response.status === 200) {
+        toast.success("Product Added to Cart");
+        fetchCart(); // Refresh cart
+      } else {
+        toast.error("Failed to add product to cart");
+      }
+    } catch (error) {
+      console.error("Error adding to cart:", error.response?.data || error);
+      toast.error("Not Able to add to the cart");
+    }
   };
 
-  const removeFromCart = (productId) => {
-    setCart(prevCart => prevCart.filter(item => item._id !== productId));
-    setCartCount(prevCount => prevCount - 1);
+  const removeFromCart = async (productId) => {
+    try {
+      await axios.post(
+        "http://localhost:5000/api/user/remove-from-cart",
+        { productId },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      fetchCart();
+    } catch (error) {
+      console.error("Error removing from cart:", error);
+    }
   };
 
-  const updateQuantity = (productId, quantity) => {
-    if (quantity < 1) return;
-    setCart(prevCart =>
-      prevCart.map(item =>
-        item._id === productId ? { ...item, quantity } : item
-      )
-    );
-    setCartCount(prevCount => prevCount + quantity - 1);
+  const updateQuantity = async (productId, quantity) => {
+    try {
+      await axios.post(
+        "http://localhost:5000/api/user/update-cart-quantity",
+        { productId, quantity },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      fetchCart();
+    } catch (error) {
+      console.error("Error updating cart quantity:", error);
+    }
   };
 
-  const clearCart = () => {
-    setCart([]);
-    setCartCount(0);
-  };
-
-  const getTotalItems = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
-  };
-
-  const getTotalPrice = () => {
-    return cart.reduce((total, item) => total + (item.offerPrice * item.quantity), 0);
-  };
-
-  const value = {
-    cart,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-    getTotalItems,
-    getTotalPrice,
-    cartCount // Add this line to expose the cart count
-  };
+  useEffect(() => {
+    if (localStorage.getItem("token")) {
+      fetchCart();
+    }
+  }, []);
 
   return (
-    <CartContext.Provider value={value}>
+    <CartContext.Provider
+      value={{ cart, addToCart, removeFromCart, updateQuantity }}
+    >
       {children}
     </CartContext.Provider>
   );
 };
 
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
-};
+export const useCart = () => useContext(CartContext);

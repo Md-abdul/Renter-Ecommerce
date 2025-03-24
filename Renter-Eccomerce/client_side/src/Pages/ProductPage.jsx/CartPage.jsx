@@ -1,11 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Trash2, Plus, Minus } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
 
 const CartPage = () => {
-  const { cart, removeFromCart, updateQuantity, getTotalPrice } = useCart();
+  const { fetchCart, cart, removeFromCart, updateQuantity, getTotalPrice } =
+    useCart();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Fetch cart items when the component mounts
+    fetchCart();
+  }, []);
 
   if (cart.length === 0) {
     return (
