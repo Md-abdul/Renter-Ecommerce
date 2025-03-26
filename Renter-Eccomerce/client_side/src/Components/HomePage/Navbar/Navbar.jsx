@@ -71,7 +71,7 @@ export const TopNavbar = () => {
           <div className="flex items-center">
             <Link to={"/"}>
               <h1 className="text-2xl font-bold">
-                <span className="text-yellow-400">Re</span>nter
+                <span className="text-yellow-400">Ra</span>nter
               </h1>
             </Link>
           </div>
