@@ -12,6 +12,16 @@ UserRoutes.use(cookieParser());
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
 const TOKEN_EXPIRY = "24h"; // Token expires in 24 hours
 
+// Get all users
+UserRoutes.get("/allUser", async (req, res) => {
+  try {
+    const users = await User.find({}, { password: 0, cart: 0 }); // Exclude password and cart
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+});
+
 // Signup Route
 UserRoutes.post("/signup", async (req, res) => {
   try {
@@ -105,11 +115,13 @@ UserRoutes.post("/logout", (req, res) => {
 // Add this middleware function before the /add-to-cart route
 const authenticateUser = async (req, res, next) => {
   try {
-    const token = req.header('auth-token');
+    const token = req.header("auth-token");
     if (!token) {
-      return res.status(401).json({ errors: "Please authenticate using valid login" });
+      return res
+        .status(401)
+        .json({ errors: "Please authenticate using valid login" });
     }
-    
+
     const verifiedToken = jwt.verify(token, JWT_SECRET);
     req.user = verifiedToken;
     next();
