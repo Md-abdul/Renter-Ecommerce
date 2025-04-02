@@ -1,7 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../Modals/UserModal");
+const { UserModel, OrderModel } = require("../Modals/UserModal");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 
@@ -12,10 +12,71 @@ UserRoutes.use(cookieParser());
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
 const TOKEN_EXPIRY = "24h"; // Token expires in 24 hours
 
+// Update user route (PUT)
+UserRoutes.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, address, phoneNumber } = req.body;
+
+    // Validate input
+    if (!name || !email) {
+      return res.status(400).json({ message: "Name and email are required" });
+    }
+
+    // Validate phone number if provided
+    if (phoneNumber && !/^\d{10}$/.test(phoneNumber)) {
+      return res
+        .status(400)
+        .json({ message: "Phone number must be 10 digits" });
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      id,
+      { name, email, address, phoneNumber },
+      { new: true, runValidators: true }
+    ).select("-password -cart"); // Exclude password and cart from response
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Update user error:", error);
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "Email already exists" });
+    }
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// Delete user route (DELETE)
+UserRoutes.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedUser = await UserModel.findByIdAndDelete(id);
+    if (!deletedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "User deleted successfully",
+      userId: id,
+    });
+  } catch (error) {
+    console.error("Delete user error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 // Get all users
 UserRoutes.get("/allUser", async (req, res) => {
   try {
-    const users = await User.find({}, { password: 0, cart: 0 }); // Exclude password and cart
+    const users = await UserModel.find({}, { password: 0, cart: 0 }); // Exclude password and cart
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
@@ -32,7 +93,7 @@ UserRoutes.post("/signup", async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await UserModel.findOne({ email });
     if (existingUser) {
       return res.status(409).json({ message: "User already exists" });
     }
@@ -40,27 +101,33 @@ UserRoutes.post("/signup", async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Initialize cart with 300 empty items
-    let cart = {};
-    for (let i = 0; i < 300; i++) {
-      cart[i] = 0;
-    }
-
-    // Save user with default values
-    const newUser = new User({
+    // Create new user with empty cart
+    const newUser = new UserModel({
       name,
       email,
       password: hashedPassword,
-      address: "", // Default value
-      phoneNumber: null, // Default value
-      cart: cart, // Ensure cart is created
+      address: "",
+      phoneNumber: null,
+      cart: {}, // Initialize as empty object (Map will be handled by Mongoose)
     });
 
     await newUser.save();
 
-    return res.status(201).json({ message: "User registered successfully" });
+    return res.status(201).json({
+      message: "User registered successfully",
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        cart: newUser.cart || {},
+      },
+    });
   } catch (error) {
-    return res.status(500).json({ message: "Server error", error });
+    console.error("Signup error:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
 });
 
@@ -76,7 +143,7 @@ UserRoutes.post("/login", async (req, res) => {
     }
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = await UserModel.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -111,128 +178,4 @@ UserRoutes.post("/logout", (req, res) => {
   return res.status(200).json({ message: "Logout successful" });
 });
 
-// Middleware to protect routes
-// Add this middleware function before the /add-to-cart route
-const authenticateUser = async (req, res, next) => {
-  try {
-    const token = req.header("auth-token");
-    if (!token) {
-      return res
-        .status(401)
-        .json({ errors: "Please authenticate using valid login" });
-    }
-
-    const verifiedToken = jwt.verify(token, JWT_SECRET);
-    req.user = verifiedToken;
-    next();
-  } catch (error) {
-    res.status(401).json({ errors: "Please authenticate using a valid token" });
-  }
-};
-
-// Add to Cart Route
-UserRoutes.post("/add-to-cart", authenticateUser, async (req, res) => {
-  try {
-    const { productId, quantity } = req.body;
-    const userId = req.user.userId;
-
-    console.log("Received add-to-cart request:", { productId, quantity });
-
-    if (!productId || quantity <= 0) {
-      return res
-        .status(400)
-        .json({ message: "Invalid product ID or quantity" });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    console.log("User found:", user.email);
-
-    // Initialize cart if empty
-    if (!user.cart) user.cart = {};
-
-    // Update cart
-    user.cart[productId] = (user.cart[productId] || 0) + quantity;
-    await user.save();
-
-    console.log("Updated cart:", user.cart);
-
-    return res
-      .status(200)
-      .json({ message: "Product added to cart", cart: user.cart });
-  } catch (error) {
-    console.error("Error adding to cart:", error);
-    return res.status(500).json({ message: "Server error", error });
-  }
-});
-
-// Remove from Cart Route
-UserRoutes.post("/remove-from-cart", authenticateUser, async (req, res) => {
-  try {
-    const { productId } = req.body;
-    const userId = req.user.userId;
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Remove the product from the cart
-    delete user.cart[productId];
-
-    await user.save();
-
-    return res
-      .status(200)
-      .json({ message: "Product removed from cart", cart: user.cart });
-  } catch (error) {
-    return res.status(500).json({ message: "Server error", error });
-  }
-});
-
-// Update Cart Quantity Route
-UserRoutes.post("/update-cart-quantity", authenticateUser, async (req, res) => {
-  try {
-    const { productId, quantity } = req.body;
-    const userId = req.user.userId;
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Update the quantity
-    user.cart[productId] = quantity;
-
-    await user.save();
-
-    return res
-      .status(200)
-      .json({ message: "Cart quantity updated", cart: user.cart });
-  } catch (error) {
-    return res.status(500).json({ message: "Server error", error });
-  }
-});
-
-// Get Cart Route
-UserRoutes.get("/get-cart", authenticateUser, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    console.log("Fetching cart for user:", user.email);
-
-    return res.status(200).json({ cart: user.cart });
-  } catch (error) {
-    return res.status(500).json({ message: "Server error", error });
-  }
-});
-
-module.exports = { UserRoutes, authenticateUser };
+module.exports = { UserRoutes };

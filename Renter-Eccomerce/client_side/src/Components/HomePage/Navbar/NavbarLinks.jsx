@@ -41,7 +41,7 @@ const navdata = () => {
           label: "About",
           link: "/aboutpage",
           icon: "fa fa-kids"
-        },
+        }
       ]
     }
   ];

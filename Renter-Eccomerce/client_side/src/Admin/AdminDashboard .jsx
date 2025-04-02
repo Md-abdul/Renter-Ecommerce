@@ -39,6 +39,7 @@ import AdminSidebar from "./AdminSidebar";
 import DashboardContent from "./Dashboard";
 import ProductsContent from "./Products";
 import UsersContent from "./Users";
+import { Orders } from "./Orders/Orders";
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
@@ -74,6 +75,7 @@ const AdminDashboard = () => {
           {activeTab === "dashboard" && <DashboardContent />}
           {activeTab === "products" && <ProductsContent />}
           {activeTab === "users" && <UsersContent />}
+          {activeTab === "orders" && <Orders />}
         </main>
       </div>
     </div>

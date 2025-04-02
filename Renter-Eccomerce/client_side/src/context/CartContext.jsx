@@ -1,111 +1,238 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
+  const API_BASE_URL = "http://localhost:5000/api";
+
+  // Calculate total price of items in cart
+  const getTotalPrice = () => {
+    return cart.reduce((total, item) => {
+      return total + (item.offerPrice || item.price) * item.quantity;
+    }, 0);
+  };
+
+  // Fetch user's cart from server
   const fetchCart = async () => {
     try {
-      console.log("Fetching cart...");
-      const response = await axios.get("http://localhost:5000/api/user/get-cart", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/cart/items`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log("Cart response:", response.data);
-
       const cartData = response.data.cart;
-      const productIds = Object.keys(cartData);
+      const cartArray = Object.values(cartData).map((item) => ({
+        ...item,
+        _id: item._id || item.productId,
+        productId: item.productId || item._id,
+      }));
 
-      // Fetch details for each product in the cart
-      const productDetails = await Promise.all(
-        productIds.map(async (id) => {
-          const productRes = await axios.get(`http://localhost:5000/api/products/${id}`);
-          return { ...productRes.data, quantity: cartData[id] };
-        })
-      );
-
-      setCart(productDetails);
+      setCart(cartArray);
     } catch (error) {
-      console.error("Error fetching cart:", error.response?.data || error);
+      console.error("Error fetching cart:", error);
+      toast.error(error.response?.data?.message || "Failed to load cart");
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchCart();
-  }, []);
+  // Fetch user's orders
+  const fetchOrders = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/orders/user`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setOrders(response.data);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      toast.error(error.response?.data?.message || "Failed to load orders");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Clear cart after order is placed
+  const clearCart = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      await axios.delete(`${API_BASE_URL}/cart/clear`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setCart([]);
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+    }
+  };
 
   // Add product to cart
-  const addToCart = async (product) => {
+  const addToCart = async (product, quantity = 1) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        alert("Please log in to add products to your cart.");
+        toast.error("Please log in to add products to your cart.");
+        navigate("/login");
         return;
       }
 
-      console.log("Adding product to cart:", product._id);
-
       const response = await axios.post(
-        "http://localhost:5000/api/user/add-to-cart",
-        { productId: product._id, quantity: 1 },
+        `${API_BASE_URL}/cart/add`,
+        {
+          productId: product._id,
+          quantity,
+          price: product.offerPrice || product.price,
+          name: product.title,
+          image:
+            product.image[0]?.imageUrl || "https://via.placeholder.com/150",
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Add to cart response:", response.data);
-
       if (response.status === 200) {
-        toast.success("Product Added to Cart");
-        fetchCart(); // Refresh cart
-      } else {
-        toast.error("Failed to add product to cart");
+        toast.success("Product added to cart");
+        await fetchCart();
       }
     } catch (error) {
-      console.error("Error adding to cart:", error.response?.data || error);
-      toast.error("Not Able to add to the cart");
+      console.error("Error adding to cart:", error);
+      toast.error(error.response?.data?.message || "Failed to add to cart");
     }
   };
 
+  // Remove product from cart
   const removeFromCart = async (productId) => {
     try {
-      await axios.post(
-        "http://localhost:5000/api/user/remove-from-cart",
-        { productId },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please log in to modify your cart.");
+        return;
+      }
+
+      const response = await axios.delete(
+        `${API_BASE_URL}/cart/remove/${productId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchCart();
+
+      if (response.status === 200) {
+        toast.success("Product removed from cart");
+        await fetchCart();
+      }
     } catch (error) {
       console.error("Error removing from cart:", error);
+      toast.error(error.response?.data?.message || "Failed to remove product");
     }
   };
 
-  const updateQuantity = async (productId, quantity) => {
+  // Update product quantity in cart
+  const updateQuantity = async (productId, newQuantity) => {
     try {
-      await axios.post(
-        "http://localhost:5000/api/user/update-cart-quantity",
-        { productId, quantity },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
+      if (newQuantity < 1) {
+        await removeFromCart(productId);
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please log in to modify your cart.");
+        return;
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL}/cart/update-quantity`,
+        { productId, newQuantity },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchCart();
+
+      if (response.status === 200) {
+        await fetchCart();
+      }
     } catch (error) {
-      console.error("Error updating cart quantity:", error);
+      console.error("Error updating quantity:", error);
+      toast.error(error.response?.data?.message || "Failed to update quantity");
     }
   };
 
+  // Checkout function
+  const checkout = async (shippingDetails, paymentMethod) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please log in to complete checkout.");
+        navigate("/login");
+        return;
+      }
+
+      if (cart.length === 0) {
+        toast.error("Your cart is empty");
+        return;
+      }
+
+      setLoading(true);
+      const response = await axios.post(
+        `${API_BASE_URL}/orders`,
+        {
+          shippingAddress: shippingDetails,
+          paymentMethod: paymentMethod || "card",
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.status === 201) {
+        await clearCart();
+        await fetchOrders();
+        toast.success("Order placed successfully!");
+        navigate("/orders");
+        return response.data.order;
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error(error.response?.data?.message || "Failed to place order");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initialize cart and orders when component mounts
   useEffect(() => {
     if (localStorage.getItem("token")) {
       fetchCart();
+      fetchOrders();
     }
   }, []);
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, updateQuantity }}
+      value={{
+        cart,
+        orders,
+        loading,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        fetchCart,
+        fetchOrders,
+        getTotalPrice,
+        clearCart,
+        checkout,
+      }}
     >
       {children}
     </CartContext.Provider>

@@ -120,7 +120,7 @@ const SingleProductPage = () => {
               console.log("Adding to cart:", product._id);
               addToCart(product);
             }}
-            className="flex-1 bg-yellow-500 text-black px-6 py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg transition hover:bg-yellow-600 hover:scale-105"
+            className="flex-1 bg-yellow-500 text-black px-6 py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg transition hover:bg-yellow-600 hover:scale-105 cursor-pointer"
           >
             <ShoppingCart size={20} />
             Add to Cart
@@ -130,7 +130,7 @@ const SingleProductPage = () => {
               addToCart(product);
               navigate("/productCart/" + product._id);
             }}
-            className="flex-1 bg-black text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg transition hover:bg-gray-900 hover:scale-105"
+            className="flex-1 bg-black text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 shadow-lg transition hover:bg-gray-900 hover:scale-105 cursor-pointer"
           >
             <Package size={20} />
             Buy Now

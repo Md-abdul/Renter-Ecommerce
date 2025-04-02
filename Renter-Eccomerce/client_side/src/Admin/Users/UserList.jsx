@@ -1,14 +1,4 @@
 import React, { useState, useEffect } from "react";
-import {
-  Modal,
-  ModalHeader,
-  ModalBody,
-  Button,
-  Form,
-  FormGroup,
-  Label,
-  Input,
-} from "reactstrap";
 
 const UserList = () => {
   // State for user data and UI
@@ -76,19 +66,20 @@ const UserList = () => {
         body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
-        const updatedUser = await response.json();
-        if (currentUser) {
-          setUsers(
-            users.map((u) => (u._id === updatedUser._id ? updatedUser : u))
-          );
-        } else {
-          setUsers([...users, updatedUser]);
-        }
-        setIsModalOpen(false);
+      if (!response.ok) throw new Error("Failed to save user");
+
+      const updatedUser = await response.json();
+      if (currentUser) {
+        setUsers(
+          users.map((u) => (u._id === updatedUser._id ? updatedUser : u))
+        );
+      } else {
+        setUsers([...users, updatedUser]);
       }
+      setIsModalOpen(false);
     } catch (error) {
       console.error("Error saving user:", error);
+      alert("Failed to save user. Please try again.");
     }
   };
 
@@ -98,25 +89,22 @@ const UserList = () => {
         `http://localhost:5000/api/user/${userToDelete._id}`,
         { method: "DELETE" }
       );
-      if (response.ok) {
-        setUsers(users.filter((u) => u._id !== userToDelete._id));
-        setDeleteModalOpen(false);
-      }
+      if (!response.ok) throw new Error("Failed to delete user");
+
+      setUsers(users.filter((u) => u._id !== userToDelete._id));
+      setDeleteModalOpen(false);
     } catch (error) {
       console.error("Error deleting user:", error);
+      alert("Failed to delete user. Please try again.");
     }
   };
-
-  const toggleModal = () => setIsModalOpen(!isModalOpen);
-  const toggleDeleteModal = () => setDeleteModalOpen(!deleteModalOpen);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header and Add User Button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <h2 className="text-2xl font-bold text-gray-800">User Management</h2>
-        <Button
-          color="primary"
+        <button
           className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors duration-200 flex items-center gap-2"
           onClick={() => {
             setCurrentUser(null);
@@ -136,7 +124,7 @@ const UserList = () => {
             />
           </svg>
           Add User
-        </Button>
+        </button>
       </div>
 
       {/* Loading State */}
@@ -151,34 +139,19 @@ const UserList = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Name
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Email
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Phone
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Address
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -219,9 +192,7 @@ const UserList = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
-                          <Button
-                            color="primary"
-                            size="sm"
+                          <button
                             className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm shadow-sm transition-colors duration-200 flex items-center gap-1"
                             onClick={() => {
                               setCurrentUser(user);
@@ -237,10 +208,8 @@ const UserList = () => {
                               <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                             </svg>
                             Edit
-                          </Button>
-                          <Button
-                            color="danger"
-                            size="sm"
+                          </button>
+                          <button
                             className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm shadow-sm transition-colors duration-200 flex items-center gap-1"
                             onClick={() => {
                               setUserToDelete(user);
@@ -260,7 +229,7 @@ const UserList = () => {
                               />
                             </svg>
                             Delete
-                          </Button>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -282,147 +251,180 @@ const UserList = () => {
       )}
 
       {/* Add/Edit User Modal */}
-      <Modal isOpen={isModalOpen} toggle={toggleModal} className="rounded-lg">
-        <div className="bg-white rounded-lg shadow-xl overflow-hidden">
-          <ModalHeader
-            toggle={toggleModal}
-            className="border-b border-gray-200 px-6 py-4"
-          >
-            <h3 className="text-lg font-medium text-gray-900">
-              {currentUser ? "Edit User" : "Add New User"}
-            </h3>
-          </ModalHeader>
-          <ModalBody className="px-6 py-4">
-            <Form onSubmit={handleSubmit}>
-              <FormGroup className="mb-4">
-                <Label
-                  for="name"
-                  className="block text-gray-700 font-medium mb-2"
-                >
-                  Name
-                </Label>
-                <Input
-                  type="text"
-                  name="name"
-                  id="name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                />
-              </FormGroup>
-              <FormGroup className="mb-4">
-                <Label
-                  for="email"
-                  className="block text-gray-700 font-medium mb-2"
-                >
-                  Email
-                </Label>
-                <Input
-                  type="email"
-                  name="email"
-                  id="email"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                />
-              </FormGroup>
-              <FormGroup className="mb-4">
-                <Label
-                  for="address"
-                  className="block text-gray-700 font-medium mb-2"
-                >
-                  Address
-                </Label>
-                <Input
-                  type="text"
-                  name="address"
-                  id="address"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                />
-              </FormGroup>
-              <FormGroup className="mb-6">
-                <Label
-                  for="phoneNumber"
-                  className="block text-gray-700 font-medium mb-2"
-                >
-                  Phone Number
-                </Label>
-                <Input
-                  type="text"
-                  name="phoneNumber"
-                  id="phoneNumber"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData.phoneNumber}
-                  onChange={handleInputChange}
-                  pattern="[0-9]{10}"
-                  title="Please enter a 10-digit phone number"
-                />
-              </FormGroup>
-              <div className="flex justify-end space-x-3">
-                <Button
-                  color="secondary"
-                  onClick={toggleModal}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  color="primary"
-                  type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {currentUser ? "Update" : "Save"}
-                </Button>
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div
+              className="fixed inset-0 transition-opacity"
+              aria-hidden="true"
+            >
+              <div
+                className="absolute inset-0 bg-gray-500 opacity-75"
+                onClick={() => setIsModalOpen(false)}
+              ></div>
+            </div>
+            <span
+              className="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                      {currentUser ? "Edit User" : "Add New User"}
+                    </h3>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <div>
+                        <label
+                          htmlFor="name"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          name="name"
+                          id="name"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="email"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          name="email"
+                          id="email"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="address"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Address
+                        </label>
+                        <input
+                          type="text"
+                          name="address"
+                          id="address"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          value={formData.address}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="phoneNumber"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Phone Number
+                        </label>
+                        <input
+                          type="text"
+                          name="phoneNumber"
+                          id="phoneNumber"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          value={formData.phoneNumber}
+                          onChange={handleInputChange}
+                          pattern="[0-9]{10}"
+                          title="Please enter a 10-digit phone number"
+                        />
+                      </div>
+                      <div className="pt-4 flex justify-end space-x-3">
+                        <button
+                          type="button"
+                          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                          onClick={() => setIsModalOpen(false)}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {currentUser ? "Update" : "Save"}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
               </div>
-            </Form>
-          </ModalBody>
+            </div>
+          </div>
         </div>
-      </Modal>
+      )}
 
       {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={deleteModalOpen}
-        toggle={toggleDeleteModal}
-        className="rounded-lg"
-      >
-        <div className="bg-white rounded-lg shadow-xl overflow-hidden">
-          <ModalHeader
-            toggle={toggleDeleteModal}
-            className="border-b border-gray-200 px-6 py-4"
-          >
-            <h3 className="text-lg font-medium text-gray-900">
-              Confirm Delete
-            </h3>
-          </ModalHeader>
-          <ModalBody className="px-6 py-4">
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to delete user:{" "}
-              <strong className="text-gray-900">{userToDelete?.name}</strong>?
-              This action cannot be undone.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <Button
-                color="secondary"
-                onClick={toggleDeleteModal}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md shadow-sm transition-colors duration-200"
-              >
-                Cancel
-              </Button>
-              <Button
-                color="danger"
-                onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md shadow-sm transition-colors duration-200"
-              >
-                Delete
-              </Button>
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div
+              className="fixed inset-0 transition-opacity"
+              aria-hidden="true"
+            >
+              <div
+                className="absolute inset-0 bg-gray-500 opacity-75"
+                onClick={() => setDeleteModalOpen(false)}
+              ></div>
             </div>
-          </ModalBody>
+            <span
+              className="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                      Confirm Delete
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Are you sure you want to delete user:{" "}
+                      <strong className="text-gray-900">
+                        {userToDelete?.name}
+                      </strong>
+                      ? This action cannot be undone.
+                    </p>
+                    <div className="pt-4 flex justify-end space-x-3">
+                      <button
+                        type="button"
+                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        onClick={() => setDeleteModalOpen(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        onClick={handleDelete}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </Modal>
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Trash2, Plus, Minus } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
@@ -7,11 +7,23 @@ const CartPage = () => {
   const { fetchCart, cart, removeFromCart, updateQuantity, getTotalPrice } =
     useCart();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(null); // Track which item is being updated
 
   useEffect(() => {
-    // Fetch cart items when the component mounts
-    fetchCart();
+    fetchCart().finally(() => setLoading(false));
   }, []);
+
+  console.log(cart);
+  
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h2 className="text-2xl font-bold text-gray-800">Loading Cart...</h2>
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (
@@ -19,9 +31,7 @@ const CartPage = () => {
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
           Your cart is empty
         </h2>
-        <p className="text-gray-600">
-          Add some products to your cart to see them here.
-        </p>
+        <p className="text-gray-600">Add some products to see them here.</p>
       </div>
     );
   }
@@ -37,55 +47,70 @@ const CartPage = () => {
           {cart.map((item) => (
             <div
               key={item._id}
-              className="flex flex-col sm:flex-row items-center gap-4 border border-gray-300 bg-gray-100 p-4 rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-1 duration-200"
+              className="flex flex-col sm:flex-row items-center gap-4 border border-gray-300 bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition duration-200"
             >
               <img
-                src={item.image[0].imageUrl}
-                alt={item.title}
+                src={item.image}
+                alt={item.name}
                 className="w-24 h-24 object-cover rounded-lg shadow-sm"
               />
 
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-black">
-                  {item.title}
+                  {item.name}
                 </h3>
                 <div className="flex items-center mt-2">
                   <span className="text-lg font-bold text-yellow-600">
-                    ₹{item.offerPrice}
+                    ₹{item.offerPrice || item.price}
                   </span>
-                  <span className="ml-2 text-sm text-gray-500 line-through">
-                    ₹{item.price}
-                  </span>
+                  {item.offerPrice && (
+                    <span className="ml-2 text-sm text-gray-500 line-through">
+                      ₹{item.price}
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() =>
-                    updateQuantity(
-                      item._id,
-                      Math.max(1, (item.quantity || 1) - 1)
-                    )
-                  }
-                  className="p-2 rounded-full bg-gray-200 hover:bg-yellow-500 hover:text-white transition duration-200"
+                  onClick={() => {
+                    setUpdating(item._id);
+                    updateQuantity(item.productId, item.quantity - 1).finally(() =>
+                      setUpdating(null)
+                    );
+                  }}
+                  disabled={updating === item.productId || item.quantity === 1}
+                  className={`p-2 rounded-full ${
+                    updating === item.productId
+                      ? "bg-gray-300"
+                      : "bg-gray-200 hover:bg-yellow-500 hover:text-white"
+                  } transition duration-200`}
                 >
                   <Minus size={20} />
                 </button>
                 <span className="w-8 text-center text-black font-semibold">
-                  {item.quantity || 1}
+                  {item.quantity}
                 </span>
                 <button
-                  onClick={() =>
-                    updateQuantity(item._id, (item.quantity || 1) + 1)
-                  }
-                  className="p-2 rounded-full bg-gray-200 hover:bg-yellow-500 hover:text-white transition duration-200"
+                  onClick={() => {
+                    setUpdating(item._id);
+                    updateQuantity(item.productId, item.quantity + 1).finally(() =>
+                      setUpdating(null)
+                    );
+                  }}
+                  disabled={updating === item.productId}
+                  className={`p-2 rounded-full ${
+                    updating === item.productId
+                      ? "bg-gray-300"
+                      : "bg-gray-200 hover:bg-yellow-500 hover:text-white"
+                  } transition duration-200`}
                 >
                   <Plus size={20} />
                 </button>
               </div>
 
               <button
-                onClick={() => removeFromCart(item._id)}
+                onClick={() => removeFromCart(item.productId)}
                 className="text-red-500 hover:text-red-600 p-2 transition duration-200"
               >
                 <Trash2 size={20} />

@@ -16,6 +16,7 @@ const AdminHeader = ({ activeTab, sidebarOpen, setSidebarOpen }) => {
             {activeTab === 'dashboard' && 'Dashboard'}
             {activeTab === 'products' && 'Product Management'}
             {activeTab === 'users' && 'User Management'}
+            {activeTab === 'orders' && 'Orders'}
           </h2>
         </div>
         <div className="relative">
