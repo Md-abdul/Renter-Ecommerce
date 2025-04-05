@@ -8,7 +8,7 @@ const { UserRoutes } = require("./Routes/userRoutes");
 const { adminRoutes } = require("./Routes/adminRoutes");
 const { CartRoutes } = require("./Routes/cartRoutes");
 const { orderRoutes } = require("./Routes/orderRoutes");
-
+const router = require("./Routes/googleSignup");
 
 const app = express();
 dotenv.config();
@@ -29,15 +29,15 @@ app.get("/", (req, res) => {
 app.use("/api/products", ProductRoutes);
 app.use("/api/user", UserRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/cart", CartRoutes)
-app.use("/api/orders", orderRoutes)
+app.use("/api/cart", CartRoutes);
+app.use("/api/orders", orderRoutes);
+
+app.use("/auth/google", router);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
-
 
 /**\
  * // Middleware to protect routes
