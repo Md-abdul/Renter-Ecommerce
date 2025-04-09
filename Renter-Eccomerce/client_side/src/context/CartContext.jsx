@@ -32,12 +32,8 @@ export const CartProvider = ({ children }) => {
       });
 
       const cartData = response.data.cart;
-      const cartArray = Object.values(cartData).map((item) => ({
-        ...item,
-        _id: item._id || item.productId,
-        productId: item.productId || item._id,
-      }));
-
+      // Convert the cart object to an array
+      const cartArray = Object.values(cartData);
       setCart(cartArray);
     } catch (error) {
       console.error("Error fetching cart:", error);
@@ -83,8 +79,41 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // // Add product to cart
+  // const addToCart = async (product, quantity = 1) => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     if (!token) {
+  //       toast.error("Please log in to add products to your cart.");
+  //       navigate("/login");
+  //       return;
+  //     }
+
+  //     const response = await axios.post(
+  //       `${API_BASE_URL}/cart/add`,
+  //       {
+  //         productId: product._id,
+  //         quantity,
+  //         price: product.offerPrice || product.price,
+  //         name: product.title,
+  //         image:
+  //           product.image[0]?.imageUrl || "https://via.placeholder.com/150",
+  //       },
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+
+  //     if (response.status === 200) {
+  //       toast.success("Product added to cart");
+  //       await fetchCart();
+  //     }
+  //   } catch (error) {
+  //     console.error("Error adding to cart:", error);
+  //     toast.error(error.response?.data?.message || "Failed to add to cart");
+  //   }
+  // };
+
   // Add product to cart
-  const addToCart = async (product, quantity = 1) => {
+  const addToCart = async (product, quantity = 1, color, size) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -98,10 +127,8 @@ export const CartProvider = ({ children }) => {
         {
           productId: product._id,
           quantity,
-          price: product.offerPrice || product.price,
-          name: product.title,
-          image:
-            product.image[0]?.imageUrl || "https://via.placeholder.com/150",
+          color,
+          size,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );

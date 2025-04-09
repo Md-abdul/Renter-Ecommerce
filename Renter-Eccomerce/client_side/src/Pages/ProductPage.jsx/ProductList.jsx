@@ -2,52 +2,35 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, SortAsc, SortDesc, Heart } from "lucide-react";
 import { useCart } from "../../context/CartContext";
+import { useProduct } from "../../context/ProductContext";
 
 const ProductList = ({ category }) => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState("asc");
+  const {
+    filteredProducts,
+    loading,
+    error,
+    searchQuery,
+    setSearchQuery,
+    sortOrder,
+    setSortOrder,
+  } = useProduct();
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(12); // Number of items per page
+  const [itemsPerPage] = useState(12);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const navigate = useNavigate();
   const { addToCart } = useCart();
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await fetch("http://localhost:5000/api/products");
-        const data = await response.json();
-        setProducts(data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
-
-  const filteredProducts = products
-    .filter(
-      (product) =>
-        product.category === category &&
-        product.title.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) =>
-      sortOrder === "asc" ? a.price - b.price : b.price - a.price
-    );
-
   // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentProducts = filteredProducts.slice(
+  const currentProducts = filteredProducts(category).slice(
     indexOfFirstItem,
     indexOfLastItem
   );
 
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const totalPages = Math.ceil(
+    filteredProducts(category).length / itemsPerPage
+  );
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -59,13 +42,24 @@ const ProductList = ({ category }) => {
 
   const handleAddToCart = (e, product) => {
     e.stopPropagation();
-    addToCart(product);
+    // Default to first color and size for quick add
+    const defaultColor = product.colors[0]?.name;
+    const defaultSize = product.sizes[0]?.size;
+    addToCart(product, 1, defaultColor, defaultSize);
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500">{error}</div>
       </div>
     );
   }
@@ -122,7 +116,10 @@ const ProductList = ({ category }) => {
             {/* Product Image */}
             <div className="relative w-full h-72 overflow-hidden rounded-t-lg">
               <img
-                src={product.image[0].imageUrl}
+                src={
+                  product.colors[0]?.images[0]?.imageUrl ||
+                  "https://via.placeholder.com/150"
+                }
                 alt={product.title}
                 className="w-full h-full object-cover object-center"
               />
@@ -154,14 +151,20 @@ const ProductList = ({ category }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-lg font-bold text-yellow-600">
-                    ₹{product.offerPrice}
+                    ₹{product.offerPrice || product.price}
                   </span>
-                  {product.discount > 0 && (
+                  {product.offerPrice && product.offerPrice < product.price && (
                     <span className="ml-2 text-sm text-gray-500 line-through">
                       ₹{product.price}
                     </span>
                   )}
                 </div>
+                <button
+                  onClick={(e) => handleAddToCart(e, product)}
+                  className="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-1 rounded text-sm font-medium transition-colors"
+                >
+                  Add to Cart
+                </button>
               </div>
               {/* Rating */}
               <div className="flex items-center mt-2">
@@ -189,23 +192,25 @@ const ProductList = ({ category }) => {
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex justify-center mt-8">
-        <nav className="inline-flex rounded-md shadow-sm">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              onClick={() => handlePageChange(page)}
-              className={`px-4 py-2 text-sm font-medium ${
-                currentPage === page
-                  ? "bg-gradient-to-r from-yellow-400 to-yellow-500 text-black"
-                  : "bg-white text-yellow-500 hover:bg-yellow-50"
-              } border border-yellow-500 rounded-md mx-1 transition-all duration-300`}
-            >
-              {page}
-            </button>
-          ))}
-        </nav>
-      </div>
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-8">
+          <nav className="inline-flex rounded-md shadow-sm">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`px-4 py-2 text-sm font-medium ${
+                  currentPage === page
+                    ? "bg-gradient-to-r from-yellow-400 to-yellow-500 text-black"
+                    : "bg-white text-yellow-500 hover:bg-yellow-50"
+                } border border-yellow-500 rounded-md mx-1 transition-all duration-300`}
+              >
+                {page}
+              </button>
+            ))}
+          </nav>
+        </div>
+      )}
 
       <div className="bg-black text-white py-20 mt-8">
         <div className="container mx-auto px-4 text-center">

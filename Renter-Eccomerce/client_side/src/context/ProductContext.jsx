@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
 
 const ProductContext = createContext();
 
@@ -12,18 +13,21 @@ export const ProductProvider = ({ children }) => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/products");
-        const data = await response.json();
-        setProducts(data);
+        const response = await axios.get("http://localhost:5000/api/products");
+        setProducts(response.data);
         setLoading(false);
       } catch (err) {
-        setError(err);
+        setError(err.message);
         setLoading(false);
       }
     };
 
     fetchProducts();
   }, []);
+
+  const getProductById = (id) => {
+    return products.find((product) => product._id === id);
+  };
 
   const filteredProducts = (category) => {
     return products
@@ -49,6 +53,7 @@ export const ProductProvider = ({ children }) => {
     sortOrder,
     setSortOrder,
     filteredProducts,
+    getProductById,
   };
 
   return (

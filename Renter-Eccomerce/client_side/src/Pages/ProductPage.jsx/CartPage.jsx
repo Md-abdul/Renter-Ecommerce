@@ -4,18 +4,15 @@ import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
 
 const CartPage = () => {
-  const { fetchCart, cart, removeFromCart, updateQuantity, getTotalPrice } =
+  const { cart, removeFromCart, updateQuantity, getTotalPrice, fetchCart } =
     useCart();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(null); // Track which item is being updated
+  const [updating, setUpdating] = useState(null);
 
   useEffect(() => {
     fetchCart().finally(() => setLoading(false));
-  }, []);
-
-  console.log(cart);
-  
+  }, [fetchCart]);
 
   if (loading) {
     return (
@@ -31,7 +28,12 @@ const CartPage = () => {
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
           Your cart is empty
         </h2>
-        <p className="text-gray-600">Add some products to see them here.</p>
+        <button
+          onClick={() => navigate("/")}
+          className="bg-yellow-500 text-black px-6 py-2 rounded-lg hover:bg-yellow-600 transition-colors"
+        >
+          Continue Shopping
+        </button>
       </div>
     );
   }
@@ -59,15 +61,13 @@ const CartPage = () => {
                 <h3 className="text-lg font-semibold text-black">
                   {item.name}
                 </h3>
+                <p className="text-sm text-gray-600">
+                  Color: {item.color} | Size: {item.size}
+                </p>
                 <div className="flex items-center mt-2">
                   <span className="text-lg font-bold text-yellow-600">
-                    ₹{item.offerPrice || item.price}
+                    ₹{item.price}
                   </span>
-                  {item.offerPrice && (
-                    <span className="ml-2 text-sm text-gray-500 line-through">
-                      ₹{item.price}
-                    </span>
-                  )}
                 </div>
               </div>
 
@@ -75,13 +75,13 @@ const CartPage = () => {
                 <button
                   onClick={() => {
                     setUpdating(item._id);
-                    updateQuantity(item.productId, item.quantity - 1).finally(() =>
-                      setUpdating(null)
+                    updateQuantity(item.productId, item.quantity - 1).finally(
+                      () => setUpdating(null)
                     );
                   }}
-                  disabled={updating === item.productId || item.quantity === 1}
+                  disabled={updating === item._id || item.quantity === 1}
                   className={`p-2 rounded-full ${
-                    updating === item.productId
+                    updating === item._id
                       ? "bg-gray-300"
                       : "bg-gray-200 hover:bg-yellow-500 hover:text-white"
                   } transition duration-200`}
@@ -94,13 +94,15 @@ const CartPage = () => {
                 <button
                   onClick={() => {
                     setUpdating(item._id);
-                    updateQuantity(item.productId, item.quantity + 1).finally(() =>
-                      setUpdating(null)
+                    updateQuantity(item.productId, item.quantity + 1).finally(
+                      () => setUpdating(null)
                     );
                   }}
-                  disabled={updating === item.productId}
+                  disabled={
+                    updating === item._id || item.quantity >= item.maxQuantity
+                  }
                   className={`p-2 rounded-full ${
-                    updating === item.productId
+                    updating === item._id
                       ? "bg-gray-300"
                       : "bg-gray-200 hover:bg-yellow-500 hover:text-white"
                   } transition duration-200`}
@@ -110,7 +112,7 @@ const CartPage = () => {
               </div>
 
               <button
-                onClick={() => removeFromCart(item.productId)}
+                onClick={() => removeFromCart(item._id)}
                 className="text-red-500 hover:text-red-600 p-2 transition duration-200"
               >
                 <Trash2 size={20} />
