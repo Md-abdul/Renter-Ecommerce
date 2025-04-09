@@ -8,12 +8,18 @@ const ProductSchema = new mongoose.Schema({
   discount: { type: Number, default: 0 },
   rating: { type: Number, default: 0 },
   reviews: { type: Number, default: 0 },
-  image: [
+  colors: [
     {
-      imageUrl: { type: String }, // Main image URL
-      subImages: [
+      name: { type: String, required: true }, // e.g., "Red", "Blue"
+      hexCode: { type: String, required: true }, // e.g., "#FF0000"
+      images: [
         {
-          subImagesUrl: { type: String }, // Related product image URLs
+          imageUrl: { type: String }, // Main image URL for this color
+          subImages: [
+            {
+              subImagesUrl: { type: String }, // Related product image URLs for this color
+            },
+          ],
         },
       ],
     },
@@ -23,7 +29,20 @@ const ProductSchema = new mongoose.Schema({
     enum: ["mens", "womens", "kids"],
     default: "general",
   },
-  //quanitity should be there 
+  sizes: [
+    {
+      size: { 
+        type: String, 
+        enum: ["S", "M", "L", "XL"],
+        required: true 
+      },
+      quantity: { 
+        type: Number, 
+        required: true,
+        min: 0 
+      }
+    }
+  ]
 });
 
 const Product = mongoose.model("products", ProductSchema);

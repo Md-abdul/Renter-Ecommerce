@@ -5,12 +5,14 @@ const Product = require("../Modals/productModal");
 const { verifyToken } = require("../Middlewares/VerifyToken");
 
 const CartRoutes = express.Router();
+const MAX_CART_TOTAL = 40000; // Maximum cart total limit in rupees
 
 CartRoutes.post("/add", verifyToken, async (req, res) => {
   try {
-    const { productId, quantity } = req.body;
+    const { productId, quantity, color, size } = req.body;
     const userId = req.user.userId;
 
+    // Validate input
     if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
       return res.status(400).json({ message: "Invalid product ID format" });
     }
@@ -19,53 +21,96 @@ CartRoutes.post("/add", verifyToken, async (req, res) => {
       return res.status(400).json({ message: "Invalid quantity" });
     }
 
+    // Get user and product
     const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    const mainImageUrl =
-      product.image[0]?.imageUrl || "https://default-image.jpg";
-
-    if (!user.cart) {
-      user.cart = new Map();
-    }
-
-    if (user.cart.has(productId)) {
-      const cartItem = user.cart.get(productId);
-      cartItem.quantity += quantity;
-    } else {
-      user.cart.set(productId, {
-        quantity,
-        price: product.offerPrice || product.price,
-        name: product.title,
-        image: mainImageUrl,
-        _id: new mongoose.Types.ObjectId().toString(), // Ensure _id is a string
-        productId: productId, // Add productId field to the cart item
+    // Check product availability
+    const sizeObj = product.sizes.find(
+      (s) => s.size.toLowerCase().trim() === size.toLowerCase().trim()
+    );
+    if (!sizeObj || sizeObj.quantity < quantity) {
+      return res.status(400).json({
+        message: "Selected size not available or insufficient quantity",
+        available: sizeObj?.quantity || 0,
       });
     }
 
-    await user.save();
+    // Calculate the total quantity needed for this variant
+    let totalQuantityNeeded = quantity;
 
-    // Convert Map to an object and ensure productId is included in each item
-    const cartObject = Object.fromEntries(user.cart);
-    for (const key in cartObject) {
-      cartObject[key] = {
-        ...cartObject[key],
-        productId: key, // Ensure productId is set correctly
-      };
+    // Check if this variant already exists in cart
+    const cartKey = `${productId}-${color}-${size}`;
+    if (user.cart.has(cartKey)) {
+      const existingItem = user.cart.get(cartKey);
+      totalQuantityNeeded += existingItem.quantity;
     }
 
-    res.status(200).json({
-      message: "Product added to cart",
-      cart: cartObject,
-    });
+    // Update the quantity only if it's less than or equal to the available quantity
+    if (totalQuantityNeeded <= sizeObj.quantity) {
+      if (user.cart.has(cartKey)) {
+        const existingItem = user.cart.get(cartKey);
+        existingItem.quantity = totalQuantityNeeded;
+        user.cart.set(cartKey, existingItem);
+      } else {
+        const mainImage =
+          product.colors.find((c) => c.name === color)?.images[0]?.imageUrl ||
+          "https://via.placeholder.com/150";
+
+        user.cart.set(cartKey, {
+          productId,
+          quantity: totalQuantityNeeded,
+          price: product.offerPrice || product.price,
+          name: product.title,
+          image: mainImage,
+          color,
+          size,
+          maxQuantity: sizeObj.quantity,
+          _id: new mongoose.Types.ObjectId().toString(),
+        });
+      }
+      await user.save();
+      res.status(200).json({
+        message: "Product added to cart",
+        cart: convertCartToObject(user.cart),
+        cartTotal: calculateCartTotal(user.cart),
+      });
+    } else {
+      return res.status(400).json({
+        message: `Cannot add ${totalQuantityNeeded} of this item as it exceeds available quantity`,
+        available: sizeObj.quantity,
+      });
+    }
   } catch (error) {
     console.error("Error adding product to cart:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
+
+// Helper function to calculate cart total
+async function calculateCartTotal(cart) {
+  let total = 0;
+  for (const [key, item] of cart) {
+    const product = await Product.findById(item.productId);
+    if (product) {
+      const price = product.offerPrice || product.price;
+      total += price * item.quantity;
+    }
+  }
+  return total;
+}
+
+// Helper function to convert cart Map to object
+function convertCartToObject(cart) {
+  const result = {};
+  for (const [key, item] of cart) {
+    result[key] = item;
+  }
+  return result;
+}
 
 CartRoutes.get("/items", verifyToken, async (req, res) => {
   try {
@@ -78,7 +123,7 @@ CartRoutes.get("/items", verifyToken, async (req, res) => {
     for (const [productId, item] of user.cart) {
       cartWithProductIds[productId] = {
         ...item.toObject(), // Convert Mongoose subdocument to plain object
-        productId: productId // Add the productId field
+        productId: productId, // Add the productId field
       };
     }
 
