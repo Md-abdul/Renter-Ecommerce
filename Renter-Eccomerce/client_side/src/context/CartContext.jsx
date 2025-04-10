@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -21,18 +21,17 @@ export const CartProvider = ({ children }) => {
   };
 
   // Fetch user's cart from server
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) return;
-
+ 
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/cart/items`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
+ 
       const cartData = response.data.cart;
-      // Convert the cart object to an array
       const cartArray = Object.values(cartData);
       setCart(cartArray);
     } catch (error) {
@@ -41,7 +40,7 @@ export const CartProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); //
 
   // Fetch user's orders
   const fetchOrders = async () => {
@@ -112,7 +111,7 @@ export const CartProvider = ({ children }) => {
   //   }
   // };
 
-  // Add product to cart
+  // Update the addToCart function to handle the new response format
   const addToCart = async (product, quantity = 1, color, size) => {
     try {
       const token = localStorage.getItem("token");
@@ -127,8 +126,8 @@ export const CartProvider = ({ children }) => {
         {
           productId: product._id,
           quantity,
-          color, // Make sure this is a string like "Red"
-          size, // Make sure this is a string like "M"
+          color,
+          size,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -136,10 +135,12 @@ export const CartProvider = ({ children }) => {
       if (response.status === 200) {
         toast.success("Product added to cart");
         await fetchCart();
+        return response.data; // Return the added item if needed
       }
     } catch (error) {
       console.error("Error adding to cart:", error);
       toast.error(error.response?.data?.message || "Failed to add to cart");
+      throw error;
     }
   };
 
@@ -168,10 +169,10 @@ export const CartProvider = ({ children }) => {
   };
 
   // Update product quantity in cart
-  const updateQuantity = async (productId, newQuantity) => {
+  const updateQuantity = async (itemId, newQuantity) => {
     try {
       if (newQuantity < 1) {
-        await removeFromCart(productId);
+        await removeFromCart(itemId);
         return;
       }
 
@@ -182,8 +183,8 @@ export const CartProvider = ({ children }) => {
       }
 
       const response = await axios.post(
-        `${API_BASE_URL}/cart/update-quantity`,
-        { productId, newQuantity },
+        `${API_BASE_URL}/cart/update-quantity/${itemId}`,
+        { newQuantity },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

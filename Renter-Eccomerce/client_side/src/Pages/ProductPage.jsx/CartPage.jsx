@@ -75,8 +75,8 @@ const CartPage = () => {
                 <button
                   onClick={() => {
                     setUpdating(item._id);
-                    updateQuantity(item.productId, item.quantity - 1).finally(
-                      () => setUpdating(null)
+                    updateQuantity(item._id, item.quantity - 1).finally(() =>
+                      setUpdating(null)
                     );
                   }}
                   disabled={updating === item._id || item.quantity === 1}
@@ -94,8 +94,8 @@ const CartPage = () => {
                 <button
                   onClick={() => {
                     setUpdating(item._id);
-                    updateQuantity(item.productId, item.quantity + 1).finally(
-                      () => setUpdating(null)
+                    updateQuantity(item._id, item.quantity + 1).finally(() =>
+                      setUpdating(null)
                     );
                   }}
                   disabled={

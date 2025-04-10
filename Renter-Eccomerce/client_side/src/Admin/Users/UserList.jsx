@@ -8,6 +8,7 @@ const UserList = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Form state
   const [formData, setFormData] = useState({
@@ -46,6 +47,13 @@ const UserList = () => {
       });
     }
   }, [isModalOpen, currentUser]);
+
+  // Filter users based on search term
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -100,100 +108,147 @@ const UserList = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      {/* Header and Add User Button */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <h2 className="text-2xl font-bold text-gray-800">User Management</h2>
-        <button
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors duration-200 flex items-center gap-2"
-          onClick={() => {
-            setCurrentUser(null);
-            setIsModalOpen(true);
-          }}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-              clipRule="evenodd"
+    <div className="container mx-auto px-4 py-8 max-w-7xl min-h-screen bg-gray-50">
+      {/* Header and Actions */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">User Management</h2>
+          <p className="text-gray-600 mt-1">Manage all registered users</p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg
+                className="h-5 w-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search users..."
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 w-full"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-          </svg>
-          Add User
-        </button>
+          </div>
+
+          <button
+            className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 flex items-center gap-2 cursor-pointer"
+            onClick={() => {
+              setCurrentUser(null);
+              setIsModalOpen(true);
+            }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Add User
+          </button>
+        </div>
       </div>
 
       {/* Loading State */}
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400"></div>
         </div>
       ) : (
         /* Users Table */
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-900">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
+                    User
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
                     Phone
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
                     Address
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-white uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {users.length > 0 ? (
-                  users.map((user) => (
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
                     <tr
                       key={user._id}
-                      className="hover:bg-gray-50 transition-colors"
+                      className="hover:bg-gray-50 transition-colors duration-150"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-blue-600 font-medium">
+                          <div className="flex-shrink-0 h-10 w-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <span className="text-yellow-800 font-medium">
                               {user.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-semibold text-gray-900">
                               {user.name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              ID: {user._id.substring(0, 8)}...
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {user.email}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.phoneNumber || (
-                          <span className="text-gray-400">N/A</span>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {user.phoneNumber ? (
+                          <span className="text-sm text-gray-600">
+                            {user.phoneNumber}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                            N/A
+                          </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.address || (
-                          <span className="text-gray-400">N/A</span>
+                      <td className="px-6 py-4">
+                        {user.address ? (
+                          <span className="text-sm text-gray-600 line-clamp-1">
+                            {user.address}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                            N/A
+                          </span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <button
-                            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm shadow-sm transition-colors duration-200 flex items-center gap-1"
+                            className="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 px-3 py-1 rounded-md transition-colors duration-200 flex items-center cursor-pointer"
                             onClick={() => {
                               setCurrentUser(user);
                               setIsModalOpen(true);
@@ -201,7 +256,7 @@ const UserList = () => {
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
+                              className="h-4 w-4 mr-1"
                               viewBox="0 0 20 20"
                               fill="currentColor"
                             >
@@ -210,7 +265,7 @@ const UserList = () => {
                             Edit
                           </button>
                           <button
-                            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm shadow-sm transition-colors duration-200 flex items-center gap-1"
+                            className="text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition-colors duration-200 flex items-center cursor-pointer"
                             onClick={() => {
                               setUserToDelete(user);
                               setDeleteModalOpen(true);
@@ -218,7 +273,7 @@ const UserList = () => {
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
+                              className="h-4 w-4 mr-1"
                               viewBox="0 0 20 20"
                               fill="currentColor"
                             >
@@ -236,11 +291,57 @@ const UserList = () => {
                   ))
                 ) : (
                   <tr>
-                    <td
-                      colSpan="5"
-                      className="px-6 py-4 text-center text-sm text-gray-500"
-                    >
-                      No users found. Click "Add User" to create one.
+                    <td colSpan="5" className="px-6 py-12 text-center">
+                      <svg
+                        className="mx-auto h-12 w-12 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                        />
+                      </svg>
+                      <h3 className="mt-2 text-lg font-medium text-gray-900">
+                        {searchTerm
+                          ? "No matching users found"
+                          : "No users found"}
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        {searchTerm
+                          ? "Try a different search term"
+                          : "Get started by adding a new user"}
+                      </p>
+                      {!searchTerm && (
+                        <div className="mt-6">
+                          <button
+                            onClick={() => {
+                              setCurrentUser(null);
+                              setIsModalOpen(true);
+                            }}
+                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-gray-900 bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                          >
+                            <svg
+                              className="-ml-1 mr-2 h-5 w-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                              />
+                            </svg>
+                            Add User
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 )}
@@ -252,7 +353,7 @@ const UserList = () => {
 
       {/* Add/Edit User Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 z-50 overflow-y-auto ">
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div
               className="fixed inset-0 transition-opacity"
