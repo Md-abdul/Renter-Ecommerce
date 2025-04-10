@@ -62,12 +62,12 @@ const orderSchema = new mongoose.Schema({
   },
   returnWindow: {
     type: Date,
-    default: function() {
+    default: function () {
       // 7 days return window from delivery date
-      return this.status === 'delivered' ? 
-        new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000) : 
-        null;
-    }
+      return this.status === "delivered"
+        ? new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000)
+        : null;
+    },
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
@@ -76,11 +76,11 @@ const orderSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { 
-    type: String, 
-    required: function() {
+  password: {
+    type: String,
+    required: function () {
       return !this.isGoogleAuth;
-    } 
+    },
   },
   isGoogleAuth: { type: Boolean, default: false },
   address: { type: String, default: "" },
@@ -97,10 +97,19 @@ const userSchema = new mongoose.Schema({
   cart: {
     type: Map,
     of: new mongoose.Schema({
+      productId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "product",
+        required: true,
+      },
       quantity: { type: Number, required: true },
       price: { type: Number, required: true },
       name: { type: String, required: true },
       image: { type: String, required: true },
+      color: { type: String, required: true },
+      size: { type: String, required: true },
+      maxQuantity: { type: Number, required: true },
+      _id: { type: String, required: true },
     }),
     default: {},
   },
