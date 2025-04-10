@@ -115,7 +115,7 @@ const AllRoutes = () => {
         <Route index element={<ProfileDetails />} /> {/* Default route */}
         <Route path="profile" element={<ProfileDetails />} />
         <Route path="orders" element={<UserOrders />} />{" "}
-        {/* Changed from /order to orders */}
+        {/* Changed from /order to orders */}z
       </Route>
 
       {/* Admin routes */}
