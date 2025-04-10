@@ -1,137 +1,221 @@
-import React, { useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import React, { useState, useEffect } from "react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
-// Define the map center (India)
-const mapCenter = [20.5937, 78.9629];
-
-// Define the zoom level
-const zoomLevel = 5;
-
-// Define the branches with their coordinates
-// const branches = [
-//   { name: "Renter Mumbai", location: [19.076, 72.8777] },
-//   { name: "Renter Delhi", location: [28.7041, 77.1025] },
-//   { name: "Renter Bangalore", location: [12.9716, 77.5946] },
-//   { name: "Renter Chennai", location: [13.0827, 80.2707] },
-//   { name: "Renter Kolkata", location: [22.5726, 88.3639] },
-// ];
-
-const branches = [
-  { name: "Renter Mumbai", location: [19.076, 72.8777] },
-  { name: "Renter Delhi", location: [28.7041, 77.1025] },
-  { name: "Renter Bangalore", location: [12.9716, 77.5946] },
-  { name: "Renter Chennai", location: [13.0827, 80.2707] },
-  { name: "Renter Kolkata", location: [22.5726, 88.3639] },
-  { name: "Renter Hyderabad", location: [17.385, 78.4867] },
-  { name: "Renter Pune", location: [18.5204, 73.8567] },
-  { name: "Renter Ahmedabad", location: [23.0225, 72.5714] },
-  { name: "Renter Jaipur", location: [26.9124, 75.7873] },
-  { name: "Renter Chandigarh", location: [30.7333, 76.7794] },
-  { name: "Renter Lucknow", location: [26.8467, 80.9462] },
-  { name: "Renter Bhopal", location: [23.2599, 77.4126] },
-  { name: "Renter Indore", location: [22.7196, 75.8577] },
-  { name: "Renter Surat", location: [21.1702, 72.8311] },
-  { name: "Renter Nagpur", location: [21.1458, 79.0882] },
-  { name: "Renter Kochi", location: [9.9312, 76.2673] },
-  { name: "Renter Patna", location: [25.5941, 85.1376] },
-  { name: "Renter Bhubaneswar", location: [20.2961, 85.8245] },
-  { name: "Renter Goa", location: [15.2993, 74.124] },
-  { name: "Renter Guwahati", location: [26.1445, 91.7362] },
-];
-
-// Fix for default marker icons in React-Leaflet
-// Replace lines 45-54 with this updated code:
-
-const defaultIcon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-  iconColor: "#ff0000", // This line changes the marker color to red
-});
+// Initialize Mapbox token
+mapboxgl.accessToken =
+  "pk.eyJ1IjoiZG9jdG9yOTU5MSIsImEiOiJjbHpqdDgyZDcwc2NzMmpzNGFybGF4NmV0In0.R8U4DHmRMWYrWojMagH-KA";
 
 const StoreLocator = () => {
-  const [selectedState, setSelectedState] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [map, setMap] = useState(null);
+  const [selectedStore, setSelectedStore] = useState(null);
+  const [mapInitialized, setMapInitialized] = useState(false);
 
-  // Filter branches based on the selected state
-  const filteredBranches =
-    selectedState === "All"
-      ? branches
-      : branches.filter((branch) => branch.name.includes(selectedState));
+  // Sample store data (you can expand this with more stores)
+  const stores = [
+    {
+      id: 1,
+      name: "96 K FASHION HOUSE MULUND",
+      address:
+        "Shop no 4 Rishi dayaram c h s, Lrd shahani colony navghar road Mulund East Mumbai",
+      city: "MUMBAI",
+      state: "MAHARASHTRA",
+      pincode: "400081",
+      country: "INDIA",
+      phone: "9820254110",
+      coordinates: [72.9476, 19.1707], // [longitude, latitude]
+    },
+    {
+      id: 2,
+      name: "A 1 BAZAR FOOT WEAR",
+      address:
+        "Shop No 3, Dattani Shopping Center, V.L. Road, Near Sarovar Hotel",
+      city: "MUMBAI",
+      state: "Maharashtra",
+      pincode: "400067",
+      country: "India",
+      phone: "8108674386",
+      coordinates: [72.8474, 19.2036],
+    },
+  ];
+
+  // Cities for the city list
+  const cities = [
+    "Dahanu",
+    "Trimbal",
+    "Palghār",
+    "Kisiki",
+    "Vasa",
+    "Jtar",
+    "Shahapur",
+    "Dombivu",
+    "Navi Mum",
+    "Kasj",
+    "Kajat",
+    "Khopoli",
+  ];
+
+  useEffect(() => {
+    if (!mapInitialized) {
+      const initializeMap = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/streets-v11",
+        center: [72.8777, 19.076], // Mumbai coordinates
+        zoom: 10,
+      });
+
+      // Add markers for each store
+      stores.forEach((store) => {
+        const marker = new mapboxgl.Marker()
+          .setLngLat(store.coordinates)
+          .setPopup(
+            new mapboxgl.Popup().setHTML(`
+            <div class="p-2">
+              <h3 class="font-bold">${store.name}</h3>
+              <p>${store.address}</p>
+              <p>${store.city}, ${store.state} ${store.pincode}</p>
+              <p>${store.country}</p>
+              <p class="mt-2">Phone: ${store.phone}</p>
+            </div>
+          `)
+          )
+          .addTo(initializeMap);
+      });
+
+      setMap(initializeMap);
+      setMapInitialized(true);
+    }
+
+    return () => {
+      if (map) map.remove();
+    };
+  }, [mapInitialized]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    // Implement search functionality here
+    if (searchQuery.trim() === "") return;
+
+    // Find stores matching the search query
+    const foundStores = stores.filter(
+      (store) =>
+        store.pincode.includes(searchQuery) ||
+        store.address.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    if (foundStores.length > 0 && map) {
+      setSelectedStore(foundStores[0]);
+      map.flyTo({
+        center: foundStores[0].coordinates,
+        zoom: 14,
+      });
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-600 p-6">
-      {/* Header */}
-      <div className="w-full max-w-4xl text-center mb-8">
-        <h1 className="text-4xl font-bold text-yellow-400 mb-4">
-          Renter Store Locator
-        </h1>
-        <p className="text-gray-300">
-          Find the nearest Renter branch in your state. Select a state from the
-          dropdown to filter branches.
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-100">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">Store Locator</h1>
 
-      {/* State Selector */}
-      <div className="w-full max-w-2xl mb-8">
-        <label
-          htmlFor="state-select"
-          className="block text-sm font-medium text-gray-300 mb-2"
-        >
-          Select State
-        </label>
-        <select
-          id="state-select"
-          value={selectedState}
-          onChange={(e) => setSelectedState(e.target.value)}
-          className="w-full p-3 border border-gray-700 rounded-lg bg-gray-800 text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-        >
-          <option value="All" className="bg-gray-800">
-            All States
-          </option>
-          <option value="Mumbai" className="bg-gray-800">
-            Mumbai
-          </option>
-          <option value="Delhi" className="bg-gray-800">
-            Delhi
-          </option>
-          <option value="Bangalore" className="bg-gray-800">
-            Bangalore
-          </option>
-          <option value="Chennai" className="bg-gray-800">
-            Chennai
-          </option>
-          <option value="Kolkata" className="bg-gray-800">
-            Kolkata
-          </option>
-        </select>
-      </div>
+        {/* Search Bar */}
+        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+          <form
+            onSubmit={handleSearch}
+            className="flex flex-col md:flex-row gap-4"
+          >
+            <div className="flex-grow">
+              <label
+                htmlFor="search"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Type a postcode or address...
+              </label>
+              <input
+                type="text"
+                id="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter pincode or address"
+              />
+            </div>
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors self-end md:self-auto"
+            >
+              Search
+            </button>
+          </form>
+        </div>
 
-      {/* Map Container */}
-      <div className="w-full max-w-8xl h-[600px] rounded-lg overflow-hidden shadow-2xl">
-        <MapContainer
-          center={mapCenter}
-          zoom={zoomLevel}
-          className="w-full h-full"
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          />
-          {filteredBranches.map((branch, index) => (
-            <Marker key={index} position={branch.location} icon={defaultIcon}>
-              <Popup className="font-medium text-yellow-600 bg-gray-800 p-2 rounded-lg">
-                {branch.name}
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Store List */}
+          <div className="w-full lg:w-1/3 bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="font-semibold text-lg">Pincode</h2>
+            </div>
+
+            {selectedStore ? (
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="font-bold text-lg">{selectedStore.name}</h3>
+                <p className="text-gray-700">{selectedStore.address}</p>
+                <p className="text-gray-700">
+                  {selectedStore.city}, {selectedStore.state}{" "}
+                  {selectedStore.pincode}
+                </p>
+                <p className="text-gray-700">{selectedStore.country}</p>
+                <p className="mt-2 text-blue-600">{selectedStore.phone}</p>
+              </div>
+            ) : (
+              stores.map((store) => (
+                <div
+                  key={store.id}
+                  className="p-4 border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    setSelectedStore(store);
+                    if (map) {
+                      map.flyTo({
+                        center: store.coordinates,
+                        zoom: 14,
+                      });
+                    }
+                  }}
+                >
+                  <h3 className="font-bold">{store.name}</h3>
+                  <p className="text-gray-700">{store.address}</p>
+                  <p className="text-gray-700">
+                    {store.city}, {store.state} {store.pincode}
+                  </p>
+                </div>
+              ))
+            )}
+
+            {/* City List */}
+            <div className="p-4">
+              <h2 className="font-semibold text-lg mb-3">Nearby Cities</h2>
+              <div className="flex flex-wrap gap-2">
+                {cities.map((city, index) => (
+                  <span
+                    key={index}
+                    className="bg-gray-200 px-3 py-1 rounded-full text-sm hover:bg-gray-300 cursor-pointer"
+                  >
+                    {city}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4 text-center text-sm text-gray-500">
+              Powered by Stocklist.
+            </div>
+          </div>
+
+          {/* Map */}
+          <div className="w-full lg:w-2/3 h-96 lg:h-auto rounded-lg overflow-hidden shadow-md">
+            <div id="map" className="w-full h-full" />
+          </div>
+        </div>
       </div>
     </div>
   );
