@@ -127,8 +127,8 @@ export const CartProvider = ({ children }) => {
         {
           productId: product._id,
           quantity,
-          color,
-          size,
+          color, // Make sure this is a string like "Red"
+          size, // Make sure this is a string like "M"
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );

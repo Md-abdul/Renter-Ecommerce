@@ -1,304 +1,287 @@
 import React, { useState, useEffect } from "react";
-import ProductForm from "./ProductForm";
+import { useNavigate } from "react-router-dom";
+import {
+  Search,
+  ChevronUp,
+  ChevronDown,
+  Heart,
+  ShoppingCart,
+  Star,
+} from "lucide-react";
+import { useCart } from "../../context/CartContext";
+import { useProduct } from "../../context/ProductContext";
 
-const ProductList = () => {
-  const [products, setProducts] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState(null);
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [excelFile, setExcelFile] = useState(null);
+const ProductList = ({ category }) => {
+  const {
+    filteredProducts,
+    loading,
+    error,
+    searchQuery,
+    setSearchQuery,
+    sortOrder,
+    setSortOrder,
+  } = useProduct();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(12);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
 
-  const toggleModal = () => setIsModalOpen(!isModalOpen);
-  const toggleUploadModal = () => setUploadModalOpen(!uploadModalOpen);
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProducts = filteredProducts(category).slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await fetch("http://localhost:5000/api/products");
-        const data = await response.json();
-        setProducts(data);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      }
-    };
-    fetchProducts();
-  }, []);
+  const totalPages = Math.ceil(
+    filteredProducts(category).length / itemsPerPage
+  );
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      try {
-        const response = await fetch(
-          `http://localhost:5000/api/products/${id}`,
-          { method: "DELETE" }
-        );
-        if (response.ok) {
-          setProducts(products.filter((p) => p._id !== id));
-        }
-      } catch (error) {
-        console.error("Error deleting product:", error);
-      }
-    }
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleFileChange = (e) => {
-    setExcelFile(e.target.files[0]);
+  const handleProductClick = (productId) => {
+    navigate(`/product/${productId}`);
   };
 
-  const handleExcelUpload = async () => {
-    if (!excelFile) {
-      alert("Please select an Excel file");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("excelFile", excelFile);
-
-    try {
-      const response = await fetch(
-        "http://localhost:5000/api/products/upload-excel",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const data = await response.json();
-      if (response.ok) {
-        // Refresh product list
-        const productsResponse = await fetch(
-          "http://localhost:5000/api/products"
-        );
-        const productsData = await productsResponse.json();
-        setProducts(productsData);
-
-        alert(data.message);
-        setUploadModalOpen(false);
-        setExcelFile(null);
-      } else {
-        throw new Error(data.error || "Failed to upload products");
-      }
-    } catch (error) {
-      console.error("Error uploading products:", error);
-      alert(error.message);
-    }
+  const handleAddToCart = (e, product) => {
+    e.stopPropagation();
+    const defaultColor = product.colors[0]?.name;
+    const defaultSize = product.sizes[0]?.size;
+    addToCart(product, 1, defaultColor, defaultSize);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gold-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500 text-lg font-light">{error}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Product Management</h2>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => {
-              setCurrentProduct(null);
-              setIsModalOpen(true);
-            }}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+    <div className="container mx-auto px-6 py-12 max-w-7xl">
+      {/* Premium Header Section */}
+      <div className="mb-12 text-center">
+        <h1 className="text-4xl font-light text-gray-900 mb-2 tracking-wide">
+          {category ? `${category} Collection` : "Luxury Collection"}
+        </h1>
+        <p className="text-gray-500 font-light max-w-2xl mx-auto">
+          Discover our curated selection of premium products crafted with
+          exceptional quality
+        </p>
+      </div>
+
+      {/* Premium Search and Sort Section */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+        <div className="relative w-full md:w-auto">
+          <div
+            className={`relative transition-all duration-500 ease-in-out ${
+              isSearchExpanded ? "w-full md:w-96" : "w-12"
+            }`}
           >
-            Add Product
-          </button>
+            <input
+              type="text"
+              placeholder="Search our collection..."
+              className={`w-full pl-12 pr-6 py-3 bg-white border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-gold-500 focus:border-gold-500 shadow-sm transition-all duration-300 ${
+                isSearchExpanded ? "opacity-100" : "absolute opacity-0"
+              }`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button
+              onClick={() => setIsSearchExpanded(!isSearchExpanded)}
+              className={`absolute left-0 top-0 p-3 rounded-full ${
+                isSearchExpanded
+                  ? "text-gold-500"
+                  : "bg-white text-gray-500 hover:text-gold-500"
+              } transition-all duration-300`}
+            >
+              <Search size={20} />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-500 font-light uppercase tracking-wider">
+            Sort By:
+          </span>
           <button
-            onClick={toggleUploadModal}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+            className="flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 text-gray-700 rounded-full hover:border-gold-500 hover:text-gold-500 transition-all duration-300"
           >
-            Upload Excel
+            {sortOrder === "asc" ? (
+              <>
+                <ChevronUp size={18} />
+                <span className="text-sm font-light">Price (Low to High)</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown size={18} />
+                <span className="text-sm font-light">Price (High to Low)</span>
+              </>
+            )}
           </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Title
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Price
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Category
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {products.map((product) => (
-              <tr key={product._id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
-                      {product.colors?.[0]?.images?.[0]?.imageUrl && (
-                        <img
-                          className="h-10 w-10 rounded-full object-cover"
-                          src={product.colors[0].images[0].imageUrl}
-                          alt={product.title}
-                        />
-                      )}
-                    </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {product.title}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {product.summary?.substring(0, 30)}...
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">${product.price}</div>
-                  {product.offerPrice && (
-                    <div className="text-sm text-gray-500 line-through">
-                      ${product.offerPrice}
-                    </div>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 capitalize">
-                    {product.category}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    onClick={() => {
-                      setCurrentProduct(product);
-                      setIsModalOpen(true);
-                    }}
-                    className="mr-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md transition-colors"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(product._id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md transition-colors"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Add Product Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
-            <div className="flex justify-between items-center border-b px-6 py-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                {currentProduct ? "Edit Product" : "Add Product"}
-              </h3>
-              <button
-                onClick={toggleModal}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <span className="sr-only">Close</span>
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="p-6">
-              <ProductForm
-                product={currentProduct}
-                setProducts={setProducts}
-                products={products}
-                onClose={toggleModal}
+      {/* Luxury Product Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        {currentProducts.map((product) => (
+          <div
+            key={product._id}
+            onClick={() => handleProductClick(product._id)}
+            className="group relative bg-white rounded-xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-xl border border-gray-100 hover:border-gold-100"
+          >
+            {/* Product Image */}
+            <div className="relative w-full aspect-square overflow-hidden">
+              <img
+                src={
+                  product.colors[0]?.images[0]?.imageUrl ||
+                  "https://via.placeholder.com/500"
+                }
+                alt={product.title}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
+
+              {/* Quick View Overlay */}
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 flex items-center justify-center transition-all duration-500 opacity-0 group-hover:opacity-100">
+                <button className="bg-white text-gray-800 px-6 py-2 rounded-full font-light text-sm shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                  Quick View
+                </button>
+              </div>
+
+              {/* Discount Badge */}
+              {product.discount > 0 && (
+                <div className="absolute top-4 right-4 bg-gold-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg">
+                  {product.discount}% OFF
+                </div>
+              )}
+
+              {/* Wishlist Button */}
+              <button
+                className="absolute top-4 left-4 bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-all duration-300"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Heart
+                  size={20}
+                  className="text-gray-400 hover:text-red-500 transition-colors"
+                />
+              </button>
+            </div>
+
+            {/* Product Details */}
+            <div className="p-5">
+              <h3 className="text-lg font-light text-gray-900 mb-2 tracking-wide">
+                {product.title}
+              </h3>
+              <p className="text-gray-500 text-sm mb-4 line-clamp-2 font-light">
+                {product.summary}
+              </p>
+
+              {/* Rating */}
+              <div className="flex items-center mb-4">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      size={16}
+                      className={`${
+                        i < Math.floor(product.rating)
+                          ? "text-gold-500 fill-gold-500"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="ml-2 text-xs text-gray-400 font-light">
+                  ({product.reviews} reviews)
+                </span>
+              </div>
+
+              {/* Price and Add to Cart */}
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div>
+                  <span className="text-xl font-light text-gray-900">
+                    ₹{product.offerPrice || product.price}
+                  </span>
+                  {product.offerPrice && product.offerPrice < product.price && (
+                    <span className="ml-2 text-sm text-gray-400 line-through font-light">
+                      ₹{product.price}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={(e) => handleAddToCart(e, product)}
+                  className="bg-white border border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-white p-2 rounded-full transition-all duration-300"
+                >
+                  <ShoppingCart size={18} />
+                </button>
+              </div>
             </div>
           </div>
+        ))}
+      </div>
+
+      {/* Luxury Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-16">
+          <nav className="inline-flex rounded-full shadow-sm border border-gray-200 p-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`w-10 h-10 flex items-center justify-center text-sm font-light ${
+                  currentPage === page
+                    ? "bg-gold-500 text-white"
+                    : "text-gray-500 hover:bg-gray-50"
+                } rounded-full mx-1 transition-all duration-300`}
+              >
+                {page}
+              </button>
+            ))}
+          </nav>
         </div>
       )}
 
-      {/* Upload Excel Modal */}
-      {uploadModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div className="flex justify-between items-center border-b px-6 py-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Upload Products from Excel
-              </h3>
-              <button
-                onClick={toggleUploadModal}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <span className="sr-only">Close</span>
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="p-6">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select Excel File
-                </label>
-                <input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={handleFileChange}
-                  className="block w-full text-sm text-gray-500
-                    file:mr-4 file:py-2 file:px-4
-                    file:rounded-md file:border-0
-                    file:text-sm file:font-semibold
-                    file:bg-indigo-50 file:text-indigo-700
-                    hover:file:bg-indigo-100"
-                />
-              </div>
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  onClick={toggleUploadModal}
-                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleExcelUpload}
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-                >
-                  Upload
-                </button>
-              </div>
-              <div className="mt-6 text-sm text-gray-600">
-                <p className="mb-2">
-                  Download the template file to ensure correct format:
-                </p>
-                <a
-                  href="/product_template.xlsx"
-                  download="product_template.xlsx"
-                  className="text-indigo-600 hover:text-indigo-500 hover:underline"
-                >
-                  Download Excel Template
-                </a>
-              </div>
-            </div>
+      {/* Premium Newsletter Section */}
+      <div className="bg-gray-900 text-white py-20 mt-16 rounded-xl overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-gold-500/10 to-gold-500/5"></div>
+        <div className="container mx-auto px-6 text-center relative z-10">
+          <h2 className="text-3xl font-light mb-4 tracking-wide">
+            Stay in Style
+          </h2>
+          <p className="text-gray-300 mb-8 max-w-2xl mx-auto font-light leading-relaxed">
+            Subscribe to our newsletter and receive 10% off your first purchase,
+            plus exclusive access to new collections and private events.
+          </p>
+          <div className="flex flex-col sm:flex-row max-w-md mx-auto gap-3">
+            <input
+              type="email"
+              placeholder="Your email address"
+              className="flex-1 px-5 py-3 rounded-full bg-gray-800 text-white placeholder-gray-400 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-gold-500 focus:border-gold-500 font-light"
+            />
+            <button className="bg-gold-500 text-gray-900 px-6 py-3 rounded-full font-light hover:bg-gold-400 transition-colors shadow-md">
+              Subscribe
+            </button>
           </div>
+          <p className="text-xs text-gray-500 mt-4 font-light">
+            By subscribing, you agree to our Privacy Policy
+          </p>
         </div>
-      )}
+      </div>
     </div>
   );
 };

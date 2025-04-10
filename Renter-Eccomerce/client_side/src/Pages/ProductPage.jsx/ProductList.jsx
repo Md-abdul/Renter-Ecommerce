@@ -148,24 +148,7 @@ const ProductList = ({ category }) => {
               <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                 {product.summary}
               </p>
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-lg font-bold text-yellow-600">
-                    ₹{product.offerPrice || product.price}
-                  </span>
-                  {product.offerPrice && product.offerPrice < product.price && (
-                    <span className="ml-2 text-sm text-gray-500 line-through">
-                      ₹{product.price}
-                    </span>
-                  )}
-                </div>
-                <button
-                  onClick={(e) => handleAddToCart(e, product)}
-                  className="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-1 rounded text-sm font-medium transition-colors"
-                >
-                  Add to Cart
-                </button>
-              </div>
+
               {/* Rating */}
               <div className="flex items-center mt-2">
                 <div className="flex text-yellow-400">
@@ -185,6 +168,25 @@ const ProductList = ({ category }) => {
                 <span className="ml-2 text-sm text-gray-600">
                   ({product.reviews} reviews)
                 </span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-lg font-bold text-yellow-600">
+                    ₹{product.offerPrice || product.price}
+                  </span>
+                  {product.offerPrice && product.offerPrice < product.price && (
+                    <span className="ml-2 text-sm text-gray-500 line-through">
+                      ₹{product.price}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={(e) => handleAddToCart(e, product)}
+                  className="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-1 rounded text-sm font-medium transition-colors"
+                >
+                  Add to Cart
+                </button>
               </div>
             </div>
           </div>
