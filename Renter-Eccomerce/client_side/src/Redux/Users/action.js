@@ -38,7 +38,7 @@ export const register = (formData) => async (dispatch) => {
     const response = await axios.post(`${API_URL}/signup`, formData);
     const token = response.data.token;
     dispatch({ type: SIGNUP_SUCCESS, payload: token });
-    localStorage.setItem("token", token);
+    // localStorage.setItem("token", token);
     toast.success("Signup successful");
     return true; // Return true indicating successful signup
   } catch (error) {

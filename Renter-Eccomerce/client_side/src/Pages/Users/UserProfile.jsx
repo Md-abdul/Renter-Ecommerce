@@ -1,103 +1,4 @@
-// import React from "react";
-// import { Link, Outlet, useNavigate } from "react-router-dom";
-// import { CgProfile } from "react-icons/cg";
-// import { FiLogOut } from "react-icons/fi";
-// import { RiLockPasswordLine, RiHistoryLine } from "react-icons/ri";
-// import { IoMdArrowBack } from "react-icons/io";
-// import { useDispatch } from "react-redux";
-// import { LogoutUsers } from "../../Redux/Users/action";
-// import { toast } from "react-toastify";
-// import userIcons from "../../assets/userimage.jpg";
-// const UserProfile = () => {
-//   const dispatch = useDispatch();
-//   const navigate = useNavigate();
-//   const user = JSON.parse(localStorage.getItem("user"));
-
-//   const handleLogout = () => {
-//     dispatch(LogoutUsers());
-//     toast.success("Logged out successfully");
-//     navigate("/login");
-//   };
-
-//   return (
-//     <div className="font-poppins min-h-screen bg-gray-50">
-//       <div className="flex">
-//         {/* Sidebar */}
-//         <div className="w-64 bg-white shadow-md fixed h-full">
-//           <div className="p-6">
-//             <button
-//               onClick={() => navigate(-1)}
-//               className="flex items-center text-gray-600 hover:text-yellow-400 mb-6"
-//             >
-//               <IoMdArrowBack className="mr-2" />
-//               Back
-//             </button>
-
-//             <div className="flex flex-col items-center mb-8">
-//               <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center mb-4">
-//                 {user?.profileImage ? (
-//                   <img
-//                     src={userIcons}
-//                     alt="Profile"
-//                     className="w-full h-full rounded-full object-cover"
-//                   />
-//                 ) : (
-//                   <span className="text-3xl text-gray-500">
-//                     {user?.name?.charAt(0).toUpperCase()}
-//                   </span>
-//                 )}
-//               </div>
-//               <h2 className="text-xl font-semibold text-gray-800">
-//                 {user?.name}
-//               </h2>
-//               <p className="text-sm text-gray-500">{user?.email}</p>
-//             </div>
-
-//             <nav className="space-y-2">
-//               <Link
-//                 to="/user/profile"
-//                 className="flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-500 rounded-lg transition-all"
-//               >
-//                 <CgProfile className="mr-3" />
-//                 My Profile
-//               </Link>
-//               <Link
-//                 to="/user/orders"
-//                 // to="/order"
-//                 className="flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-500 rounded-lg transition-all"
-//               >
-//                 <RiHistoryLine className="mr-3" />
-//                 My Orders
-//               </Link>
-//               <Link
-//                 to="/user/change-password"
-//                 className="flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-500 rounded-lg transition-all"
-//               >
-//                 <RiLockPasswordLine className="mr-3" />
-//                 Change Password
-//               </Link>
-//               <button
-//                 onClick={handleLogout}
-//                 className="w-full flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-500 rounded-lg transition-all"
-//               >
-//                 <FiLogOut className="mr-3" />
-//                 Logout
-//               </button>
-//             </nav>
-//           </div>
-//         </div>
-
-//         {/* Main Content */}
-//         <div className="ml-64 flex-1 p-8">
-//           <Outlet />
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default UserProfile;
-import React from "react";
+import React, { useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { CgProfile } from "react-icons/cg";
 import { FiLogOut } from "react-icons/fi";
@@ -112,6 +13,7 @@ const UserProfile = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogout = () => {
     dispatch(LogoutUsers());
@@ -120,7 +22,7 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="font-poppins min-h-screen bg-gray-50 flex mt-5">
+    <div className="font-poppins min-h-screen bg-gray-50 flex mt-5 relative">
       {/* Sidebar - Scrollable */}
       <div className="w-64 bg-white shadow-md h-screen overflow-y-auto">
         <div className="p-6 sticky top-0 bg-white z-10">
@@ -156,28 +58,28 @@ const UserProfile = () => {
         <nav className="space-y-2 px-6 pb-6">
           <Link
             to="/user/profile"
-            className="flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-500 rounded-lg transition-all"
+            className="flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-400 hover:text-black rounded-lg transition-all"
           >
             <CgProfile className="mr-3" />
             My Profile
           </Link>
           <Link
             to="/user/orders"
-            className="flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-500 rounded-lg transition-all"
+            className="flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-400 hover:text-black  rounded-lg transition-all"
           >
             <RiHistoryLine className="mr-3" />
             My Orders
           </Link>
           <Link
             to="/user/change-password"
-            className="flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-500 rounded-lg transition-all"
+            className="flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-400 hover:text-black  rounded-lg transition-all"
           >
             <RiLockPasswordLine className="mr-3" />
             Change Password
           </Link>
           <button
-            onClick={handleLogout}
-            className="w-full flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-500 rounded-lg transition-all"
+            onClick={() => setShowLogoutModal(true)}
+            className="w-full flex items-center px-4 py-3 text-gray-700 hover:bg-red-500 hover:text-black  rounded-lg transition-all cursor-pointer"
           >
             <FiLogOut className="mr-3" />
             Logout
@@ -191,6 +93,39 @@ const UserProfile = () => {
           <Outlet />
         </div>
       </div>
+
+      {/* Logout Confirmation Modal with Glass Effect */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Blur Backdrop */}
+          <div 
+              className="absolute inset-0 bg-gray-500 opacity-75"
+            onClick={() => setShowLogoutModal(false)}
+          ></div>
+          
+          {/* Glass Modal */}
+          <div className="relative bg-white bg-opacity-80 rounded-xl shadow-2xl border border-white border-opacity-30 backdrop-blur-md p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800">Confirm Logout</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to logout?
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors text-gray-700 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors cursor-pointer"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

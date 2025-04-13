@@ -465,9 +465,6 @@
 //   );
 // };
 
-
-
-
 import React, { useState, useEffect } from "react";
 import {
   FiTruck,
@@ -644,12 +641,14 @@ export const Orders = () => {
     <div className="container mx-auto px-4 py-8 bg-gray-50 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Orders Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Orders Management
+          </h1>
           <p className="text-gray-600 mt-1">
             {showReturns ? "Viewing return requests" : "Viewing all orders"}
           </p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -663,7 +662,7 @@ export const Orders = () => {
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 w-full"
             />
           </div>
-          
+
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <FiFilter className="h-5 w-5 text-gray-400" />
@@ -681,7 +680,7 @@ export const Orders = () => {
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
-          
+
           <button
             onClick={() => {
               setShowReturns(!showReturns);
@@ -749,10 +748,7 @@ export const Orders = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {returnRequests.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan="7"
-                      className="px-6 py-12 text-center"
-                    >
+                    <td colSpan="7" className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center justify-center">
                         <FiPackage className="h-12 w-12 text-gray-400 mb-4" />
                         <h3 className="text-lg font-medium text-gray-900">
@@ -766,40 +762,64 @@ export const Orders = () => {
                   </tr>
                 ) : (
                   returnRequests.map((request) => (
-                    <tr key={`${request.orderId}-${request.itemId}`} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {request.orderNumber ||
-                          request.orderId?.substring(0, 8)}
-                      </td>
+                    <tr
+                      key={`${request.orderId}-${request.itemId}`}
+                      className="hover:bg-gray-50"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <FiUser className="h-5 w-5 text-blue-600" />
-                          </div>
-                          <div className="ml-4">
+                          <img
+                            src={request.image || "/default-product.png"}
+                            alt={request.productName}
+                            className="w-10 h-10 rounded-md object-cover mr-3"
+                          />
+                          <div>
                             <div className="text-sm font-medium text-gray-900">
-                              {request.customer || request.userId?.name}
+                              {request.orderNumber}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              {request.email || request.userId?.email}
+                            <div className="text-xs text-gray-500">
+                              {format(
+                                new Date(request.requestedAt),
+                                "MMM dd, yyyy"
+                              )}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {request.productName}
+                          {request.customer}
                         </div>
-                        {request.exchangeSize && (
-                          <div className="text-xs text-gray-500">
-                            Exchange to: {request.exchangeSize}
+                        <div className="text-xs text-gray-500">
+                          {request.email}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <img
+                            src={request.image || "/default-product.png"}
+                            alt={request.productName}
+                            className="w-10 h-10 rounded-md object-cover mr-3"
+                          />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {request.productName}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Qty: {request.quantity}
+                            </div>
                           </div>
-                        )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
                         {request.type}
+                        {request.exchangeSize && (
+                          <div className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded mt-1">
+                            New size: {request.exchangeSize}
+                          </div>
+                        )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                      <td className="px-6 py-4 text-sm text-gray-500">
                         {request.reason}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -816,34 +836,47 @@ export const Orders = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {request.status === "requested" && (
+                        {request.status === "requested" ? (
                           <div className="flex space-x-2">
                             <button
-                              onClick={() => {
+                              onClick={() =>
                                 updateReturnStatus(
                                   request.orderId,
                                   request.itemId,
                                   "approved"
-                                );
-                              }}
-                              className="px-3 py-1 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors"
+                                )
+                              }
+                              className="px-3 py-1 bg-green-50 text-green-700 rounded-md hover:bg-green-100"
                             >
                               Approve
                             </button>
                             <button
-                              onClick={() => {
+                              onClick={() =>
                                 updateReturnStatus(
                                   request.orderId,
                                   request.itemId,
                                   "rejected"
-                                );
-                              }}
-                              className="px-3 py-1 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-colors"
+                                )
+                              }
+                              className="px-3 py-1 bg-red-50 text-red-700 rounded-md hover:bg-red-100"
                             >
                               Reject
                             </button>
                           </div>
-                        )}
+                        ) : request.status === "approved" ? (
+                          <button
+                            onClick={() =>
+                              updateReturnStatus(
+                                request.orderId,
+                                request.itemId,
+                                "completed"
+                              )
+                            }
+                            className="px-3 py-1 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100"
+                          >
+                            Mark Complete
+                          </button>
+                        ) : null}
                       </td>
                     </tr>
                   ))
@@ -899,10 +932,7 @@ export const Orders = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredOrders.length === 0 ? (
                       <tr>
-                        <td
-                          colSpan="7"
-                          className="px-6 py-12 text-center"
-                        >
+                        <td colSpan="7" className="px-6 py-12 text-center">
                           <div className="flex flex-col items-center justify-center">
                             <FiPackage className="h-12 w-12 text-gray-400 mb-4" />
                             <h3 className="text-lg font-medium text-gray-900">
@@ -923,7 +953,10 @@ export const Orders = () => {
                       </tr>
                     ) : (
                       filteredOrders.map((order) => (
-                        <tr key={order._id} className="hover:bg-gray-50 transition-colors">
+                        <tr
+                          key={order._id}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {order._id.substring(0, 8)}...
                           </td>

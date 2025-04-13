@@ -7,9 +7,12 @@ const HomePage = () => {
   return (
     <div>
       {/* <Cards />
-      <RecommendedSlider /> */}
+      
       {/* <Cards /> */}
       <ProductCard />
+
+
+      <RecommendedSlider /> 
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React from "react";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from "react-responsive-carousel";
-import img1 from "../../../assets/jeans1.jpg";
+import img1 from "../../../assets/mens banners.png";
 import img2 from "../../../assets/banner-jens-2.webp";
 import img3 from "../../../assets/banner-jens1.webp";
 import img4 from "../../../assets/upd.png";
@@ -10,24 +10,24 @@ import { IoIosArrowDropleftCircle } from "react-icons/io";
 import { IoIosArrowDroprightCircle } from "react-icons/io";
 
 const Cards = () => {
-  const items = [
-    {
-      key: 1,
-      src: img4,
-    },
-    {
-      key: 2,
-      src: img5,
-    },
-    {
-      key: 3,
-      src: img2,
-    },
-    {
-      key: 4,
-      src: img3,
-    },
-  ];
+  // const items = [
+  //   {
+  //     key: 1,
+  //     src: img1,
+  //   },
+  //   {
+  //     key: 2,
+  //     src: img5,
+  //   },
+  //   {
+  //     key: 3,
+  //     src: img2,
+  //   },
+  //   {
+  //     key: 4,
+  //     src: img3,
+  //   },
+  // ];
 
   return (
     <div

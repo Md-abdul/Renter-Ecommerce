@@ -28,7 +28,6 @@ createRoot(document.getElementById("root")).render(
               draggable
               pauseOnHover
               theme="colored"
-              // transition={Bounce}
             />
           </Provider>
         </CartProvider>

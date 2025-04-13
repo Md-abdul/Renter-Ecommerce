@@ -19,7 +19,7 @@ const SignupPage = () => {
     const formData = { name: username, email, password };
     const success = await dispatch(register(formData));
     if (success) {
-      navigate("/");
+      navigate("/login");
     }
   };
 

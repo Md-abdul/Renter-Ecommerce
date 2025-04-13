@@ -6,17 +6,16 @@ import {
   ShoppingCart,
   Star,
 } from "lucide-react";
-
+import mensBanner from "../../../assets/mens banners.png";
+import mensBanner1 from "../../../assets/banner-jens1.webp";
 const carouselSlides = [
   {
-    image:
-      "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=1920",
+    image: mensBanner,
     title: "Summer Collection 2025",
     subtitle: "Discover the latest trends in summer fashion",
   },
   {
-    image:
-      "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&q=80&w=1920",
+    image: mensBanner1,
     title: "Luxury Essentials",
     subtitle: "Elevate your wardrobe with premium pieces",
   },
