@@ -82,26 +82,34 @@ orderRoutes.get("/admin", verifyToken, async (req, res) => {
   }
 });
 
-// Update order status (admin)
+// In the status update route, ensure canReturn and returnWindow are set when status is delivered
 orderRoutes.put("/:id/status", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    const validStatuses = [
-      "pending",
-      "processing",
-      "shipped",
-      "delivered",
-      "cancelled",
-    ];
+    const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
 
+    const updateData = {
+      status,
+      updatedAt: Date.now()
+    };
+
+    // If status is delivered, set canReturn and returnWindow
+    if (status === "delivered") {
+      updateData.canReturn = true;
+      updateData.returnWindow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    } else if (status !== "delivered") {
+      updateData.canReturn = false;
+      updateData.returnWindow = null;
+    }
+
     const order = await OrderModel.findByIdAndUpdate(
       id,
-      { status, updatedAt: Date.now() },
+      updateData,
       { new: true }
     );
 
@@ -146,19 +154,32 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
     const { itemId, type, reason, exchangeSize } = req.body;
     const userId = req.user.userId;
 
+    // Validate request
+    if (!type || !reason || (type === "exchange" && !exchangeSize)) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
     const order = await OrderModel.findOne({
       _id: orderId,
       userId,
       status: "delivered",
+      canReturn: true
     });
 
     if (!order) {
-      return res.status(404).json({ message: "Order not found or not eligible for return" });
+      return res.status(404).json({
+        message: "Order not found or not eligible for return",
+      });
     }
 
-    // Check if return window is still open
-    if (new Date() > order.returnWindow) {
-      return res.status(400).json({ message: "Return window has expired" });
+    // Check return window (7 days)
+    const returnDeadline = order.returnWindow || 
+      new Date(new Date(order.updatedAt).getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    if (new Date() > returnDeadline) {
+      return res.status(400).json({
+        message: "Return window has expired (7 days from delivery)",
+      });
     }
 
     const item = order.items.id(itemId);
@@ -166,17 +187,21 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Item not found in order" });
     }
 
-    // Check if already has a request
+    // Check for existing active request
     if (item.returnRequest && item.returnRequest.status !== "rejected") {
-      return res.status(400).json({ message: "Request already exists for this item" });
+      return res.status(400).json({
+        message: "Active request already exists for this item",
+      });
     }
 
+    // Create return request
     item.returnRequest = {
       type,
       reason,
       status: "requested",
       requestedAt: new Date(),
-      exchangeSize: type === "exchange" ? exchangeSize : undefined,
+      updatedAt: new Date(),
+      ...(type === "exchange" && { exchangeSize })
     };
 
     await order.save();
@@ -187,7 +212,10 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating return request:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
 });
 
@@ -210,7 +238,9 @@ orderRoutes.put("/:orderId/return/:itemId", verifyToken, async (req, res) => {
 
     const item = order.items.id(itemId);
     if (!item || !item.returnRequest) {
-      return res.status(404).json({ message: "Item or return request not found" });
+      return res
+        .status(404)
+        .json({ message: "Item or return request not found" });
     }
 
     item.returnRequest.status = status;
@@ -238,13 +268,13 @@ orderRoutes.get("/returns", verifyToken, async (req, res) => {
     }
 
     const orders = await OrderModel.find({
-      "items.returnRequest": { $exists: true, $ne: null }
+      "items.returnRequest": { $exists: true, $ne: null },
     }).populate("userId", "name email");
 
-    const returnRequests = orders.flatMap(order => 
+    const returnRequests = orders.flatMap((order) =>
       order.items
-        .filter(item => item.returnRequest)
-        .map(item => ({
+        .filter((item) => item.returnRequest)
+        .map((item) => ({
           orderId: order._id,
           orderNumber: order._id.toString().slice(-6).toUpperCase(),
           customer: order.userId.name,
