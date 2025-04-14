@@ -81,6 +81,8 @@ const UserOrders = () => {
     return steps;
   };
 
+  // In UserOrders.jsx, update the ReturnModal component and handleReturnRequest function:
+
   const handleReturnRequest = async (
     orderId,
     itemId,
@@ -96,12 +98,106 @@ const UserOrders = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
-      toast.success("Return/exchange request submitted successfully");
+      toast.success(
+        `${
+          type === "return" ? "Return" : "Exchange"
+        } request submitted successfully`
+      );
       fetchOrders();
+      return response.data; // Return the updated order data
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to submit request");
+      throw error;
     }
   };
+
+  // Update the ReturnModal component
+  const ReturnModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full">
+        <h3 className="text-lg font-medium mb-4">
+          {returnType === "return" ? "Return Item" : "Exchange Item"}
+        </h3>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Reason (required)
+          </label>
+          <textarea
+            value={returnReason}
+            onChange={(e) => setReturnReason(e.target.value)}
+            className="w-full border border-gray-300 rounded-md p-2"
+            rows={3}
+            placeholder="Please explain why you want to return/exchange this item"
+            required
+          />
+        </div>
+
+        {returnType === "exchange" && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              New Size (required)
+            </label>
+            <select
+              value={exchangeSize}
+              onChange={(e) => setExchangeSize(e.target.value)}
+              className="w-full border border-gray-300 rounded-md p-2"
+              required
+            >
+              <option value="">Select new size</option>
+              <option value="S">Small (S)</option>
+              <option value="M">Medium (M)</option>
+              <option value="L">Large (L)</option>
+              <option value="XL">Extra Large (XL)</option>
+            </select>
+          </div>
+        )}
+
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={() => {
+              setShowReturnModal(false);
+              setReturnReason("");
+              setExchangeSize("");
+            }}
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              if (!returnReason) {
+                toast.error("Please provide a reason");
+                return;
+              }
+              if (returnType === "exchange" && !exchangeSize) {
+                toast.error("Please select exchange size");
+                return;
+              }
+
+              try {
+                await handleReturnRequest(
+                  selectedItem.orderId,
+                  selectedItem.itemId,
+                  returnType,
+                  returnReason,
+                  exchangeSize
+                );
+                setShowReturnModal(false);
+                setReturnReason("");
+                setExchangeSize("");
+              } catch (error) {
+                console.error("Failed to submit request:", error);
+              }
+            }}
+            className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700"
+          >
+            Submit Request
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   const cancelReturnRequest = async (orderId, itemId) => {
     try {
@@ -119,82 +215,82 @@ const UserOrders = () => {
     }
   };
 
-  const ReturnModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full">
-        <h3 className="text-lg font-medium mb-4">
-          {returnType === "return" ? "Return Item" : "Exchange Item"}
-        </h3>
+  // const ReturnModal = () => (
+  //   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  //     <div className="bg-white rounded-lg p-6 max-w-md w-full">
+  //       <h3 className="text-lg font-medium mb-4">
+  //         {returnType === "return" ? "Return Item" : "Exchange Item"}
+  //       </h3>
 
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Reason
-          </label>
-          <textarea
-            value={returnReason}
-            onChange={(e) => setReturnReason(e.target.value)}
-            className="w-full border border-gray-300 rounded-md p-2"
-            rows={3}
-            placeholder="Why are you returning/exchanging this item?"
-          />
-        </div>
+  //       <div className="mb-4">
+  //         <label className="block text-sm font-medium text-gray-700 mb-1">
+  //           Reason
+  //         </label>
+  //         <textarea
+  //           value={returnReason}
+  //           onChange={(e) => setReturnReason(e.target.value)}
+  //           className="w-full border border-gray-300 rounded-md p-2"
+  //           rows={3}
+  //           placeholder="Why are you returning/exchanging this item?"
+  //         />
+  //       </div>
 
-        {returnType === "exchange" && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              New Size
-            </label>
-            <input
-              type="text"
-              value={exchangeSize}
-              onChange={(e) => setExchangeSize(e.target.value)}
-              className="w-full border border-gray-300 rounded-md p-2"
-              placeholder="Enter the size you want to exchange to"
-            />
-          </div>
-        )}
+  //       {returnType === "exchange" && (
+  //         <div className="mb-4">
+  //           <label className="block text-sm font-medium text-gray-700 mb-1">
+  //             New Size
+  //           </label>
+  //           <input
+  //             type="text"
+  //             value={exchangeSize}
+  //             onChange={(e) => setExchangeSize(e.target.value)}
+  //             className="w-full border border-gray-300 rounded-md p-2"
+  //             placeholder="Enter the size you want to exchange to"
+  //           />
+  //         </div>
+  //       )}
 
-        <div className="flex justify-end space-x-3">
-          <button
-            onClick={() => setShowReturnModal(false)}
-            className="px-4 py-2 border border-gray-300 rounded-md"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={async () => {
-              if (!returnReason) {
-                toast.error("Please provide a reason");
-                return;
-              }
-              if (returnType === "exchange" && !exchangeSize) {
-                toast.error("Please provide exchange size");
-                return;
-              }
+  //       <div className="flex justify-end space-x-3">
+  //         <button
+  //           onClick={() => setShowReturnModal(false)}
+  //           className="px-4 py-2 border border-gray-300 rounded-md"
+  //         >
+  //           Cancel
+  //         </button>
+  //         <button
+  //           onClick={async () => {
+  //             if (!returnReason) {
+  //               toast.error("Please provide a reason");
+  //               return;
+  //             }
+  //             if (returnType === "exchange" && !exchangeSize) {
+  //               toast.error("Please provide exchange size");
+  //               return;
+  //             }
 
-              try {
-                await handleReturnRequest(
-                  selectedItem.orderId,
-                  selectedItem.itemId,
-                  returnType,
-                  returnReason,
-                  exchangeSize
-                );
-                setShowReturnModal(false);
-                setReturnReason("");
-                setExchangeSize("");
-              } catch (error) {
-                toast.error("Failed to submit request");
-              }
-            }}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-md"
-          >
-            Submit Request
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  //             try {
+  //               await handleReturnRequest(
+  //                 selectedItem.orderId,
+  //                 selectedItem.itemId,
+  //                 returnType,
+  //                 returnReason,
+  //                 exchangeSize
+  //               );
+  //               setShowReturnModal(false);
+  //               setReturnReason("");
+  //               setExchangeSize("");
+  //             } catch (error) {
+  //               toast.error("Failed to submit request");
+  //             }
+  //           }}
+  //           className="px-4 py-2 bg-yellow-600 text-white rounded-md"
+  //         >
+  //           Submit Request
+  //         </button>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
 
   if (loading) {
     return (
@@ -610,6 +706,7 @@ const UserOrders = () => {
                         })}
                       </div>
                     )}
+
                     <div className="mt-6 pt-4 border-t flex justify-end">
                       <button
                         onClick={() =>

@@ -732,10 +732,7 @@ export const Orders = () => {
                     Product
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Reason
+                    Request Details
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -748,7 +745,7 @@ export const Orders = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {returnRequests.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="px-6 py-12 text-center">
+                    <td colSpan="6" className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center justify-center">
                         <FiPackage className="h-12 w-12 text-gray-400 mb-4" />
                         <h3 className="text-lg font-medium text-gray-900">
@@ -767,23 +764,14 @@ export const Orders = () => {
                       className="hover:bg-gray-50"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <img
-                            src={request.image || "/default-product.png"}
-                            alt={request.productName}
-                            className="w-10 h-10 rounded-md object-cover mr-3"
-                          />
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {request.orderNumber}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {format(
-                                new Date(request.requestedAt),
-                                "MMM dd, yyyy"
-                              )}
-                            </div>
-                          </div>
+                        <div className="text-sm font-medium text-gray-900">
+                          #{request.orderNumber}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {format(
+                            new Date(request.requestedAt),
+                            "MMM dd, yyyy"
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -811,16 +799,21 @@ export const Orders = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
-                        {request.type}
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">
+                          <span className="font-medium">Type:</span>{" "}
+                          {request.type}
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          <span className="font-medium">Reason:</span>{" "}
+                          {request.reason}
+                        </div>
                         {request.exchangeSize && (
-                          <div className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded mt-1">
-                            New size: {request.exchangeSize}
+                          <div className="text-sm text-blue-600 mt-1">
+                            <span className="font-medium">Exchange to:</span>{" "}
+                            {request.exchangeSize}
                           </div>
                         )}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {request.reason}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
@@ -828,16 +821,19 @@ export const Orders = () => {
                             request.status === "requested"
                               ? "bg-yellow-100 text-yellow-800"
                               : request.status === "approved"
+                              ? "bg-blue-100 text-blue-800"
+                              : request.status === "completed"
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {request.status}
+                          {request.status.charAt(0).toUpperCase() +
+                            request.status.slice(1)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {request.status === "requested" ? (
-                          <div className="flex space-x-2">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        {request.status === "requested" && (
+                          <>
                             <button
                               onClick={() =>
                                 updateReturnStatus(
@@ -846,7 +842,7 @@ export const Orders = () => {
                                   "approved"
                                 )
                               }
-                              className="px-3 py-1 bg-green-50 text-green-700 rounded-md hover:bg-green-100"
+                              className="px-3 py-1 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100"
                             >
                               Approve
                             </button>
@@ -862,8 +858,9 @@ export const Orders = () => {
                             >
                               Reject
                             </button>
-                          </div>
-                        ) : request.status === "approved" ? (
+                          </>
+                        )}
+                        {request.status === "approved" && (
                           <button
                             onClick={() =>
                               updateReturnStatus(
@@ -872,11 +869,11 @@ export const Orders = () => {
                                 "completed"
                               )
                             }
-                            className="px-3 py-1 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100"
+                            className="px-3 py-1 bg-green-50 text-green-700 rounded-md hover:bg-green-100"
                           >
-                            Mark Complete
+                            Mark Completed
                           </button>
-                        ) : null}
+                        )}
                       </td>
                     </tr>
                   ))
