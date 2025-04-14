@@ -77,7 +77,12 @@ const orderSchema = new mongoose.Schema({
 
 const userSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
+    name: {
+      type: String,
+      equired: function () {
+        return !this.isGoogleAuth;
+      },
+    },
     email: { type: String, required: true, unique: true },
     password: {
       type: String,
@@ -85,6 +90,10 @@ const userSchema = new mongoose.Schema(
         return !this.isGoogleAuth;
       },
     },
+    tokens: [{
+      token: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now }
+    }],
     isGoogleAuth: { type: Boolean, default: false },
     address: { type: String, default: "" },
     phoneNumber: {
