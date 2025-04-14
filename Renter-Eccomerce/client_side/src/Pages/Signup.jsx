@@ -23,14 +23,18 @@ const SignupPage = () => {
     }
   };
 
-  const handleGoogleSignup = () => {
-    const clientId =
-      import.meta.env.VITE_REACT_APP_GOOGLE_CLIENT_ID ||
-      process.env.REACT_APP_GOOGLE_CLIENT_ID ||
-      "418833940575-9ok3fv8o722as25vurk95jlm6qujt0o5.apps.googleusercontent.com";
+  // const handleGoogleSignup = () => {
+  //   const clientId =
+  //     import.meta.env.VITE_REACT_APP_GOOGLE_CLIENT_ID ||
+  //     process.env.REACT_APP_GOOGLE_CLIENT_ID ||
+  //     "418833940575-9ok3fv8o722as25vurk95jlm6qujt0o5.apps.googleusercontent.com";
 
-    const redirectUri = `${window.location.origin}/auth/google/callback`;
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=profile email`;
+  //   const redirectUri = `${window.location.origin}/auth/google/callback`;
+  //   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=profile email`;
+  // };
+  const handleGoogleSignup = () => {
+    // Use the backend URL from environment variables
+    window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google`;
   };
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
@@ -109,12 +113,12 @@ const SignupPage = () => {
             </button>
 
             <div className="text-center">
-              <p className="text-gray-600 mb-4">or sign up with</p>
+              <p className="text-gray-600 mb-4">Or sign up with Google</p>
               <div className="flex justify-center space-x-4">
                 <button
                   type="button"
                   onClick={handleGoogleSignup}
-                  className="p-2 border-2 border-gray-300 rounded-lg hover:border-yellow-400 hover:text-yellow-400 transition-colors"
+                  className="p-2 border-2 border-gray-300 rounded-lg hover:border-yellow-400 hover:text-yellow-400 transition-colors cursor-pointer"
                 >
                   <FaGoogle />
                 </button>

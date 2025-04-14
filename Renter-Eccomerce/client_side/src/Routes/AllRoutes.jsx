@@ -77,6 +77,7 @@ import AdminDashboard from "../Admin/AdminDashboard ";
 import UserOrders from "../Pages/ProductPage.jsx/UserOrders";
 import UserProfile from "../Pages/Users/UserProfile";
 import ProfileDetails from "../Pages/Users/ProfileDetails";
+import AuthRedirect from "../Pages/AuthRedirect";
 
 const AllRoutes = () => {
   return (
@@ -120,6 +121,9 @@ const AllRoutes = () => {
 
       {/* Admin routes */}
       <Route path="/adminDashboard" element={<AdminDashboard />} />
+
+      {/* for google auth */}
+      <Route path="/auth-redirect" element={<AuthRedirect />} />
     </Routes>
   );
 };

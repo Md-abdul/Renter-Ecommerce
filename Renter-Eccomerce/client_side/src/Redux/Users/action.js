@@ -74,3 +74,12 @@ export const adminLogin = (adminData) => async (dispatch) => {
     return false; // Return false indicating admin login failure
   }
 };
+
+// In action.js
+// Add this new action
+export const googleLoginSuccess = (token, user) => (dispatch) => {
+  dispatch({ type: LOGIN_SUCCESS, payload: token });
+  localStorage.setItem("token", token);
+  localStorage.setItem("user", JSON.stringify(user));
+  toast.success("Google login successful");
+};
