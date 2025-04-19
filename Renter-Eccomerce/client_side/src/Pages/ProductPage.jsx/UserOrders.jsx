@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useCart } from "../../context/CartContext";
-import { format, addDays } from "date-fns";
+import { format, addDays, isAfter } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import {
   FiChevronDown,
@@ -9,6 +9,8 @@ import {
   FiCheckCircle,
   FiClock,
   FiXCircle,
+  FiRefreshCw,
+  FiArrowRight,
 } from "react-icons/fi";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -18,10 +20,11 @@ const UserOrders = () => {
   const navigate = useNavigate();
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [showReturnModal, setShowReturnModal] = useState(false);
+  const [showExchangeModal, setShowExchangeModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [returnType, setReturnType] = useState("return");
   const [returnReason, setReturnReason] = useState("");
   const [exchangeSize, setExchangeSize] = useState("");
+  const [availableSizes, setAvailableSizes] = useState([]);
 
   useEffect(() => {
     fetchOrders();
@@ -36,7 +39,7 @@ const UserOrders = () => {
       case "pending":
         return <FiClock className="text-yellow-500 mr-2" />;
       case "processing":
-        return <FiClock className="text-blue-500 mr-2" />;
+        return <FiRefreshCw className="text-blue-500 mr-2" />;
       case "shipped":
         return <FiTruck className="text-indigo-500 mr-2" />;
       case "delivered":
@@ -81,123 +84,69 @@ const UserOrders = () => {
     return steps;
   };
 
-  // In UserOrders.jsx, update the ReturnModal component and handleReturnRequest function:
+  const openReturnModal = (item) => {
+    setSelectedItem(item);
+    setReturnReason("");
+    setShowReturnModal(true);
+  };
 
-  const handleReturnRequest = async (
-    orderId,
-    itemId,
-    type,
-    reason,
-    exchangeSize
-  ) => {
+  const openExchangeModal = async (item) => {
     try {
+      setSelectedItem(item);
+      setExchangeSize("");
+      setReturnReason("");
+
+      // Fetch available sizes for this product
+      const response = await axios.get(
+        `http://localhost:5000/api/products/${item.productId}/sizes`
+      );
+      setAvailableSizes(response.data.sizes || []);
+
+      setShowExchangeModal(true);
+    } catch (error) {
+      toast.error("Failed to fetch product sizes");
+      console.error("Error fetching sizes:", error);
+    }
+  };
+
+  const handleReturnRequest = async (type) => {
+    try {
+      if (!returnReason) {
+        toast.error("Please provide a reason");
+        return;
+      }
+
+      if (type === "exchange" && !exchangeSize) {
+        toast.error("Please select a size for exchange");
+        return;
+      }
+
       const response = await axios.post(
-        `http://localhost:5000/api/orders/${orderId}/return`,
-        { itemId, type, reason, exchangeSize },
+        `http://localhost:5000/api/orders/${selectedItem.orderId}/return`,
+        {
+          itemId: selectedItem._id,
+          type,
+          reason: returnReason,
+          exchangeSize: type === "exchange" ? exchangeSize : undefined,
+        },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
+
       toast.success(
         `${
           type === "return" ? "Return" : "Exchange"
         } request submitted successfully`
       );
       fetchOrders();
-      return response.data; // Return the updated order data
+      setShowReturnModal(false);
+      setShowExchangeModal(false);
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to submit request");
-      throw error;
+      console.error("Error submitting request:", error);
     }
   };
-
-  // Update the ReturnModal component
-  const ReturnModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full">
-        <h3 className="text-lg font-medium mb-4">
-          {returnType === "return" ? "Return Item" : "Exchange Item"}
-        </h3>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Reason (required)
-          </label>
-          <textarea
-            value={returnReason}
-            onChange={(e) => setReturnReason(e.target.value)}
-            className="w-full border border-gray-300 rounded-md p-2"
-            rows={3}
-            placeholder="Please explain why you want to return/exchange this item"
-            required
-          />
-        </div>
-
-        {returnType === "exchange" && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              New Size (required)
-            </label>
-            <select
-              value={exchangeSize}
-              onChange={(e) => setExchangeSize(e.target.value)}
-              className="w-full border border-gray-300 rounded-md p-2"
-              required
-            >
-              <option value="">Select new size</option>
-              <option value="S">Small (S)</option>
-              <option value="M">Medium (M)</option>
-              <option value="L">Large (L)</option>
-              <option value="XL">Extra Large (XL)</option>
-            </select>
-          </div>
-        )}
-
-        <div className="flex justify-end space-x-3">
-          <button
-            onClick={() => {
-              setShowReturnModal(false);
-              setReturnReason("");
-              setExchangeSize("");
-            }}
-            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={async () => {
-              if (!returnReason) {
-                toast.error("Please provide a reason");
-                return;
-              }
-              if (returnType === "exchange" && !exchangeSize) {
-                toast.error("Please select exchange size");
-                return;
-              }
-
-              try {
-                await handleReturnRequest(
-                  selectedItem.orderId,
-                  selectedItem.itemId,
-                  returnType,
-                  returnReason,
-                  exchangeSize
-                );
-                setShowReturnModal(false);
-                setReturnReason("");
-                setExchangeSize("");
-              } catch (error) {
-                console.error("Failed to submit request:", error);
-              }
-            }}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700"
-          >
-            Submit Request
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 
   const cancelReturnRequest = async (orderId, itemId) => {
     try {
@@ -215,82 +164,14 @@ const UserOrders = () => {
     }
   };
 
-  // const ReturnModal = () => (
-  //   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  //     <div className="bg-white rounded-lg p-6 max-w-md w-full">
-  //       <h3 className="text-lg font-medium mb-4">
-  //         {returnType === "return" ? "Return Item" : "Exchange Item"}
-  //       </h3>
+  const isReturnWindowOpen = (order) => {
+    if (order.status !== "delivered") return false;
+    if (!order.updatedAt) return false;
 
-  //       <div className="mb-4">
-  //         <label className="block text-sm font-medium text-gray-700 mb-1">
-  //           Reason
-  //         </label>
-  //         <textarea
-  //           value={returnReason}
-  //           onChange={(e) => setReturnReason(e.target.value)}
-  //           className="w-full border border-gray-300 rounded-md p-2"
-  //           rows={3}
-  //           placeholder="Why are you returning/exchanging this item?"
-  //         />
-  //       </div>
-
-  //       {returnType === "exchange" && (
-  //         <div className="mb-4">
-  //           <label className="block text-sm font-medium text-gray-700 mb-1">
-  //             New Size
-  //           </label>
-  //           <input
-  //             type="text"
-  //             value={exchangeSize}
-  //             onChange={(e) => setExchangeSize(e.target.value)}
-  //             className="w-full border border-gray-300 rounded-md p-2"
-  //             placeholder="Enter the size you want to exchange to"
-  //           />
-  //         </div>
-  //       )}
-
-  //       <div className="flex justify-end space-x-3">
-  //         <button
-  //           onClick={() => setShowReturnModal(false)}
-  //           className="px-4 py-2 border border-gray-300 rounded-md"
-  //         >
-  //           Cancel
-  //         </button>
-  //         <button
-  //           onClick={async () => {
-  //             if (!returnReason) {
-  //               toast.error("Please provide a reason");
-  //               return;
-  //             }
-  //             if (returnType === "exchange" && !exchangeSize) {
-  //               toast.error("Please provide exchange size");
-  //               return;
-  //             }
-
-  //             try {
-  //               await handleReturnRequest(
-  //                 selectedItem.orderId,
-  //                 selectedItem.itemId,
-  //                 returnType,
-  //                 returnReason,
-  //                 exchangeSize
-  //               );
-  //               setShowReturnModal(false);
-  //               setReturnReason("");
-  //               setExchangeSize("");
-  //             } catch (error) {
-  //               toast.error("Failed to submit request");
-  //             }
-  //           }}
-  //           className="px-4 py-2 bg-yellow-600 text-white rounded-md"
-  //         >
-  //           Submit Request
-  //         </button>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
+    const deliveryDate = new Date(order.updatedAt);
+    const returnDeadline = addDays(deliveryDate, 7);
+    return isAfter(returnDeadline, new Date());
+  };
 
   if (loading) {
     return (
@@ -335,6 +216,8 @@ const UserOrders = () => {
               ? new Date(order.updatedAt)
               : null;
             const estimatedDeliveryDate = addDays(orderDate, 7);
+            const canReturn =
+              order.status === "delivered" && isReturnWindowOpen(order);
 
             return (
               <div
@@ -436,6 +319,13 @@ const UserOrders = () => {
                                           estimatedDeliveryDate,
                                           "MMM dd, yyyy"
                                         )}`}
+                                    {order.status === "delivered" && (
+                                      <span className="block mt-1">
+                                        {canReturn
+                                          ? "Return window open (7 days from delivery)"
+                                          : "Return window expired"}
+                                      </span>
+                                    )}
                                   </p>
                                 )}
                               </div>
@@ -508,204 +398,79 @@ const UserOrders = () => {
                               <p className="text-gray-600 text-sm">
                                 Size: {item.size || "Standard"}
                               </p>
+                              {item.returnRequest && (
+                                <div className="mt-2">
+                                  <span
+                                    className={`text-xs px-2 py-1 rounded ${
+                                      item.returnRequest.status === "requested"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : item.returnRequest.status ===
+                                          "approved"
+                                        ? "bg-blue-100 text-blue-800"
+                                        : item.returnRequest.status ===
+                                          "completed"
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-red-100 text-red-800"
+                                    }`}
+                                  >
+                                    {item.returnRequest.type === "return"
+                                      ? "Return"
+                                      : "Exchange"}{" "}
+                                    {item.returnRequest.status}
+                                  </span>
+                                  {item.returnRequest.status ===
+                                    "requested" && (
+                                    <button
+                                      onClick={() =>
+                                        cancelReturnRequest(order._id, item._id)
+                                      }
+                                      className="ml-2 text-xs text-red-600 hover:text-red-800"
+                                    >
+                                      Cancel
+                                    </button>
+                                  )}
+                                  {item.returnRequest.exchangeSize && (
+                                    <div className="text-xs text-blue-600 mt-1">
+                                      Exchange to:{" "}
+                                      {item.returnRequest.exchangeSize}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                             <div className="text-gray-900 font-medium">
                               ₹{(item.price * item.quantity).toFixed(2)}
                             </div>
+                            {order.status === "delivered" && (
+                              <div className="flex space-x-2 ml-4">
+                                <button
+                                  onClick={() =>
+                                    openReturnModal({
+                                      ...item,
+                                      orderId: order._id,
+                                    })
+                                  }
+                                  className="text-sm text-red-600 hover:text-red-800 border border-red-200 px-2 py-1 rounded"
+                                >
+                                  Return
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    openExchangeModal({
+                                      ...item,
+                                      orderId: order._id,
+                                    })
+                                  }
+                                  className="text-sm text-blue-600 hover:text-blue-800 border border-blue-200 px-2 py-1 rounded"
+                                >
+                                  Exchange
+                                </button>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
                     </div>
-
-                    {order.status === "delivered" && order.canReturn && (
-                      <div className="mt-6 pt-4 border-t">
-                        <h3 className="font-medium text-gray-700 mb-4">
-                          Return/Exchange
-                        </h3>
-                        {order.items.map((item) => {
-                          // Use the returnWindow from the order if available
-                          const returnDeadline = order.returnWindow
-                            ? new Date(order.returnWindow)
-                            : new Date(
-                                new Date(order.updatedAt).getTime() +
-                                  7 * 24 * 60 * 60 * 1000
-                              );
-
-                          const canReturn = new Date() < returnDeadline;
-                          const daysLeft = canReturn
-                            ? Math.ceil(
-                                (returnDeadline - new Date()) /
-                                  (1000 * 60 * 60 * 24)
-                              )
-                            : 0;
-
-                          return (
-                            <div
-                              key={item._id}
-                              className="flex items-start border-b pb-4 mb-4"
-                            >
-                              <img
-                                src={item.image}
-                                alt={item.name}
-                                className="w-16 h-16 object-cover rounded mr-4 border"
-                              />
-                              <div className="flex-1">
-                                <h4 className="font-medium text-gray-800">
-                                  {item.name}
-                                </h4>
-                                <p className="text-gray-600 text-sm">
-                                  Qty: {item.quantity}
-                                </p>
-                                {item.size && (
-                                  <p className="text-gray-600 text-sm">
-                                    Size: {item.size}
-                                  </p>
-                                )}
-
-                                {!item.returnRequest && canReturn && (
-                                  <div className="mt-3">
-                                    <div className="flex space-x-3">
-                                      <button
-                                        onClick={() => {
-                                          setSelectedItem({
-                                            orderId: order._id,
-                                            itemId: item._id,
-                                          });
-                                          setReturnType("return");
-                                          setShowReturnModal(true);
-                                        }}
-                                        className="px-3 py-1 bg-red-50 text-red-600 rounded-md text-sm hover:bg-red-100"
-                                      >
-                                        Return Item
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          setSelectedItem({
-                                            orderId: order._id,
-                                            itemId: item._id,
-                                          });
-                                          setReturnType("exchange");
-                                          setShowReturnModal(true);
-                                        }}
-                                        className="px-3 py-1 bg-blue-50 text-blue-600 rounded-md text-sm hover:bg-blue-100"
-                                      >
-                                        Exchange Item
-                                      </button>
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-2">
-                                      {daysLeft > 1
-                                        ? `${daysLeft} days left to return`
-                                        : "Last day to return"}
-                                    </p>
-                                  </div>
-                                )}
-
-                                {item.returnRequest && (
-                                  <div className="mt-2">
-                                    <div
-                                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                                        item.returnRequest.status ===
-                                        "requested"
-                                          ? "bg-yellow-100 text-yellow-800"
-                                          : item.returnRequest.status ===
-                                            "approved"
-                                          ? "bg-green-100 text-green-800"
-                                          : "bg-red-100 text-red-800"
-                                      }`}
-                                    >
-                                      {item.returnRequest.type}{" "}
-                                      {item.returnRequest.status}
-                                    </div>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                      Reason: {item.returnRequest.reason}
-                                    </p>
-                                    {item.returnRequest.exchangeSize && (
-                                      <p className="text-sm text-gray-600">
-                                        Exchange size:{" "}
-                                        {item.returnRequest.exchangeSize}
-                                      </p>
-                                    )}
-                                    <div className="mt-3">
-                                      <h5 className="text-sm font-medium text-gray-700">
-                                        Return Status
-                                      </h5>
-                                      <div className="flex items-center mt-1 space-x-4">
-                                        <div
-                                          className={`flex items-center ${
-                                            item.returnRequest.status !==
-                                            "requested"
-                                              ? "text-green-500"
-                                              : "text-gray-400"
-                                          }`}
-                                        >
-                                          <FiCheckCircle className="mr-1" />
-                                          <span className="text-xs">
-                                            Requested
-                                          </span>
-                                        </div>
-                                        <div
-                                          className={`flex items-center ${
-                                            item.returnRequest.status ===
-                                            "approved"
-                                              ? "text-green-500"
-                                              : item.returnRequest.status ===
-                                                "rejected"
-                                              ? "text-red-500"
-                                              : "text-gray-400"
-                                          }`}
-                                        >
-                                          <FiCheckCircle className="mr-1" />
-                                          <span className="text-xs">
-                                            {item.returnRequest.status ===
-                                            "rejected"
-                                              ? "Rejected"
-                                              : "Reviewed"}
-                                          </span>
-                                        </div>
-                                        <div
-                                          className={`flex items-center ${
-                                            item.returnRequest.status ===
-                                            "completed"
-                                              ? "text-green-500"
-                                              : "text-gray-400"
-                                          }`}
-                                        >
-                                          <FiCheckCircle className="mr-1" />
-                                          <span className="text-xs">
-                                            Completed
-                                          </span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    {item.returnRequest.status ===
-                                      "requested" && (
-                                      <button
-                                        onClick={() =>
-                                          cancelReturnRequest(
-                                            order._id,
-                                            item._id
-                                          )
-                                        }
-                                        className="text-red-600 hover:text-red-800 text-sm mt-2"
-                                      >
-                                        Cancel Request
-                                      </button>
-                                    )}
-                                  </div>
-                                )}
-
-                                {!item.returnRequest && !canReturn && (
-                                  <p className="text-xs text-gray-500 mt-2">
-                                    Return window expired on{" "}
-                                    {format(returnDeadline, "MMM dd, yyyy")}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
 
                     <div className="mt-6 pt-4 border-t flex justify-end">
                       <button
@@ -715,18 +480,7 @@ const UserOrders = () => {
                         className="text-yellow-600 hover:text-yellow-700 font-medium flex items-center"
                       >
                         Buy it again
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 ml-1"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
+                        <FiArrowRight className="ml-1" />
                       </button>
                     </div>
                   </div>
@@ -734,7 +488,103 @@ const UserOrders = () => {
               </div>
             );
           })}
-          {showReturnModal && <ReturnModal />}
+        </div>
+      )}
+
+      {/* Return Modal */}
+      {showReturnModal && selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Request Return</h3>
+            <div className="mb-4">
+              <p className="font-medium mb-2">Item: {selectedItem.name}</p>
+              <p className="text-sm text-gray-600">Size: {selectedItem.size}</p>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Reason for Return
+              </label>
+              <textarea
+                className="w-full border border-gray-300 rounded p-2"
+                rows="3"
+                value={returnReason}
+                onChange={(e) => setReturnReason(e.target.value)}
+                placeholder="Please specify the reason for return..."
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowReturnModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleReturnRequest("return")}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Submit Return Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Exchange Modal */}
+      {showExchangeModal && selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Request Exchange</h3>
+            <div className="mb-4">
+              <p className="font-medium mb-2">Item: {selectedItem.name}</p>
+              <p className="text-sm text-gray-600">
+                Current Size: {selectedItem.size}
+              </p>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Select New Size
+              </label>
+              <select
+                className="w-full border border-gray-300 rounded p-2"
+                value={exchangeSize}
+                onChange={(e) => setExchangeSize(e.target.value)}
+              >
+                <option value="">Select size</option>
+                {availableSizes.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Reason for Exchange
+              </label>
+              <textarea
+                className="w-full border border-gray-300 rounded p-2"
+                rows="3"
+                value={returnReason}
+                onChange={(e) => setReturnReason(e.target.value)}
+                placeholder="Please specify the reason for exchange..."
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowExchangeModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleReturnRequest("exchange")}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Submit Exchange Request
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
