@@ -80,58 +80,8 @@ orderRoutes.get("/admin", verifyToken, async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }
-});
+});// Get all orders (admin)
 
-// In the status update route, ensure canReturn and returnWindow are set when status is delivered
-orderRoutes.put("/:id/status", verifyToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    const validStatuses = [
-      "pending",
-      "processing",
-      "shipped",
-      "delivered",
-      "cancelled",
-    ];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
-    }
-
-    const updateData = {
-      status,
-      updatedAt: Date.now(),
-    };
-
-    // If status is delivered, set canReturn and returnWindow
-    if (status === "delivered") {
-      updateData.canReturn = true;
-      updateData.returnWindow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
-    } else {
-      updateData.canReturn = false;
-      updateData.returnWindow = null;
-    }
-
-    const order = await OrderModel.findByIdAndUpdate(id, updateData, {
-      new: true,
-    });
-
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    res.status(200).json({
-      message: "Order status updated",
-      order,
-    });
-  } catch (error) {
-    console.error("Error updating order:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
-
-// Get all orders (admin)
 orderRoutes.get("/admin", verifyToken, async (req, res) => {
   try {
     // Check if user is admin
@@ -149,18 +99,63 @@ orderRoutes.get("/admin", verifyToken, async (req, res) => {
   }
 });
 
+// In the status update route, ensure canReturn and returnWindow are set when status is delivered
+// Enhanced status update route
+orderRoutes.put("/:id/status", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const updateData = {
+      status,
+      updatedAt: Date.now()
+    };
+
+    // Reset return data when status changes
+    updateData.$unset = { "items.$[].returnRequest": 1 };
+
+    if (status === "delivered") {
+      updateData.canReturn = true;
+      updateData.returnWindow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    } else {
+      updateData.canReturn = false;
+      updateData.returnWindow = null;
+    }
+
+    const order = await OrderModel.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.status(200).json({
+      message: "Order status updated",
+      order,
+    });
+  } catch (error) {
+    console.error("Error updating order:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 // Add these routes to orderRoutes.js
 
 // Request return/exchange
-// In orderRoutes.js, update the return request endpoint:
-
 orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
   try {
     const { orderId } = req.params;
     const { itemId, type, reason, exchangeSize } = req.body;
     const userId = req.user.userId;
 
-    // Validate request
     if (!type || !reason || (type === "exchange" && !exchangeSize)) {
       return res.status(400).json({ message: "Missing required fields" });
     }
@@ -169,7 +164,7 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
       _id: orderId,
       userId,
       status: "delivered",
-      canReturn: true,
+      canReturn: true
     });
 
     if (!order) {
@@ -178,12 +173,8 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
       });
     }
 
-    // Check return window (7 days from delivery)
-    const returnDeadline =
-      order.returnWindow ||
-      new Date(new Date(order.updatedAt).getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    if (new Date() > returnDeadline) {
+    // Check return window
+    if (new Date() > order.returnWindow) {
       return res.status(400).json({
         message: "Return window has expired (7 days from delivery)",
       });
@@ -195,7 +186,7 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
     }
 
     // Check for existing active request
-    if (item.returnRequest && item.returnRequest.status === "requested") {
+    if (item.returnRequest && item.returnRequest.status !== "rejected") {
       return res.status(400).json({
         message: "Active request already exists for this item",
       });
@@ -208,15 +199,13 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
       status: "requested",
       requestedAt: new Date(),
       updatedAt: new Date(),
-      ...(type === "exchange" && { exchangeSize }),
+      ...(type === "exchange" && { exchangeSize })
     };
 
     await order.save();
 
     res.status(200).json({
-      message: `${
-        type === "return" ? "Return" : "Exchange"
-      } request submitted successfully`,
+      message: "Return/exchange request submitted successfully",
       order,
     });
   } catch (error) {
@@ -247,9 +236,13 @@ orderRoutes.put("/:orderId/return/:itemId", verifyToken, async (req, res) => {
 
     const item = order.items.id(itemId);
     if (!item || !item.returnRequest) {
-      return res
-        .status(404)
-        .json({ message: "Item or return request not found" });
+      return res.status(404).json({ message: "Item or return request not found" });
+    }
+
+    // Validate status transition
+    const validStatuses = ["approved", "rejected", "completed"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
     }
 
     item.returnRequest.status = status;
@@ -292,10 +285,12 @@ orderRoutes.get("/returns", verifyToken, async (req, res) => {
           productName: item.name,
           quantity: item.quantity,
           price: item.price,
+          image: item.image,
           type: item.returnRequest.type,
           reason: item.returnRequest.reason,
           status: item.returnRequest.status,
           requestedAt: item.returnRequest.requestedAt,
+          updatedAt: item.returnRequest.updatedAt,
           exchangeSize: item.returnRequest.exchangeSize,
         }))
     );
