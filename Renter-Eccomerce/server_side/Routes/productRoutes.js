@@ -127,24 +127,94 @@ ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
 
 
 // Create a new product
+// ProductRoutes.post("/", async (req, res) => {
+//   try {
+//     const { title, basePrice, category, wearCategory, colors, sizes: incomingSizes } = req.body;
+
+//     if (!title || !basePrice || !category || !wearCategory || !colors?.length) {
+//       return res.status(400).json({ error: "Missing required fields" });
+//     }
+
+//     // Generate expected size options based on category and wear type
+//     const sizeOptions = getSizeOptions(category, wearCategory);
+
+//     // Create a map of incoming sizes for quick lookup
+//     const incomingSizesMap = {};
+//     if (Array.isArray(incomingSizes)) {
+//       incomingSizes.forEach(size => {
+//         incomingSizesMap[size.size] = {
+//           priceAdjustment: size.priceAdjustment || 0,
+//           quantity: size.quantity || 0
+//         };
+//       });
+//     }
+
+//     // Map sizes from size options, using incoming sizes data if available
+//     const sizes = sizeOptions.map((size) => ({
+//       size,
+//       priceAdjustment: incomingSizesMap[size]?.priceAdjustment || 0,
+//       quantity: incomingSizesMap[size]?.quantity || 0
+//     }));
+
+//     const productData = {
+//       ...req.body,
+//       sizes,
+//     };
+
+//     const newProduct = new ProductModal(productData);
+//     await newProduct.save();
+
+//     res.status(201).json({
+//       message: "Product created successfully",
+//       product: newProduct,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       error: "Failed to create product",
+//       details: error.message,
+//     });
+//   }
+// });
+
 ProductRoutes.post("/", async (req, res) => {
   try {
-    const { title, basePrice, category, wearCategory, colors } = req.body;
+    const { title, basePrice, category, wearCategory, colors: incomingColors, sizes: incomingSizes } = req.body;
 
-    if (!title || !basePrice || !category || !wearCategory || !colors?.length) {
+    if (!title || !basePrice || !category || !wearCategory || !incomingColors?.length) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Generate sizes based on category and wear type
+    // Process colors - add default priceAdjustment if not provided
+    const colors = incomingColors.map(color => ({
+      ...color,
+      priceAdjustment: color.priceAdjustment || 0,
+      images: color.images || { main: '', gallery: [] }
+    }));
+
+    // Generate expected size options based on category and wear type
     const sizeOptions = getSizeOptions(category, wearCategory);
+
+    // Create a map of incoming sizes for quick lookup
+    const incomingSizesMap = {};
+    if (Array.isArray(incomingSizes)) {
+      incomingSizes.forEach(size => {
+        incomingSizesMap[size.size] = {
+          priceAdjustment: size.priceAdjustment || 0,
+          quantity: size.quantity || 0
+        };
+      });
+    }
+
+    // Map sizes from size options, using incoming sizes data if available
     const sizes = sizeOptions.map((size) => ({
       size,
-      priceAdjustment: req.body.sizes?.[size]?.priceAdjustment || 0,
-      quantity: req.body.sizes?.[size]?.quantity || 0,
+      priceAdjustment: incomingSizesMap[size]?.priceAdjustment || 0,
+      quantity: incomingSizesMap[size]?.quantity || 0
     }));
 
     const productData = {
       ...req.body,
+      colors,
       sizes,
     };
 
