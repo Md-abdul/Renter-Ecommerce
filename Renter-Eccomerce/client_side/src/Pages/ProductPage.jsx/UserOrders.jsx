@@ -400,7 +400,7 @@ const UserOrders = () => {
                               </p>
                               {item.returnRequest && (
                                 <div className="mt-2">
-                                  <span
+                                  {/* <span
                                     className={`text-xs px-2 py-1 rounded ${
                                       item.returnRequest.status === "requested"
                                         ? "bg-yellow-100 text-yellow-800"
@@ -417,7 +417,7 @@ const UserOrders = () => {
                                       ? "Return"
                                       : "Exchange"}{" "}
                                     {item.returnRequest.status}
-                                  </span>
+                                  </span> */}
                                   {item.returnRequest.status ===
                                     "requested" && (
                                     <button

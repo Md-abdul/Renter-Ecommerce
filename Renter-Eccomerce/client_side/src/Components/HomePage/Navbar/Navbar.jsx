@@ -19,7 +19,7 @@ export const TopNavbar = () => {
   const { isAuth, token } = useSelector((state) => state.UsersReducer);
   const [userName, setUserName] = useState("");
   const location = useNavigate();
-
+  const { cart } = useCart();
   const toggleDrawer = () => setIsOpen(!isOpen);
 
   // Hover handlers for profile dropdown
@@ -207,7 +207,7 @@ export const TopNavbar = () => {
               </Link>
             )}
 
-            <button
+            {/* <button
               onClick={handleCartClick}
               className="text-gray-700 hover:text-yellow-400 relative transition-all duration-300 p-2 rounded-full hover:bg-gray-100"
             >
@@ -216,6 +216,22 @@ export const TopNavbar = () => {
                   className="w-6 h-6"
                   strokeWidth={1.5}
                 />
+              </span>
+            </button> */}
+            <button
+              onClick={handleCartClick}
+              className="text-gray-700 hover:text-yellow-400 relative transition-all duration-300 p-2 rounded-full hover:bg-gray-100 cursor-pointer"
+            >
+              <span className="text-lg font-medium">
+                <PiShoppingCartSimpleBold
+                  className="w-6 h-6"
+                  strokeWidth={1.5}
+                />
+                {isAuth && cart.length > 0 && (
+  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+    {cart.length}
+  </span>
+)}
               </span>
             </button>
           </div>

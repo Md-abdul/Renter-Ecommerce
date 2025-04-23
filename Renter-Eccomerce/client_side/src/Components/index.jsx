@@ -11,8 +11,7 @@ const HomePage = () => {
       {/* <Cards /> */}
       <ProductCard />
 
-
-      <RecommendedSlider /> 
+      <RecommendedSlider />
     </div>
   );
 };
