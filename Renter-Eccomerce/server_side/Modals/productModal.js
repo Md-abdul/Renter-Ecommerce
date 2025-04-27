@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const ProductSchema = new mongoose.Schema({
+  variantId: { type: String, required: true },
   title: { type: String, required: true },
   summary: { type: String },
   basePrice: { type: Number, required: true },
@@ -14,6 +15,7 @@ const ProductSchema = new mongoose.Schema({
     enum: ["top", "bottom"],
     required: true,
   },
+
   colors: [
     {
       name: { type: String, required: true },
@@ -35,6 +37,7 @@ const ProductSchema = new mongoose.Schema({
   discount: { type: Number, default: 0 },
   rating: { type: Number, default: 0 },
   reviews: { type: Number, default: 0 },
+  sku: { type: String, required: true, unique: true },
   createdAt: { type: Date, default: Date.now },
 });
 

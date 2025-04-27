@@ -4,6 +4,7 @@ const ProductModal = require("../Modals/productModal");
 const multer = require("multer");
 const xlsx = require("xlsx");
 const path = require("path");
+const fs = require("fs");
 
 // Configure multer storage
 const storage = multer.diskStorage({
@@ -19,7 +20,8 @@ const upload = multer({
   storage: storage,
   fileFilter: (req, file, cb) => {
     if (
-      file.mimetype === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.mimetype ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
       file.mimetype === "application/vnd.ms-excel"
     ) {
       cb(null, true);
@@ -56,6 +58,7 @@ function getSizeOptions(category, wearCategory) {
   return Array.from({ length: 21 }, (_, i) => (28 + i).toString());
 }
 
+
 ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
@@ -66,52 +69,99 @@ ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = xlsx.utils.sheet_to_json(worksheet);
 
+    // Group by variantId (handles both spellings)
+    const productGroups = {};
+    data.forEach((row) => {
+      const key = row.variantId || row.varientId || row.sku;
+      if (!productGroups[key]) {
+        productGroups[key] = [];
+      }
+      productGroups[key].push(row);
+    });
+
     const products = [];
-    for (const row of data) {
-      if (!row.title || !row.basePrice || !row.category || !row.wearCategory) {
-        continue;
-      }
+    for (const [groupKey, rows] of Object.entries(productGroups)) {
+      const firstRow = rows[0];
 
-      const colors = [];
-      if (row.colors) {
-        const colorGroups = row.colors.split("|");
-        for (const group of colorGroups) {
-          const [name, hexCode, mainImage, ...gallery] = group.split(",");
-          colors.push({
-            name: name.trim(),
-            hexCode: hexCode.trim(),
-            images: {
-              main: mainImage.trim(),
-              gallery: gallery.map((img) => img.trim()),
-            },
-          });
+      if (!firstRow.sku) continue;
+
+      // Process Colors with their sizes
+      const colorsMap = new Map();
+      rows.forEach((row) => {
+        const colorName = row.colorName;
+        const hexCode = row.hexCode;
+        const mainImage = row.mainImage;
+        const priceAdjustment = row.priceAdjustment || 0; // Get price adjustment from row
+
+        if (colorName && hexCode && mainImage) {
+          if (!colorsMap.has(colorName)) {
+            colorsMap.set(colorName, {
+              name: colorName,
+              hexCode: hexCode,
+              priceAdjustment: priceAdjustment, // Set price adjustment at color level
+              images: {
+                main: mainImage,
+                gallery: [
+                  row.gallery1,
+                  row.gallery2,
+                  row.gallery3,
+                  row.gallery4
+                ].filter(Boolean),
+              },
+              sizes: []
+            });
+          }
+
+          // Add size information to this color (without price adjustment)
+          if (row.size) {
+            const colorObj = colorsMap.get(colorName);
+            colorObj.sizes.push({
+              size: row.size,
+              quantity: row.quantity || 0,
+              sku: row.sku,
+              available: (row.quantity || 0) > 0
+            });
+          }
         }
-      }
+      });
 
-      const sizeOptions = getSizeOptions(row.category, row.wearCategory);
-      const sizes = sizeOptions.map((size) => ({
-        size,
-        priceAdjustment: row[`${size}_price`] || 0,
-        quantity: row[`${size}_qty`] || 0,
-      }));
+      // Get all unique sizes across all colors (without price adjustment)
+      const sizeMap = new Map();
+      
+      Array.from(colorsMap.values()).forEach(color => {
+        color.sizes.forEach(size => {
+          if (!sizeMap.has(size.size)) {
+            sizeMap.set(size.size, {
+              size: size.size,
+              quantity: size.quantity,
+              available: size.available
+            });
+          }
+        });
+      });
 
       const productData = {
-        title: row.title,
-        summary: row.summary || "",
-        basePrice: row.basePrice,
-        category: row.category,
-        wearCategory: row.wearCategory,
-        colors,
-        sizes,
-        discount: row.discount || 0,
-        rating: row.rating || 0,
-        reviews: row.reviews || 0,
+        variantId: firstRow.variantId || firstRow.varientId || firstRow.sku,
+        title: firstRow.title,
+        summary: firstRow.summary || "",
+        basePrice: firstRow.basePrice,
+        category: firstRow.category,
+        wearCategory: firstRow.wearCategory,
+        colors: Array.from(colorsMap.values()),
+        sizes: Array.from(sizeMap.values()),
+        discount: firstRow.discount || 0,
+        rating: firstRow.rating || 0,
+        reviews: firstRow.reviews || 0,
+        sku: firstRow.sku,
       };
 
       const product = new ProductModal(productData);
       await product.save();
       products.push(product);
     }
+
+    // Clean up - delete the uploaded file
+    fs.unlinkSync(req.file.path);
 
     res.status(201).json({
       success: true,
@@ -120,6 +170,11 @@ ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
     });
   } catch (error) {
     console.error("Error processing Excel:", error);
+    
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
     res.status(500).json({
       error: "Failed to process Excel file",
       details: error.message,
@@ -127,71 +182,32 @@ ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
   }
 });
 
-
-
-// Create a new product
-// ProductRoutes.post("/", async (req, res) => {
-//   try {
-//     const { title, basePrice, category, wearCategory, colors, sizes: incomingSizes } = req.body;
-
-//     if (!title || !basePrice || !category || !wearCategory || !colors?.length) {
-//       return res.status(400).json({ error: "Missing required fields" });
-//     }
-
-//     // Generate expected size options based on category and wear type
-//     const sizeOptions = getSizeOptions(category, wearCategory);
-
-//     // Create a map of incoming sizes for quick lookup
-//     const incomingSizesMap = {};
-//     if (Array.isArray(incomingSizes)) {
-//       incomingSizes.forEach(size => {
-//         incomingSizesMap[size.size] = {
-//           priceAdjustment: size.priceAdjustment || 0,
-//           quantity: size.quantity || 0
-//         };
-//       });
-//     }
-
-//     // Map sizes from size options, using incoming sizes data if available
-//     const sizes = sizeOptions.map((size) => ({
-//       size,
-//       priceAdjustment: incomingSizesMap[size]?.priceAdjustment || 0,
-//       quantity: incomingSizesMap[size]?.quantity || 0
-//     }));
-
-//     const productData = {
-//       ...req.body,
-//       sizes,
-//     };
-
-//     const newProduct = new ProductModal(productData);
-//     await newProduct.save();
-
-//     res.status(201).json({
-//       message: "Product created successfully",
-//       product: newProduct,
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       error: "Failed to create product",
-//       details: error.message,
-//     });
-//   }
-// });
-
 ProductRoutes.post("/", async (req, res) => {
   try {
-    const { title, basePrice, category, wearCategory, colors: incomingColors, sizes: incomingSizes } = req.body;
+    const {
+      title,
+      basePrice,
+      category,
+      wearCategory,
+      colors: incomingColors,
+      sizes: incomingSizes,
+    } = req.body;
 
-    if (!title || !basePrice || !category || !wearCategory || !incomingColors?.length) {
+    if (
+      !title ||
+      !basePrice ||
+      !category ||
+      !wearCategory ||
+      !incomingColors?.length
+    ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     // Process colors - add default priceAdjustment if not provided
-    const colors = incomingColors.map(color => ({
+    const colors = incomingColors.map((color) => ({
       ...color,
       priceAdjustment: color.priceAdjustment || 0,
-      images: color.images || { main: '', gallery: [] }
+      images: color.images || { main: "", gallery: [] },
     }));
 
     // Generate expected size options based on category and wear type
@@ -200,10 +216,10 @@ ProductRoutes.post("/", async (req, res) => {
     // Create a map of incoming sizes for quick lookup
     const incomingSizesMap = {};
     if (Array.isArray(incomingSizes)) {
-      incomingSizes.forEach(size => {
+      incomingSizes.forEach((size) => {
         incomingSizesMap[size.size] = {
           priceAdjustment: size.priceAdjustment || 0,
-          quantity: size.quantity || 0
+          quantity: size.quantity || 0,
         };
       });
     }
@@ -212,7 +228,7 @@ ProductRoutes.post("/", async (req, res) => {
     const sizes = sizeOptions.map((size) => ({
       size,
       priceAdjustment: incomingSizesMap[size]?.priceAdjustment || 0,
-      quantity: incomingSizesMap[size]?.quantity || 0
+      quantity: incomingSizesMap[size]?.quantity || 0,
     }));
 
     const productData = {
@@ -263,7 +279,9 @@ ProductRoutes.get("/:id/:color", async (req, res) => {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    const selectedColor = product.colors.find((c) => c.name === req.params.color);
+    const selectedColor = product.colors.find(
+      (c) => c.name === req.params.color
+    );
     if (!selectedColor) {
       return res.status(404).json({ error: "Color not found" });
     }
@@ -295,13 +313,13 @@ ProductRoutes.post("/:id/check", async (req, res) => {
     }
 
     // Check color exists
-    const colorExists = product.colors.some(c => c.name === color);
+    const colorExists = product.colors.some((c) => c.name === color);
     if (!colorExists) {
       return res.status(400).json({ error: "Selected color not available" });
     }
 
     // Check size exists
-    const sizeObj = product.sizes.find(s => s.size === size);
+    const sizeObj = product.sizes.find((s) => s.size === size);
     if (!sizeObj) {
       return res.status(400).json({ error: "Selected size not available" });
     }
@@ -310,7 +328,7 @@ ProductRoutes.post("/:id/check", async (req, res) => {
     if (sizeObj.quantity < quantity) {
       return res.status(400).json({
         error: "Insufficient quantity available",
-        available: sizeObj.quantity
+        available: sizeObj.quantity,
       });
     }
 
@@ -323,12 +341,12 @@ ProductRoutes.post("/:id/check", async (req, res) => {
       finalPrice,
       totalPrice,
       size: sizeObj.size,
-      quantityAvailable: sizeObj.quantity
+      quantityAvailable: sizeObj.quantity,
     });
   } catch (error) {
     res.status(500).json({
       error: "Failed to check availability",
-      details: error.message
+      details: error.message,
     });
   }
 });
