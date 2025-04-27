@@ -32,6 +32,9 @@ const upload = multer({
 function getSizeOptions(category, wearCategory) {
   if (category === "kids") {
     return [
+      "0-6 months",
+      "6-12 months",
+      "1-2 years",
       "2-4 years",
       "4-6 years",
       "6-8 years",
