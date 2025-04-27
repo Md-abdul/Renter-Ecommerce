@@ -64,10 +64,30 @@ const CartPage = () => {
                 <p className="text-sm text-gray-600">
                   Color: {item.color} | Size: {item.size}
                 </p>
-                <div className="flex items-center mt-2">
+                {/* <div className="flex items-center mt-2">
                   <span className="text-lg font-bold text-yellow-600">
                     ₹{item.price}
                   </span>
+                </div> */}
+               
+                <div className="flex items-center mt-2">
+                  {item.discount > 0 ? (
+                    <>
+                      <span className="text-lg font-bold text-yellow-600">
+                        ₹{item.price}
+                      </span>
+                      <span className="ml-2 text-sm text-gray-500 line-through">
+                        ₹{item.originalPrice}
+                      </span>
+                      <span className="ml-2 text-sm font-medium text-green-600">
+                        ({item.discount}% OFF)
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-lg font-bold text-yellow-600">
+                      ₹{Math.round(item.price)}
+                    </span>
+                  )}
                 </div>
               </div>
 

@@ -1,4 +1,10 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -14,10 +20,17 @@ export const CartProvider = ({ children }) => {
   const API_BASE_URL = "http://localhost:5000/api";
 
   // Calculate total price of items in cart
+  // const getTotalPrice = () => {
+  //   return cart.reduce((total, item) => {
+  //     return total + (item.offerPrice || item.price) * item.quantity;
+  //   }, 0);
+  // };
   const getTotalPrice = () => {
-    return cart.reduce((total, item) => {
-      return total + (item.offerPrice || item.price) * item.quantity;
-    }, 0);
+    return Math.round(
+      cart.reduce((total, item) => {
+        return total + item.price * item.quantity; // Already using discounted price
+      }, 0)
+    );
   };
 
   // Fetch user's cart from server
@@ -25,12 +38,12 @@ export const CartProvider = ({ children }) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) return;
- 
+
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/cart/items`, {
         headers: { Authorization: `Bearer ${token}` },
       });
- 
+
       const cartData = response.data.cart;
       const cartArray = Object.values(cartData);
       setCart(cartArray);
@@ -78,7 +91,6 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // // Add product to cart
   // const addToCart = async (product, quantity = 1) => {
   //   try {
   //     const token = localStorage.getItem("token");
@@ -88,31 +100,41 @@ export const CartProvider = ({ children }) => {
   //       return;
   //     }
 
+  //     // Extract color and size from product
+  //     const color = product.selectedColor; // Should be a string (e.g., "Red")
+  //     const size = product.selectedSize;   // Should be a string (e.g., "M")
+
+  //     if (!color || !size) {
+  //       toast.error("Color and size are required.");
+  //       return;
+  //     }
+
   //     const response = await axios.post(
   //       `${API_BASE_URL}/cart/add`,
   //       {
   //         productId: product._id,
   //         quantity,
-  //         price: product.offerPrice || product.price,
-  //         name: product.title,
-  //         image:
-  //           product.image[0]?.imageUrl || "https://via.placeholder.com/150",
+  //         color: color.toString(), // Ensure string
+  //         size: size.toString(),   // Ensure string
   //       },
   //       { headers: { Authorization: `Bearer ${token}` } }
   //     );
 
   //     if (response.status === 200) {
   //       toast.success("Product added to cart");
-  //       await fetchCart();
+  //       await fetchCart(); // Refresh cart data
+  //       return response.data.addedItem; // Use the renamed `addedItem` from backend
   //     }
   //   } catch (error) {
   //     console.error("Error adding to cart:", error);
   //     toast.error(error.response?.data?.message || "Failed to add to cart");
+  //     throw error;
   //   }
   // };
 
-  // Update the addToCart function to handle the new response format
-  const addToCart = async (product, quantity = 1, color, size) => {
+  // Remove product from cart
+
+  const addToCart = async (product, quantity = 1) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -121,21 +143,31 @@ export const CartProvider = ({ children }) => {
         return;
       }
 
+      // Extract color and size from product
+      const color = product.selectedColor; // Should be a string (e.g., "Red")
+      const size = product.selectedSize; // Should be a string (e.g., "M")
+
+      if (!color || !size) {
+        toast.error("Color and size are required.");
+        return;
+      }
+
       const response = await axios.post(
         `${API_BASE_URL}/cart/add`,
         {
           productId: product._id,
           quantity,
-          color,
-          size,
+          color: color.toString(), // Ensure string
+          size: size.toString(), // Ensure string
+          price: product.price, // Send the calculated price from SingleProductPage
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.status === 200) {
         toast.success("Product added to cart");
-        await fetchCart();
-        return response.data; // Return the added item if needed
+        await fetchCart(); // Refresh cart data
+        return response.data.addedItem; // Use the renamed `addedItem` from backend
       }
     } catch (error) {
       console.error("Error adding to cart:", error);
@@ -144,7 +176,6 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Remove product from cart
   const removeFromCart = async (productId) => {
     try {
       const token = localStorage.getItem("token");
