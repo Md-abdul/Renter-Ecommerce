@@ -492,4 +492,59 @@ ProductRoutes.post("/check-availability/:id", async (req, res) => {
   }
 });
 
+
+// Add this route to productRoutes.js
+// In productRoutes.js, update the check-inventory route
+ProductRoutes.post("/check-inventory", async (req, res) => {
+  try {
+    const { items } = req.body;
+    
+    const availabilityCheck = await Promise.all(items.map(async (item) => {
+      const product = await ProductModal.findById(item.productId);
+      if (!product) {
+        return {
+          productId: item.productId,
+          available: false,
+          message: "Product not found",
+          name: "Unknown product",
+          size: item.size
+        };
+      }
+
+      const sizeObj = product.sizes.find(s => s.size === item.size);
+      if (!sizeObj) {
+        return {
+          productId: item.productId,
+          available: false,
+          message: "Size not available",
+          name: product.title,
+          size: item.size
+        };
+      }
+
+      return {
+        productId: item.productId,
+        available: sizeObj.quantity >= item.quantity,
+        availableQuantity: sizeObj.quantity,
+        requiredQuantity: item.quantity,
+        name: product.title,
+        size: item.size,
+        message: sizeObj.quantity >= item.quantity ? "" : "Insufficient quantity"
+      };
+    }));
+
+    const allAvailable = availabilityCheck.every(item => item.available);
+    
+    res.status(200).json({
+      allAvailable,
+      details: availabilityCheck
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "Failed to check inventory",
+      details: error.message
+    });
+  }
+});
+
 module.exports = { ProductRoutes };

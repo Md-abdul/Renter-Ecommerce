@@ -1,8 +1,63 @@
 const express = require("express");
 const { UserModel, OrderModel } = require("../Modals/UserModal");
 const { verifyToken } = require("../Middlewares/VerifyToken");
+const ProductModal = require("../Modals/productModal");
 
 const orderRoutes = express.Router();
+
+// Create order
+// orderRoutes.post("/", verifyToken, async (req, res) => {
+//   try {
+//     const userId = req.user.userId;
+//     const { shippingAddress, paymentMethod } = req.body;
+
+//     const user = await UserModel.findById(userId);
+//     if (!user) return res.status(404).json({ message: "User not found" });
+
+//     if (user.cart.size === 0) {
+//       return res.status(400).json({ message: "Cart is empty" });
+//     }
+
+//     // Convert cart items to array
+//     const items = Array.from(user.cart.entries()).map(([productId, item]) => ({
+//       productId,
+//       quantity: item.quantity,
+//       price: item.price,
+//       name: item.name,
+//       image: item.image,
+//     }));
+
+//     // Calculate total amount
+//     const totalAmount = items.reduce(
+//       (sum, item) => sum + item.price * item.quantity,
+//       0
+//     );
+
+//     // Create new order
+//     const order = new OrderModel({
+//       userId,
+//       items,
+//       totalAmount,
+//       shippingAddress,
+//       paymentMethod,
+//       status: "pending",
+//     });
+
+//     await order.save();
+
+//     // Clear user's cart
+//     user.cart = new Map();
+//     await user.save();
+
+//     res.status(201).json({
+//       message: "Order created successfully",
+//       order,
+//     });
+//   } catch (error) {
+//     console.error("Error creating order:", error);
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// });
 
 // Create order
 orderRoutes.post("/", verifyToken, async (req, res) => {
@@ -17,14 +72,17 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
-    // Convert cart items to array
-    const items = Array.from(user.cart.entries()).map(([productId, item]) => ({
-      productId,
+    // Convert cart items to array - USE THE CORRECT PRODUCT ID
+    const items = Array.from(user.cart.values()).map((item) => ({
+      productId: item.productId, // Use the productId from the cart item object
       quantity: item.quantity,
       price: item.price,
       name: item.name,
       image: item.image,
+      size: item.size, // Make sure this matches your cart structure
     }));
+
+    console.log("Processed items for order:", items);
 
     // Calculate total amount
     const totalAmount = items.reduce(
@@ -41,6 +99,45 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
       paymentMethod,
       status: "pending",
     });
+
+    // Update product quantities
+    for (const item of items) {
+      try {
+        console.log(
+          `Updating product ${item.productId}, size ${item.size}, deducting ${item.quantity}`
+        );
+
+        const product = await ProductModal.findById(item.productId);
+        if (!product) {
+          console.error(`Product not found: ${item.productId}`);
+          continue;
+        }
+
+        const sizeObj = product.sizes.find((s) => s.size === item.size);
+        if (!sizeObj) {
+          console.error(
+            `Size ${item.size} not found in product ${item.productId}`
+          );
+          continue;
+        }
+
+        console.log(
+          `Before update - Size ${sizeObj.size} quantity: ${sizeObj.quantity}`
+        );
+
+        sizeObj.quantity -= item.quantity;
+        if (sizeObj.quantity < 0) sizeObj.quantity = 0;
+
+        console.log(
+          `After update - Size ${sizeObj.size} quantity: ${sizeObj.quantity}`
+        );
+
+        await product.save();
+        console.log(`Product ${item.productId} updated successfully`);
+      } catch (updateError) {
+        console.error(`Error updating product ${item.productId}:`, updateError);
+      }
+    }
 
     await order.save();
 
@@ -80,7 +177,7 @@ orderRoutes.get("/admin", verifyToken, async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }
-});// Get all orders (admin)
+}); // Get all orders (admin)
 
 orderRoutes.get("/admin", verifyToken, async (req, res) => {
   try {
@@ -106,14 +203,20 @@ orderRoutes.put("/:id/status", verifyToken, async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
+    const validStatuses = [
+      "pending",
+      "processing",
+      "shipped",
+      "delivered",
+      "cancelled",
+    ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
 
     const updateData = {
       status,
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     };
 
     // Reset return data when status changes
@@ -127,11 +230,9 @@ orderRoutes.put("/:id/status", verifyToken, async (req, res) => {
       updateData.returnWindow = null;
     }
 
-    const order = await OrderModel.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true }
-    );
+    const order = await OrderModel.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
@@ -164,7 +265,7 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
       _id: orderId,
       userId,
       status: "delivered",
-      canReturn: true
+      canReturn: true,
     });
 
     if (!order) {
@@ -199,7 +300,7 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
       status: "requested",
       requestedAt: new Date(),
       updatedAt: new Date(),
-      ...(type === "exchange" && { exchangeSize })
+      ...(type === "exchange" && { exchangeSize }),
     };
 
     await order.save();
@@ -236,13 +337,26 @@ orderRoutes.put("/:orderId/return/:itemId", verifyToken, async (req, res) => {
 
     const item = order.items.id(itemId);
     if (!item || !item.returnRequest) {
-      return res.status(404).json({ message: "Item or return request not found" });
+      return res
+        .status(404)
+        .json({ message: "Item or return request not found" });
     }
 
     // Validate status transition
     const validStatuses = ["approved", "rejected", "completed"];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
+    }
+    if (status === "approved" || status === "completed") {
+      // Find the product and increase quantity
+      const product = await ProductModel.findById(item.productId);
+      if (product) {
+        const sizeObj = product.sizes.find((s) => s.size === item.size);
+        if (sizeObj) {
+          sizeObj.quantity += item.quantity;
+          await product.save();
+        }
+      }
     }
 
     item.returnRequest.status = status;
