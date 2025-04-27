@@ -1,142 +1,12 @@
-// import React, { useState } from "react";
-// import { FiHome, FiUsers, FiShoppingBag, FiLogOut } from "react-icons/fi";
-// import { useDispatch } from "react-redux";
-// import { useNavigate } from "react-router-dom";
-// import { ADMIN_LOGOUT } from "../Redux/Users/actionType";
-// import { toast } from "react-toastify";
-// import { BsBox } from "react-icons/bs";
-// import { motion, AnimatePresence } from "framer-motion";
-
-// const AdminSidebar = ({
-//   activeTab,
-//   setActiveTab,
-//   sidebarOpen,
-//   setSidebarOpen,
-// }) => {
-//   const dispatch = useDispatch();
-//   const navigate = useNavigate();
-//   const [showModal, setShowModal] = useState(false);
-
-//   const handleLogout = () => {
-//     dispatch({ type: ADMIN_LOGOUT });
-//     localStorage.removeItem("adminToken");
-//     toast.success("Admin logged out successfully");
-//     navigate("/login");
-//   };
-
-//   return (
-//     <>
-//       <div
-//         className={`${
-//           sidebarOpen ? "w-64" : "w-20"
-//         } bg-yellow-400 text-white transition-all duration-300`}
-//       >
-//         <div className="p-4 flex items-center justify-between border-b border-yellow-400">
-//           {sidebarOpen && <h1 className="text-xl font-bold">Admin Panel</h1>}
-//           <button
-//             onClick={() => setSidebarOpen(!sidebarOpen)}
-//             className="p-1 rounded-full hover:bg-indigo-700"
-//           >
-//             {sidebarOpen ? "◀" : "▶"}
-//           </button>
-//         </div>
-//         <nav className="mt-6">
-//           <div
-//             className={`flex items-center p-4 cursor-pointer ${
-//               activeTab === "dashboard"
-//                 ? "bg-indigo-700"
-//                 : "hover:bg-indigo-700"
-//             }`}
-//             onClick={() => setActiveTab("dashboard")}
-//           >
-//             <FiHome className="text-xl" />
-//             {sidebarOpen && <span className="ml-3">Dashboard</span>}
-//           </div>
-//           <div
-//             className={`flex items-center p-4 cursor-pointer ${
-//               activeTab === "products" ? "bg-indigo-700" : "hover:bg-indigo-700"
-//             }`}
-//             onClick={() => setActiveTab("products")}
-//           >
-//             <FiShoppingBag className="text-xl" />
-//             {sidebarOpen && <span className="ml-3">Products</span>}
-//           </div>
-//           <div
-//             className={`flex items-center p-4 cursor-pointer ${
-//               activeTab === "users" ? "bg-indigo-700" : "hover:bg-indigo-700"
-//             }`}
-//             onClick={() => setActiveTab("users")}
-//           >
-//             <FiUsers className="text-xl" />
-//             {sidebarOpen && <span className="ml-3">Users</span>}
-//           </div>
-//           <div
-//             className={`flex items-center p-4 cursor-pointer ${
-//               activeTab === "orders" ? "bg-indigo-700" : "hover:bg-indigo-700"
-//             }`}
-//             onClick={() => setActiveTab("orders")}
-//           >
-//             <BsBox className="text-xl" />
-//             {sidebarOpen && <span className="ml-3">Orders</span>}
-//           </div>
-//           <div
-//             className="flex items-center p-4 cursor-pointer hover:bg-indigo-700 mt-10"
-//             onClick={() => setShowModal(true)}
-//           >
-//             <FiLogOut className="text-xl" />
-//             {sidebarOpen && <span className="ml-3">Logout</span>}
-//           </div>
-//         </nav>
-//       </div>
-
-//       {/* Logout Confirmation Modal className="fixed inset-0 transition-opacity" */}
-//       <AnimatePresence>
-//         {showModal && (
-//           <motion.div
-//             initial={{ opacity: 0, scale: 0.9 }}
-//             animate={{ opacity: 1, scale: 1 }}
-//             exit={{ opacity: 0, scale: 0.9 }}
-//             transition={{ duration: 0.3, ease: "easeOut" }}
-//             className="fixed inset-0 z-50 flex items-center justify-center backdrop-filter backdrop-blur-md"
-//           >
-//             <div className="bg-white rounded-lg shadow-xl sm:max-w-lg sm:w-full">
-//               <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-//                 <h3 className="text-lg font-medium text-gray-900 mb-4">
-//                   Confirm Logout
-//                 </h3>
-//                 <p className="text-gray-600 mb-4">
-//                   Are you sure you want to logout? You'll need to log back in to
-//                   access the admin panel.
-//                 </p>
-//                 <div className="flex justify-end space-x-3">
-//                   <button
-//                     type="button"
-//                     className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none cursor-pointer"
-//                     onClick={() => setShowModal(false)}
-//                   >
-//                     Cancel
-//                   </button>
-//                   <button
-//                     type="button"
-//                     className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none cursor-pointer"
-//                     onClick={handleLogout}
-//                   >
-//                     Logout
-//                   </button>
-//                 </div>
-//               </div>
-//             </div>
-//           </motion.div>
-//         )}
-//       </AnimatePresence>
-//     </>
-//   );
-// };
-
-// export default AdminSidebar;
-
 import React, { useState } from "react";
-import { FiHome, FiUsers, FiShoppingBag, FiLogOut, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import {
+  FiHome,
+  FiUsers,
+  FiShoppingBag,
+  FiLogOut,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { ADMIN_LOGOUT } from "../Redux/Users/actionType";
@@ -179,7 +49,7 @@ const AdminSidebar = ({
         {/* Header */}
         <div className="p-4 flex items-center justify-between border-b border-black/10">
           {sidebarOpen && (
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-xl font-bold text-black"
@@ -208,7 +78,9 @@ const AdminSidebar = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={`relative flex items-center p-4 cursor-pointer ${
-                activeTab === item.id ? "bg-black text-white" : "hover:bg-black/10"
+                activeTab === item.id
+                  ? "bg-black text-white"
+                  : "hover:bg-black/10"
               } transition-colors duration-200 mx-2 rounded-lg`}
               onClick={() => setActiveTab(item.id)}
               onMouseEnter={() => setHoveredItem(item.id)}
@@ -285,7 +157,9 @@ const AdminSidebar = ({
               className="bg-white rounded-xl shadow-2xl overflow-hidden w-full max-w-md mx-4"
             >
               <div className="p-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Confirm Logout</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  Confirm Logout
+                </h3>
                 <p className="text-gray-600 mb-6">
                   Are you sure you want to logout? You'll need to log back in to
                   access the admin panel.

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import ProductForm from "./ProductForm";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
@@ -38,6 +40,7 @@ const ProductList = () => {
       if (response.ok) {
         setProducts(products.filter((p) => p._id !== productToDelete._id));
         setDeleteModalOpen(false);
+        toast.success("Product deleted successfully");
       }
     } catch (error) {
       console.error("Error deleting product:", error);
@@ -51,12 +54,12 @@ const ProductList = () => {
 
   const handleExcelUpload = async () => {
     if (!excelFile) {
-      alert("Please select an Excel file");
+      toast.error("Please select an Excel file");
       return;
     }
 
     const formData = new FormData();
-    formData.append("excelFile", excelFile);
+    formData.append("file", excelFile);
 
     try {
       const response = await fetch(
@@ -75,7 +78,7 @@ const ProductList = () => {
         const productsData = await productsResponse.json();
         setProducts(productsData);
 
-        alert(data.message);
+        toast.success(data.message);
         setUploadModalOpen(false);
         setExcelFile(null);
       } else {
@@ -83,7 +86,7 @@ const ProductList = () => {
       }
     } catch (error) {
       console.error("Error uploading products:", error);
-      alert(error.message);
+      toast.error(error.message);
     }
   };
 
@@ -211,10 +214,10 @@ const ProductList = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-16 w-16 bg-yellow-100 rounded-md flex items-center justify-center overflow-hidden">
-                            {product.colors?.[0]?.images?.[0]?.imageUrl ? (
+                            {product.colors?.[0]?.images?.[0]?.main ? (
                               <img
                                 className="h-full w-full object-cover"
-                                src={product.colors[0].images[0].imageUrl}
+                                src={product.colors[0].images[0].main}
                                 alt={product.title}
                               />
                             ) : (
@@ -424,6 +427,7 @@ const ProductList = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      
       {/* Upload Excel Modal */}
       {uploadModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -443,59 +447,114 @@ const ProductList = () => {
             >
               &#8203;
             </span>
+
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                      Upload Products from Excel
-                    </h3>
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Select Excel File
-                      </label>
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Upload Products
+                </h3>
+              </div>
+
+              <div className="px-6 py-5">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Excel File
+                  </label>
+                  <label className="cursor-pointer">
+                    {" "}
+                    {/* Changed to label wrapping the entire area */}
+                    <div className="flex items-center justify-center px-6 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400">
+                      {excelFile ? (
+                        <div className="text-center">
+                          <svg
+                            className="mx-auto h-10 w-10 text-green-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <p className="mt-2 text-sm font-medium text-gray-900">
+                            {excelFile.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {Math.round(excelFile.size / 1024)} KB
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <svg
+                            className="mx-auto h-10 w-10 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                            />
+                          </svg>
+                          <p className="mt-2 text-sm text-gray-600">
+                            <span className="font-medium text-yellow-600">
+                              Click to upload
+                            </span>{" "}
+                            or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Excel files only (.xlsx, .xls)
+                          </p>
+                        </div>
+                      )}
                       <input
                         type="file"
                         accept=".xlsx,.xls"
                         onChange={handleFileChange}
-                        className="block w-full text-sm text-gray-500
-                          file:mr-4 file:py-2 file:px-4
-                          file:rounded-md file:border-0
-                          file:text-sm file:font-semibold
-                          file:bg-yellow-50 file:text-yellow-700
-                          hover:file:bg-yellow-100"
+                        className="hidden"
+                        id="file-upload" // Added ID for label association
                       />
                     </div>
-                    <div className="pt-4 flex justify-end space-x-3">
-                      <button
-                        type="button"
-                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                        onClick={() => setUploadModalOpen(false)}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        className="px-4 py-2 bg-yellow-400 text-gray-900 rounded-md hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                        onClick={handleExcelUpload}
-                      >
-                        Upload
-                      </button>
-                    </div>
-                    <div className="mt-6 text-sm text-gray-600">
-                      <p className="mb-2">
-                        Download the template file to ensure correct format:
-                      </p>
-                      <a
-                        href="/product_template.xlsx"
-                        download="product_template.xlsx"
-                        className="text-yellow-600 hover:text-yellow-500 hover:underline"
-                      >
-                        Download Excel Template
-                      </a>
-                    </div>
-                  </div>
+                  </label>
                 </div>
+
+                <div className="text-center text-sm text-gray-600">
+                  <p>
+                    Need the template file?{" "}
+                    <a
+                      href="/product_template.xlsx"
+                      download="product_template.xlsx"
+                      className="text-yellow-600 hover:text-yellow-500 font-medium"
+                    >
+                      Download template
+                    </a>
+                  </p>
+                </div>
+              </div>
+
+              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end space-x-3">
+                <button
+                  onClick={() => setUploadModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleExcelUpload}
+                  disabled={!excelFile}
+                  className={`px-4 py-2 text-sm font-medium text-black rounded-md cursor-pointer ${
+                    excelFile
+                      ? "bg-yellow-600 hover:bg-yellow-700"
+                      : "bg-yellow-300 cursor-not-allowed"
+                  }`}
+                >
+                  Upload
+                </button>
               </div>
             </div>
           </div>

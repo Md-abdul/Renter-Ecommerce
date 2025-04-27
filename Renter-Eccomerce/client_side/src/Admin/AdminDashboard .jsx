@@ -56,7 +56,7 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 -mt-12">
       <AdminSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
