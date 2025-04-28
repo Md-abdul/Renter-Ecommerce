@@ -167,10 +167,10 @@ const UserOrders = () => {
   const isReturnWindowOpen = (order) => {
     if (order.status !== "delivered") return false;
     if (!order.updatedAt) return false;
-
+  
     const deliveryDate = new Date(order.updatedAt);
     const returnDeadline = addDays(deliveryDate, 7);
-    return isAfter(returnDeadline, new Date());
+    return isAfter(new Date(), returnDeadline) ? false : true; // Fix logic
   };
 
   if (loading) {

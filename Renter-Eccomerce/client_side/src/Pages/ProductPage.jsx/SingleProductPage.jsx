@@ -469,15 +469,6 @@ const SingleProductPage = () => {
                       <Plus size={16} className="text-gray-700" />
                     </button>
                   </div>
-
-                  {selectedSizeObj && (
-                    <div className="text-sm text-gray-500">
-                      <span className="font-medium">
-                        {selectedSizeObj.quantity}
-                      </span>{" "}
-                      available
-                    </div>
-                  )}
                 </div>
 
                 {selectedQuantity >=
