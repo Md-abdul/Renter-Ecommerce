@@ -419,7 +419,7 @@
 
 const express = require("express");
 const { UserModel, OrderModel } = require("../Modals/UserModal");
-const { verifyToken } = require("../Middlewares/VerifyToken");
+const { verifyToken, verifyAdmin } = require("../Middlewares/VerifyToken");
 const ProductModal = require("../Modals/productModal");
 
 const orderRoutes = express.Router();
@@ -519,7 +519,7 @@ orderRoutes.get("/user", verifyToken, async (req, res) => {
 });
 
 // Get all orders (admin)
-orderRoutes.get("/admin", verifyToken, async (req, res) => {
+orderRoutes.get("/admin", verifyToken, verifyAdmin, async (req, res) => {
   try {
     // Check if user is admin
     const user = await UserModel.findById(req.user.userId);
@@ -537,7 +537,7 @@ orderRoutes.get("/admin", verifyToken, async (req, res) => {
 });
 
 // Update order status
-orderRoutes.put("/:id/status", verifyToken, async (req, res) => {
+orderRoutes.put("/:id/status", verifyToken, verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -659,16 +659,10 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
 });
 
 // Admin approve/reject return
-orderRoutes.put("/:orderId/return/:itemId", verifyToken, async (req, res) => {
+orderRoutes.put("/:orderId/return/:itemId", verifyToken, verifyAdmin, async (req, res) => {
   try {
     const { orderId, itemId } = req.params;
     const { status } = req.body;
-
-    // Check if user is admin
-    const user = await UserModel.findById(req.user.userId);
-    if (!user || !user.isAdmin) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
 
     const order = await OrderModel.findById(orderId);
     if (!order) {
@@ -677,18 +671,15 @@ orderRoutes.put("/:orderId/return/:itemId", verifyToken, async (req, res) => {
 
     const item = order.items.id(itemId);
     if (!item || !item.returnRequest) {
-      return res
-        .status(404)
-        .json({ message: "Item or return request not found" });
+      return res.status(404).json({ message: "Item or return request not found" });
     }
 
-    // Validate status transition
     const validStatuses = ["approved", "rejected", "completed"];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
 
-    // If approving or completing, restock the item
+    // If approving or completing, restock
     if (status === "approved" || status === "completed") {
       const product = await ProductModal.findById(item.productId);
       if (product) {
@@ -715,15 +706,11 @@ orderRoutes.put("/:orderId/return/:itemId", verifyToken, async (req, res) => {
   }
 });
 
-// Get return requests (admin)
-orderRoutes.get("/returns", verifyToken, async (req, res) => {
-  try {
-    // Check if user is admin
-    const user = await UserModel.findById(req.user.userId);
-    if (!user || !user.isAdmin) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
 
+// Get return requests (admin)
+// Get return requests (admin only)
+orderRoutes.get("/returns", verifyToken, verifyAdmin, async (req, res) => {
+  try {
     const orders = await OrderModel.find({
       "items.returnRequest": { $exists: true, $ne: null },
     }).populate("userId", "name email");
@@ -752,8 +739,9 @@ orderRoutes.get("/returns", verifyToken, async (req, res) => {
 
     res.status(200).json(returnRequests);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
+
 
 module.exports = { orderRoutes };
