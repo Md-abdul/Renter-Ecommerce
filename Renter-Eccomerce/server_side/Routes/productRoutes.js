@@ -58,7 +58,6 @@ function getSizeOptions(category, wearCategory) {
   return Array.from({ length: 21 }, (_, i) => (28 + i).toString());
 }
 
-
 ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
@@ -105,10 +104,10 @@ ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
                   row.gallery1,
                   row.gallery2,
                   row.gallery3,
-                  row.gallery4
+                  row.gallery4,
                 ].filter(Boolean),
               },
-              sizes: []
+              sizes: [],
             });
           }
 
@@ -119,7 +118,7 @@ ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
               size: row.size,
               quantity: row.quantity || 0,
               sku: row.sku,
-              available: (row.quantity || 0) > 0
+              available: (row.quantity || 0) > 0,
             });
           }
         }
@@ -127,14 +126,14 @@ ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
 
       // Get all unique sizes across all colors (without price adjustment)
       const sizeMap = new Map();
-      
-      Array.from(colorsMap.values()).forEach(color => {
-        color.sizes.forEach(size => {
+
+      Array.from(colorsMap.values()).forEach((color) => {
+        color.sizes.forEach((size) => {
           if (!sizeMap.has(size.size)) {
             sizeMap.set(size.size, {
               size: size.size,
               quantity: size.quantity,
-              available: size.available
+              available: size.available,
             });
           }
         });
@@ -170,7 +169,7 @@ ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
     });
   } catch (error) {
     console.error("Error processing Excel:", error);
-    
+
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
@@ -248,6 +247,29 @@ ProductRoutes.post("/", async (req, res) => {
     res.status(500).json({
       error: "Failed to create product",
       details: error.message,
+    });
+  }
+});
+
+// Get sizes array for a specific product by ID
+ProductRoutes.get("/:id/sizes", async (req, res) => {
+  try {
+    const product = await ProductModal.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+ 
+    // Return just the sizes array with availability information
+    const sizesWithAvailability = product.sizes.map(size => ({
+      ...size.toObject(),
+      available: size.quantity > 0
+    }));
+ 
+    res.status(200).json(sizesWithAvailability);
+  } catch (error) {
+    res.status(500).json({
+      error: "Failed to fetch product sizes",
+      details: error.message
     });
   }
 });
@@ -492,59 +514,63 @@ ProductRoutes.post("/check-availability/:id", async (req, res) => {
   }
 });
 
-
 // Add this route to productRoutes.js
 // In productRoutes.js, update the check-inventory route
 ProductRoutes.post("/check-inventory", async (req, res) => {
   try {
     const { items } = req.body;
-    
-    const availabilityCheck = await Promise.all(items.map(async (item) => {
-      const product = await ProductModal.findById(item.productId);
-      if (!product) {
-        return {
-          productId: item.productId,
-          available: false,
-          message: "Product not found",
-          name: "Unknown product",
-          size: item.size
-        };
-      }
 
-      const sizeObj = product.sizes.find(s => s.size === item.size);
-      if (!sizeObj) {
+    const availabilityCheck = await Promise.all(
+      items.map(async (item) => {
+        const product = await ProductModal.findById(item.productId);
+        if (!product) {
+          return {
+            productId: item.productId,
+            available: false,
+            message: "Product not found",
+            name: "Unknown product",
+            size: item.size,
+          };
+        }
+
+        const sizeObj = product.sizes.find((s) => s.size === item.size);
+        if (!sizeObj) {
+          return {
+            productId: item.productId,
+            available: false,
+            message: "Size not available",
+            name: product.title,
+            size: item.size,
+          };
+        }
+
         return {
           productId: item.productId,
-          available: false,
-          message: "Size not available",
+          available: sizeObj.quantity >= item.quantity,
+          availableQuantity: sizeObj.quantity,
+          requiredQuantity: item.quantity,
           name: product.title,
-          size: item.size
+          size: item.size,
+          message:
+            sizeObj.quantity >= item.quantity ? "" : "Insufficient quantity",
         };
-      }
+      })
+    );
 
-      return {
-        productId: item.productId,
-        available: sizeObj.quantity >= item.quantity,
-        availableQuantity: sizeObj.quantity,
-        requiredQuantity: item.quantity,
-        name: product.title,
-        size: item.size,
-        message: sizeObj.quantity >= item.quantity ? "" : "Insufficient quantity"
-      };
-    }));
+    const allAvailable = availabilityCheck.every((item) => item.available);
 
-    const allAvailable = availabilityCheck.every(item => item.available);
-    
     res.status(200).json({
       allAvailable,
-      details: availabilityCheck
+      details: availabilityCheck,
     });
   } catch (error) {
     res.status(500).json({
       error: "Failed to check inventory",
-      details: error.message
+      details: error.message,
     });
   }
 });
+
+// ProductModal
 
 module.exports = { ProductRoutes };
