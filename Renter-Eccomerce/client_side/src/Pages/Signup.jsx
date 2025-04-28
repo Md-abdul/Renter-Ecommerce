@@ -6,6 +6,7 @@ import { useDispatch } from "react-redux";
 import { register } from "../Redux/Users/action";
 import { toast } from "react-toastify";
 import { FaGoogle } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // Install react-icons if you haven't
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const SignupPage = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -21,6 +23,10 @@ const SignupPage = () => {
     if (success) {
       navigate("/login");
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
   };
 
   // const handleGoogleSignup = () => {
@@ -96,13 +102,19 @@ const SignupPage = () => {
 
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 required
               />
+              <div
+                className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
+                onClick={togglePasswordVisibility}
+              >
+                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+              </div>
             </div>
 
             <button

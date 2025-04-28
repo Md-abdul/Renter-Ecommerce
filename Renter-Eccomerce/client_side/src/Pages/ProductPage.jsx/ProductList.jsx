@@ -14,6 +14,7 @@ import { useCart } from "../../context/CartContext";
 import { useProduct } from "../../context/ProductContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
+import { FaSearch } from "react-icons/fa"; // Import Search Icon
 
 const ProductList = ({ category }) => {
   const {
@@ -42,6 +43,7 @@ const ProductList = ({ category }) => {
     wearCategory: true,
     colors: true,
     price: true,
+    sort: true,
   });
 
   // Get all unique colors from products
@@ -55,9 +57,20 @@ const ProductList = ({ category }) => {
     setAvailableColors(Array.from(colors));
   }, [filteredProducts, category]);
 
-  // Apply filters
-  const applyFilters = (products) => {
-    return products.filter((product) => {
+  const calculateDisplayPrice = (product) => {
+    const basePrice = product.basePrice;
+    const sizeAdjustment = product.sizes[0]?.priceAdjustment || 0;
+    const priceBeforeDiscount = basePrice + sizeAdjustment;
+
+    if (product.discount > 0) {
+      return Math.round(priceBeforeDiscount * (1 - product.discount / 100));
+    }
+    return priceBeforeDiscount;
+  };
+
+  // Apply filters and sorting
+  const applyFiltersAndSorting = (products) => {
+    let filtered = products.filter((product) => {
       // Wear category filter
       if (
         wearCategoryFilter.length > 0 &&
@@ -88,10 +101,26 @@ const ProductList = ({ category }) => {
 
       return true;
     });
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      const priceA = calculateDisplayPrice(a);
+      const priceB = calculateDisplayPrice(b);
+
+      if (sortOrder === "asc") {
+        return priceA - priceB;
+      } else {
+        return priceB - priceA;
+      }
+    });
+
+    return filtered;
   };
 
   // Pagination Logic
-  const filteredAndSortedProducts = applyFilters(filteredProducts(category));
+  const filteredAndSortedProducts = applyFiltersAndSorting(
+    filteredProducts(category)
+  );
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentProducts = filteredAndSortedProducts.slice(
@@ -134,17 +163,6 @@ const ProductList = ({ category }) => {
     setTimeout(() => {
       button.classList.remove("animate-ping");
     }, 500);
-  };
-
-  const calculateDisplayPrice = (product) => {
-    const basePrice = product.basePrice;
-    const sizeAdjustment = product.sizes[0]?.priceAdjustment || 0;
-    const priceBeforeDiscount = basePrice + sizeAdjustment;
-
-    if (product.discount > 0) {
-      return Math.round(priceBeforeDiscount * (1 - product.discount / 100));
-    }
-    return priceBeforeDiscount;
   };
 
   const handleWearCategoryChange = (category) => {
@@ -337,7 +355,6 @@ const ProductList = ({ category }) => {
                 Reset All
               </button>
             </div>
-
             {/* Wear Category Filter */}
             <div className="mb-6">
               <div
@@ -377,7 +394,6 @@ const ProductList = ({ category }) => {
                 )}
               </AnimatePresence>
             </div>
-
             {/* Color Filter */}
             <div className="mb-6">
               <div
@@ -424,7 +440,6 @@ const ProductList = ({ category }) => {
                 )}
               </AnimatePresence>
             </div>
-
             {/* Price Range Filter */}
             <div className="mb-6">
               <div
@@ -488,6 +503,53 @@ const ProductList = ({ category }) => {
                         style={{ left: `${(priceRange[1] / 1000) * 100}%` }}
                       ></div>
                     </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            {/* // Add this in the sidebar filters section (right after the price
+            range filter) */}
+            <div className="mb-6">
+              <div
+                className="flex justify-between items-center cursor-pointer mb-3"
+                onClick={() => toggleFilterSection("sort")}
+              >
+                <h4 className="font-semibold text-gray-700">Sort By</h4>
+                {expandedFilters.sort ? (
+                  <ChevronUp size={18} />
+                ) : (
+                  <ChevronDown size={18} />
+                )}
+              </div>
+              <AnimatePresence>
+                {expandedFilters.sort && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-2 overflow-hidden"
+                  >
+                    <button
+                      onClick={() => setSortOrder("asc")}
+                      className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 ${
+                        sortOrder === "asc"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "hover:bg-gray-100"
+                      }`}
+                    >
+                      <SortAsc size={16} /> Price: Low to High
+                    </button>
+                    <button
+                      onClick={() => setSortOrder("desc")}
+                      className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 ${
+                        sortOrder === "desc"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "hover:bg-gray-100"
+                      }`}
+                    >
+                      <SortDesc size={16} /> Price: High to Low
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -708,6 +770,53 @@ const ProductList = ({ category }) => {
                         )}
                       </AnimatePresence>
                     </div>
+
+                    {/* shorting filter */}
+                    <div className="mb-6">
+                      <div
+                        className="flex justify-between items-center cursor-pointer mb-3"
+                        onClick={() => toggleFilterSection("sort")}
+                      >
+                        <h4 className="font-semibold text-gray-700">Sort By</h4>
+                        {expandedFilters.sort ? (
+                          <ChevronUp size={18} />
+                        ) : (
+                          <ChevronDown size={18} />
+                        )}
+                      </div>
+                      <AnimatePresence>
+                        {expandedFilters.sort && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="space-y-2 overflow-hidden"
+                          >
+                            <button
+                              onClick={() => setSortOrder("asc")}
+                              className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 ${
+                                sortOrder === "asc"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "hover:bg-gray-100"
+                              }`}
+                            >
+                              <SortAsc size={16} /> Price: Low to High
+                            </button>
+                            <button
+                              onClick={() => setSortOrder("desc")}
+                              className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 ${
+                                sortOrder === "desc"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "hover:bg-gray-100"
+                              }`}
+                            >
+                              <SortDesc size={16} /> Price: High to Low
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
                   <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
                     <motion.button
@@ -738,55 +847,30 @@ const ProductList = ({ category }) => {
         {/* Main Content */}
         <div className="flex-1">
           {/* Search and Sort Section */}
+
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4"
+            className="flex justify-end mb-8"
           >
-            <div className="relative flex items-center w-full md:w-auto">
+            <div className="relative flex items-center">
               <motion.div
-                className={`relative ${isSearchExpanded ? "w-full" : "w-10"}`}
-                animate={{
-                  width: isSearchExpanded ? "100%" : "40px",
-                }}
-                transition={{ duration: 0.3 }}
+                initial={{ width: 0 }}
+                animate={{ width: "250px" }}
+                transition={{ duration: 0.5 }}
+                className="relative"
               >
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search products..."
-                  className={`absolute left-0 pl-10 pr-4 py-2 bg-white border border-yellow-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 shadow-sm transition-all duration-300 ${
-                    isSearchExpanded ? "w-full opacity-100" : "w-0 opacity-0"
-                  }`}
+                  className="w-full pl-10 pr-4 py-2 bg-white border border-yellow-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 shadow-sm transition-all duration-300"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </motion.div>
-              <motion.button
-                onClick={() => setIsSearchExpanded(!isSearchExpanded)}
-                className="p-2 bg-yellow-400 rounded-full shadow-md hover:bg-yellow-500 transition-all duration-300 ml-2"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <Search className="text-gray-900" size={20} />
-              </motion.button>
             </div>
-            <motion.button
-              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black rounded-lg hover:from-yellow-500 hover:to-yellow-600 transition-all duration-300 shadow-md hover:shadow-lg w-full md:w-auto justify-center"
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {sortOrder === "asc" ? (
-                <>
-                  <SortAsc size={20} /> Price: Low to High
-                </>
-              ) : (
-                <>
-                  <SortDesc size={20} /> Price: High to Low
-                </>
-              )}
-            </motion.button>
           </motion.div>
 
           {/* Product Count */}
