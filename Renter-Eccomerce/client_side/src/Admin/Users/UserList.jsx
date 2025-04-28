@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 
 const UserList = () => {
   // State for user data and UI
@@ -101,6 +102,7 @@ const UserList = () => {
 
       setUsers(users.filter((u) => u._id !== userToDelete._id));
       setDeleteModalOpen(false);
+      toast.success('User Deleted Successfully')
     } catch (error) {
       console.error("Error deleting user:", error);
       alert("Failed to delete user. Please try again.");
@@ -143,7 +145,7 @@ const UserList = () => {
             />
           </div>
 
-          <button
+          {/* <button
             className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 flex items-center gap-2 cursor-pointer"
             onClick={() => {
               setCurrentUser(null);
@@ -163,7 +165,7 @@ const UserList = () => {
               />
             </svg>
             Add User
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -247,8 +249,8 @@ const UserList = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
-                          <button
-                            className="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 px-3 py-1 rounded-md transition-colors duration-200 flex items-center cursor-pointer"
+                          {/* <button
+                            className="text-yellow-900 hover:text-yellow-800 bg-yellow-100 hover:bg-yellow-100 px-3 py-1 rounded-md transition-colors duration-200 flex items-center cursor-pointer"
                             onClick={() => {
                               setCurrentUser(user);
                               setIsModalOpen(true);
@@ -263,7 +265,7 @@ const UserList = () => {
                               <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                             </svg>
                             Edit
-                          </button>
+                          </button> */}
                           <button
                             className="text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition-colors duration-200 flex items-center cursor-pointer"
                             onClick={() => {
@@ -317,7 +319,7 @@ const UserList = () => {
                       </p>
                       {!searchTerm && (
                         <div className="mt-6">
-                          <button
+                          {/* <button
                             onClick={() => {
                               setCurrentUser(null);
                               setIsModalOpen(true);
@@ -339,7 +341,7 @@ const UserList = () => {
                               />
                             </svg>
                             Add User
-                          </button>
+                          </button> */}
                         </div>
                       )}
                     </td>
@@ -419,7 +421,7 @@ const UserList = () => {
                         >
                           Address
                         </label>
-                        <input
+                        <textarea
                           type="text"
                           name="address"
                           id="address"
@@ -443,20 +445,21 @@ const UserList = () => {
                           value={formData.phoneNumber}
                           onChange={handleInputChange}
                           pattern="[0-9]{10}"
+                          maxLength={10}
                           title="Please enter a 10-digit phone number"
                         />
                       </div>
                       <div className="pt-4 flex justify-end space-x-3">
                         <button
                           type="button"
-                          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 cursor-pointer"
                           onClick={() => setIsModalOpen(false)}
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
-                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="px-4 py-2 bg-yellow-500 text-black rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                         >
                           {currentUser ? "Update" : "Save"}
                         </button>
@@ -506,14 +509,14 @@ const UserList = () => {
                     <div className="pt-4 flex justify-end space-x-3">
                       <button
                         type="button"
-                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 cursor-pointer"
                         onClick={() => setDeleteModalOpen(false)}
                       >
                         Cancel
                       </button>
                       <button
                         type="button"
-                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
                         onClick={handleDelete}
                       >
                         Delete

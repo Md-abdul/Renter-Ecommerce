@@ -14,6 +14,8 @@ const ProductList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // 10 items per page
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -90,12 +92,71 @@ const ProductList = () => {
     }
   };
 
+  // Calculate total quantity for a product
+  const calculateTotalQuantity = (product) => {
+    return product.sizes.reduce((total, size) => total + size.quantity, 0);
+  };
+
   // Filter products based on search term
   const filteredProducts = products.filter(
     (product) =>
       product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination logic
+  const totalItems = filteredProducts.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  // Get current products
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProducts = filteredProducts.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+
+  // Function to generate page numbers with dots
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5; // Show max 5 pages at a time
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      const leftBound = Math.max(currentPage - 2, 1);
+      const rightBound = Math.min(currentPage + 2, totalPages);
+
+      if (currentPage - 1 > 2) {
+        pageNumbers.push(1, "...");
+      } else {
+        for (let i = 1; i <= currentPage; i++) {
+          pageNumbers.push(i);
+        }
+      }
+
+      for (let i = leftBound; i <= rightBound; i++) {
+        if (i !== 1 && i !== totalPages && !pageNumbers.includes(i)) {
+          pageNumbers.push(i);
+        }
+      }
+
+      if (totalPages - currentPage > 2) {
+        if (!pageNumbers.includes(rightBound + 1)) {
+          pageNumbers.push("...");
+        }
+        pageNumbers.push(totalPages);
+      } else {
+        for (let i = currentPage + 1; i <= totalPages; i++) {
+          pageNumbers.push(i);
+        }
+      }
+    }
+
+    return pageNumbers;
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl min-h-screen bg-gray-50">
@@ -178,83 +239,154 @@ const ProductList = () => {
         </div>
       </div>
 
-      {/* Loading State */}
+      {/* =============== */}
+
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400"></div>
         </div>
       ) : (
-        /* Products Table */
         <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-lg shadow-md bg-white border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-900">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">
                     Product
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                    Price
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">
+                    Pricing
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">
+                    Inventory
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">
                     Category
                   </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-white uppercase tracking-wider">
+                  <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-100">
                 {filteredProducts.length > 0 ? (
-                  filteredProducts.map((product) => (
+                  currentProducts.map((product) => (
                     <tr
                       key={product._id}
-                      className="hover:bg-gray-50 transition-colors duration-150"
+                      className="hover:bg-gray-50 transition"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-16 w-16 bg-yellow-100 rounded-md flex items-center justify-center overflow-hidden">
-                            {product.colors?.[0]?.images?.[0]?.main ? (
+                      {/* Product */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-4">
+                          <div className="h-16 w-16 rounded-md overflow-hidden border border-gray-200 shadow-sm">
+                            {product.colors?.[0]?.images?.main ? (
                               <img
-                                className="h-full w-full object-cover"
-                                src={product.colors[0].images[0].main}
+                                src={product.colors[0].images.main}
                                 alt={product.title}
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src =
+                                    "https://via.placeholder.com/80?text=No+Image";
+                                }}
                               />
                             ) : (
-                              <span className="text-yellow-800 font-medium text-xl">
-                                {product.title.charAt(0).toUpperCase()}
+                              <div className="h-full w-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                                No Image
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="text-base font-semibold text-gray-900">
+                              {product.title}
+                            </div>
+                            <div className="flex items-center text-xs text-gray-500 mt-1">
+                              <span
+                                className="inline-block w-3 h-3 rounded-full mr-2"
+                                style={{
+                                  backgroundColor:
+                                    product.colors?.[0]?.hexCode || "#ccc",
+                                }}
+                              ></span>
+                              {product.colors?.[0]?.name || "No Color"}
+                              {product.colors.length > 1 && (
+                                <span className="ml-2 text-gray-400">
+                                  +{product.colors.length - 1} more
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Pricing */}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-gray-900 font-semibold text-sm">
+                            ${product.basePrice}
+                          </span>
+                          {product.discount > 0 && (
+                            <span className="mt-1 text-green-600 text-xs font-medium">
+                              {product.discount}% off
+                            </span>
+                          )}
+                          {product.basePrice !== product.price && (
+                            <span className="text-xs text-gray-400 line-through">
+                              ${product.price}
+                            </span>
+                          )}
+                          <span className="text-xs text-gray-400 mt-1">
+                            {product.colors.length} variants
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Inventory */}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <div className="flex items-center text-sm font-semibold text-gray-800">
+                            {calculateTotalQuantity(product)} in stock
+                            {calculateTotalQuantity(product) <= 10 &&
+                              calculateTotalQuantity(product) > 0 && (
+                                <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                                  Low
+                                </span>
+                              )}
+                            {calculateTotalQuantity(product) === 0 && (
+                              <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-800">
+                                Out
                               </span>
                             )}
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-semibold text-gray-900">
-                              {product.title}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {product.summary?.substring(0, 30)}...
-                            </div>
-                          </div>
+                          {/* <div className="text-xs text-gray-500 mt-1">
+                            {
+                              product.sizes?.filter((size) => size.available)
+                                .length
+                            }{" "}
+                            active sizes
+                          </div> */}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-gray-900">
-                          ${product.price}
+
+                      {/* Category */}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-semibold rounded-full bg-gray-100 text-gray-700 px-2 py-1 w-fit capitalize">
+                            {product.category}
+                          </span>
+                          {product.wearCategory && (
+                            <span className="mt-1 text-xs rounded-full bg-blue-100 text-blue-800 px-2 py-1 w-fit capitalize">
+                              {product.wearCategory}
+                            </span>
+                          )}
                         </div>
-                        {product.offerPrice && (
-                          <div className="text-xs text-gray-500 line-through">
-                            ${product.offerPrice}
-                          </div>
-                        )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 capitalize">
-                          {product.category}
-                        </span>
-                      </td>
+
+                      {/* Actions */}
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <button
-                            className="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 px-3 py-1 rounded-md transition-colors duration-200 flex items-center cursor-pointer"
+                            className="text-yellow-900 hover:text-yellow-800 bg-yellow-300 hover:bg-yellow-100 px-3 py-1 rounded-md transition-colors duration-200 flex items-center cursor-pointer"
                             onClick={() => {
                               setCurrentProduct(product);
                               setIsModalOpen(true);
@@ -271,7 +403,7 @@ const ProductList = () => {
                             Edit
                           </button>
                           <button
-                            className="text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition-colors duration-200 flex items-center cursor-pointer"
+                            className="text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 px-3 py-1 rounded-md transition-colors duration-200 flex items-center cursor-pointer"
                             onClick={() => {
                               setProductToDelete(product);
                               setDeleteModalOpen(true);
@@ -297,63 +429,70 @@ const ProductList = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="px-6 py-12 text-center">
-                      <svg
-                        className="mx-auto h-12 w-12 text-gray-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                        />
-                      </svg>
-                      <h3 className="mt-2 text-lg font-medium text-gray-900">
-                        {searchTerm
-                          ? "No matching products found"
-                          : "No products found"}
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-500">
-                        {searchTerm
-                          ? "Try a different search term"
-                          : "Get started by adding a new product"}
-                      </p>
-                      {!searchTerm && (
-                        <div className="mt-6">
-                          <button
-                            onClick={() => {
-                              setCurrentProduct(null);
-                              setIsModalOpen(true);
-                            }}
-                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-gray-900 bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-                          >
-                            <svg
-                              className="-ml-1 mr-2 h-5 w-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                              />
-                            </svg>
-                            Add Product
-                          </button>
-                        </div>
-                      )}
+                    <td
+                      colSpan="5"
+                      className="px-6 py-16 text-center text-gray-500 text-sm"
+                    >
+                      No products found.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-end mt-6">
+          <nav className="flex items-center space-x-2">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 rounded-md ${
+                currentPage === 1
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-black hover:bg-yellow-300 hover:scale-105 transition-all duration-200"
+              }`}
+            >
+              Previous
+            </button>
+
+            {getPageNumbers().map((number, index) =>
+              number === "..." ? (
+                <span key={`dots-${index}`} className="px-3 py-1">
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={number}
+                  onClick={() => setCurrentPage(number)}
+                  className={`px-3 py-1 rounded-2xl transition-all duration-200 cursor-pointer ${
+                    currentPage === number
+                      ? "bg-yellow-400 text-black font-medium"
+                      : "text-black hover:bg-yellow-300 hover:scale-105"
+                  }`}
+                >
+                  {number}
+                </button>
+              )
+            )}
+
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1 rounded-md ${
+                currentPage === totalPages
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-black hover:bg-yellow-300 hover:scale-105 transition-all duration-200"
+              }`}
+            >
+              Next
+            </button>
+          </nav>
         </div>
       )}
 
@@ -427,7 +566,7 @@ const ProductList = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       {/* Upload Excel Modal */}
       {uploadModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
