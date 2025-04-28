@@ -6,6 +6,7 @@ import { useDispatch } from "react-redux";
 import { adminLogin, signIn } from "../Redux/Users/action";
 import { toast } from "react-toastify";
 import { FaGoogle } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // Install react-icons if you haven't
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -13,6 +14,11 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [showPassword, setShowPassword] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
   const handleLogin = async (e) => {
     e.preventDefault();
     const userData = { email, password };
@@ -62,12 +68,18 @@ const LoginPage = () => {
 
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                className="w-full px-4 py-3 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 pr-12" // add pr-12 to leave space for the icon
               />
+              <div
+                className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
+                onClick={togglePasswordVisibility}
+              >
+                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+              </div>
             </div>
 
             <div className="text-right">
