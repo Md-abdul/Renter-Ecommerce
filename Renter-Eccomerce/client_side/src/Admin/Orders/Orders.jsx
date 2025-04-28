@@ -491,7 +491,6 @@ export const Orders = () => {
   const [error, setError] = useState(null);
   const [returnRequests, setReturnRequests] = useState([]);
   const [showReturns, setShowReturns] = useState(false);
-
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -532,6 +531,7 @@ export const Orders = () => {
   const fetchReturnRequests = async () => {
     try {
       const token = localStorage.getItem("adminToken");
+      console.log("Admin Token:", token);
       const response = await axios.get(
         "http://localhost:5000/api/orders/returns",
         {
@@ -580,8 +580,9 @@ export const Orders = () => {
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       toast.success(`Return request ${newStatus}`);
-      fetchReturnRequests();
+      fetchReturnRequests(); // Call this after updating the status
     } catch (error) {
       console.error("Error updating return status:", error);
       toast.error(
