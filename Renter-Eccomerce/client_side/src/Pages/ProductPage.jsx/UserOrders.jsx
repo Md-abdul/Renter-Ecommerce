@@ -90,17 +90,25 @@ const UserOrders = () => {
     setShowReturnModal(true);
   };
 
+  // 1. First, update the openExchangeModal function to properly fetch sizes:
   const openExchangeModal = async (item) => {
     try {
       setSelectedItem(item);
       setExchangeSize("");
       setReturnReason("");
-
+  
       // Fetch available sizes for this product
       const response = await axios.get(
         `http://localhost:5000/api/products/${item.productId}/sizes`
       );
-      setAvailableSizes(response.data.sizes || []);
+
+      // Correctly filter and map sizes
+      const availableSizes = (response.data?.sizes || [])
+        .filter((s) => s.available && s.size !== item.size)
+        .map((s) => s.size);
+  
+      setAvailableSizes(availableSizes);
+      console.log(availableSizes);
 
       setShowExchangeModal(true);
     } catch (error) {
@@ -108,6 +116,7 @@ const UserOrders = () => {
       console.error("Error fetching sizes:", error);
     }
   };
+  
 
   const handleReturnRequest = async (type) => {
     try {
@@ -164,13 +173,14 @@ const UserOrders = () => {
     }
   };
 
+  // Also update the isReturnWindowOpen function to fix the logic:
   const isReturnWindowOpen = (order) => {
     if (order.status !== "delivered") return false;
     if (!order.updatedAt) return false;
-  
+
     const deliveryDate = new Date(order.updatedAt);
     const returnDeadline = addDays(deliveryDate, 7);
-    return isAfter(new Date(), returnDeadline) ? false : true; // Fix logic
+    return isAfter(returnDeadline, new Date()); // Fixed logic - return window is open if deadline is after current date
   };
 
   if (loading) {
@@ -184,7 +194,6 @@ const UserOrders = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">Your Orders</h1>
-
       {orders.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg shadow-sm p-8">
           <div className="max-w-md mx-auto">
@@ -400,7 +409,7 @@ const UserOrders = () => {
                               </p>
                               {item.returnRequest && (
                                 <div className="mt-2">
-                                  {/* <span
+                                  <span
                                     className={`text-xs px-2 py-1 rounded ${
                                       item.returnRequest.status === "requested"
                                         ? "bg-yellow-100 text-yellow-800"
@@ -417,7 +426,7 @@ const UserOrders = () => {
                                       ? "Return"
                                       : "Exchange"}{" "}
                                     {item.returnRequest.status}
-                                  </span> */}
+                                  </span>
                                   {item.returnRequest.status ===
                                     "requested" && (
                                     <button
@@ -433,6 +442,11 @@ const UserOrders = () => {
                                     <div className="text-xs text-blue-600 mt-1">
                                       Exchange to:{" "}
                                       {item.returnRequest.exchangeSize}
+                                    </div>
+                                  )}
+                                  {item.returnRequest.status === "rejected" && (
+                                    <div className="text-xs text-red-600 mt-1">
+                                      Your request was rejected
                                     </div>
                                   )}
                                 </div>
@@ -490,7 +504,6 @@ const UserOrders = () => {
           })}
         </div>
       )}
-
       {/* Return Modal */}
       {showReturnModal && selectedItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -529,8 +542,8 @@ const UserOrders = () => {
           </div>
         </div>
       )}
-
       {/* Exchange Modal */}
+      {/* // 2. Update the Exchange Modal JSX to properly display sizes: */}
       {showExchangeModal && selectedItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
@@ -541,23 +554,34 @@ const UserOrders = () => {
                 Current Size: {selectedItem.size}
               </p>
             </div>
+
+            {/* Size Selection */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Select New Size
               </label>
-              <select
-                className="w-full border border-gray-300 rounded p-2"
-                value={exchangeSize}
-                onChange={(e) => setExchangeSize(e.target.value)}
-              >
-                <option value="">Select size</option>
-                {availableSizes.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
+              {availableSizes.length > 0 ? (
+                <select
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={exchangeSize}
+                  onChange={(e) => setExchangeSize(e.target.value)}
+                  required
+                >
+                  <option value="">Select size</option>
+                  {availableSizes.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p className="text-red-500 text-sm">
+                  No other sizes available for exchange
+                </p>
+              )}
             </div>
+
+            {/* Reason for Exchange */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Reason for Exchange
@@ -568,8 +592,11 @@ const UserOrders = () => {
                 value={returnReason}
                 onChange={(e) => setReturnReason(e.target.value)}
                 placeholder="Please specify the reason for exchange..."
+                required
               />
             </div>
+
+            {/* Action Buttons */}
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowExchangeModal(false)}
@@ -579,7 +606,12 @@ const UserOrders = () => {
               </button>
               <button
                 onClick={() => handleReturnRequest("exchange")}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className={`px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ${
+                  availableSizes.length === 0
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+                disabled={availableSizes.length === 0}
               >
                 Submit Exchange Request
               </button>
