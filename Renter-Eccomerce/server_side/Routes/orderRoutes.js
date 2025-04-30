@@ -584,14 +584,95 @@ orderRoutes.put("/:id/status", verifyToken, async (req, res) => {
 });
 
 // Request return/exchange
+// orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
+//   try {
+//     const { orderId } = req.params;
+//     const { itemId, type, reason, exchangeSize, exchangeColor, exchangeProductId } = req.body;
+//     const userId = req.user.userId;
+
+//     if (!type || !reason || (type === "exchange" && (!exchangeSize || !exchangeColor))) {
+//       return res.status(400).json({ message: "Missing required fields for exchange" });
+//     }
+
+//     const order = await OrderModel.findOne({
+//       _id: orderId,
+//       userId,
+//       status: "delivered",
+//       canReturn: true,
+//     });
+
+//     if (!order) {
+//       return res.status(404).json({
+//         message: "Order not found or not eligible for return",
+//       });
+//     }
+
+//     // Check return window
+//     if (new Date() > order.returnWindow) {
+//       return res.status(400).json({
+//         message: "Return window has expired (7 days from delivery)",
+//       });
+//     }
+
+//     const item = order.items.id(itemId);
+//     if (!item) {
+//       return res.status(404).json({ message: "Item not found in order" });
+//     }
+
+//     // Check for existing active request
+//     if (
+//       item.returnRequest &&
+//       ["requested", "approved", "processing", "shipped"].includes(item.returnRequest.status)
+//     ) {
+//       return res.status(400).json({
+//         message: "Active request already exists for this item",
+//       });
+//     }
+
+//     // Create return/exchange request
+//     item.returnRequest = {
+//       type,
+//       reason,
+//       status: "requested",
+//       requestedAt: new Date(),
+//       updatedAt: new Date(),
+//       ...(type === "exchange" && { 
+//         exchangeSize,
+//         exchangeColor,
+//         ...(exchangeProductId && { exchangeProductId })
+//       }),
+//     };
+
+//     await order.save();
+
+//     res.status(200).json({
+//       message: "Return/exchange request submitted successfully",
+//       order,
+//     });
+//   } catch (error) {
+//     console.error("Error creating return request:", error);
+//     res.status(500).json({
+//       message: "Server error",
+//       error: error.message,
+//     });
+//   }
+// });
+
+// Request return/exchange
 orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { itemId, type, reason, exchangeSize } = req.body;
+    const { itemId, type, reason, exchangeSize, exchangeColor, exchangeProductId } = req.body;
     const userId = req.user.userId;
 
-    if (!type || !reason || (type === "exchange" && !exchangeSize)) {
+    if (!type || !reason) {
       return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    if (type === "exchange" && (!exchangeSize || !exchangeColor)) {
+      return res.status(400).json({ 
+        message: "For exchanges, both size and color are required" 
+      });
     }
 
     const order = await OrderModel.findOne({
@@ -619,11 +700,8 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Item not found in order" });
     }
 
-    // Check for existing active request (only allow if previous was rejected or doesn't exist)
-    if (
-      item.returnRequest &&
-      ["requested", "approved", "completed"].includes(item.returnRequest.status)
-    ) {
+    // Check for existing active request
+    if (item.returnRequest && item.returnRequest.status !== "rejected") {
       return res.status(400).json({
         message: "Active request already exists for this item",
       });
@@ -636,7 +714,11 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
       status: "requested",
       requestedAt: new Date(),
       updatedAt: new Date(),
-      ...(type === "exchange" && { exchangeSize }),
+      ...(type === "exchange" && { 
+        exchangeSize,
+        exchangeColor,
+        exchangeProductId: exchangeProductId || item.productId
+      }),
     };
 
     await order.save();

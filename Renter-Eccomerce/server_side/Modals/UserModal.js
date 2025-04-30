@@ -20,12 +20,18 @@ const orderItemSchema = new mongoose.Schema({
     reason: String,
     status: {
       type: String,
-      enum: ["requested", "approved", "rejected", "completed", null],
+      enum: ["requested", "approved", "processing", "shipped", "delivered", "rejected", "completed", null],
       default: null,
     },
     requestedAt: Date,
     updatedAt: Date,
-    exchangeSize: String, // Only for exchange requests
+    exchangeSize: String, // New size for exchange
+    exchangeColor: String, // New color for exchange
+    exchangeProductId: {  // In case exchanging for a different product variant
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "product",
+    },
+    trackingNumber: String, // For shipping the exchanged item
   },
 });
 
