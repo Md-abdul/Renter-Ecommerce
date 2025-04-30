@@ -25,7 +25,8 @@ const UserOrders = () => {
   const [returnReason, setReturnReason] = useState("");
   const [exchangeSize, setExchangeSize] = useState("");
   const [availableSizes, setAvailableSizes] = useState([]);
-
+  const [exchangeColor, setExchangeColor] = useState(""); // Add this line
+  const [availableColors, setAvailableColors] = useState([]);
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -91,33 +92,148 @@ const UserOrders = () => {
   };
 
   // 1. First, update the openExchangeModal function to properly fetch sizes:
+  // Update the openExchangeModal function
   const openExchangeModal = async (item) => {
     try {
       setSelectedItem(item);
       setExchangeSize("");
+      setExchangeColor("");
       setReturnReason("");
-  
-      // Fetch available sizes for this product
-      const response = await axios.get(
-        `http://localhost:5000/api/products/${item.productId}/sizes`
+
+      // Fetch product details to get available colors and sizes
+      const productResponse = await axios.get(
+        `http://localhost:5000/api/products/${item.productId}`
       );
 
-      // Correctly filter and map sizes
-      const availableSizes = (response.data?.sizes || [])
+      const product = productResponse.data;
+
+      // Get available colors (excluding current color)
+      const availableColors = product.colors
+        .filter((c) => c.name !== item.color)
+        .map((c) => c.name);
+
+      // Get available sizes (excluding current size)
+      const availableSizes = product.sizes
         .filter((s) => s.available && s.size !== item.size)
         .map((s) => s.size);
-  
-      setAvailableSizes(availableSizes);
-      console.log(availableSizes);
 
+      setAvailableColors(availableColors);
+      setAvailableSizes(availableSizes);
       setShowExchangeModal(true);
     } catch (error) {
-      toast.error("Failed to fetch product sizes");
-      console.error("Error fetching sizes:", error);
+      toast.error("Failed to fetch product details");
+      console.error("Error fetching product:", error);
     }
   };
-  
 
+  // Update the exchange modal JSX
+  {
+    showExchangeModal && selectedItem && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full">
+          <h3 className="text-xl font-bold mb-4">Request Exchange</h3>
+          <div className="mb-4">
+            <p className="font-medium mb-2">Item: {selectedItem.name}</p>
+            <p className="text-sm text-gray-600">
+              Current: {selectedItem.color}, Size: {selectedItem.size}
+            </p>
+          </div>
+
+          {/* Color Selection */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Select New Color
+            </label>
+            {availableColors.length > 0 ? (
+              <select
+                className="w-full border border-gray-300 rounded p-2"
+                value={exchangeColor}
+                onChange={(e) => setExchangeColor(e.target.value)}
+                required
+              >
+                <option value="">Select color</option>
+                {availableColors.map((color) => (
+                  <option key={color} value={color}>
+                    {color}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-red-500 text-sm">
+                No other colors available for exchange
+              </p>
+            )}
+          </div>
+
+          {/* Size Selection */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Select New Size
+            </label>
+            {availableSizes.length > 0 ? (
+              <select
+                className="w-full border border-gray-300 rounded p-2"
+                value={exchangeSize}
+                onChange={(e) => setExchangeSize(e.target.value)}
+                required
+              >
+                <option value="">Select size</option>
+                {availableSizes.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-red-500 text-sm">
+                No other sizes available for exchange
+              </p>
+            )}
+          </div>
+
+          {/* Reason for Exchange */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Reason for Exchange
+            </label>
+            <textarea
+              className="w-full border border-gray-300 rounded p-2"
+              rows="3"
+              value={returnReason}
+              onChange={(e) => setReturnReason(e.target.value)}
+              placeholder="Please specify the reason for exchange..."
+              required
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setShowExchangeModal(false)}
+              className="px-4 py-2 border border-gray-300 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => handleReturnRequest("exchange")}
+              className={`px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ${
+                availableSizes.length === 0 || availableColors.length === 0
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
+              disabled={
+                availableSizes.length === 0 || availableColors.length === 0
+              }
+            >
+              Submit Exchange Request
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Update the handleReturnRequest function
   const handleReturnRequest = async (type) => {
     try {
       if (!returnReason) {
@@ -125,8 +241,8 @@ const UserOrders = () => {
         return;
       }
 
-      if (type === "exchange" && !exchangeSize) {
-        toast.error("Please select a size for exchange");
+      if (type === "exchange" && (!exchangeSize || !exchangeColor)) {
+        toast.error("Please select both color and size for exchange");
         return;
       }
 
@@ -137,6 +253,9 @@ const UserOrders = () => {
           type,
           reason: returnReason,
           exchangeSize: type === "exchange" ? exchangeSize : undefined,
+          exchangeColor: type === "exchange" ? exchangeColor : undefined,
+          exchangeProductId:
+            type === "exchange" ? selectedItem.productId : undefined,
         },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -152,7 +271,31 @@ const UserOrders = () => {
       setShowReturnModal(false);
       setShowExchangeModal(false);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to submit request");
+      if (
+        error.response?.data?.message ===
+        "Active request already exists for this item"
+      ) {
+        const existingRequest = error.response.data.existingRequest;
+
+        let errorMessage = "An active request already exists for this item";
+        if (existingRequest.type && existingRequest.status) {
+          errorMessage = `You already have a ${existingRequest.type} request (status: ${existingRequest.status})`;
+          if (existingRequest.requestedAt) {
+            errorMessage += ` submitted on ${new Date(
+              existingRequest.requestedAt
+            ).toLocaleDateString()}`;
+          }
+        }
+
+        toast.error(errorMessage, { autoClose: 7000 });
+
+        // Force refresh the orders to get current state
+        fetchOrders();
+      } else {
+        toast.error(
+          error.response?.data?.message || "Failed to submit request"
+        );
+      }
       console.error("Error submitting request:", error);
     }
   };
@@ -427,20 +570,22 @@ const UserOrders = () => {
                                       : "Exchange"}{" "}
                                     {item.returnRequest.status}
                                   </span>
-                                  {item.returnRequest.status ===
-                                    "requested" && (
+                                  {["requested", "approved"].includes(
+                                    item.returnRequest.status
+                                  ) && (
                                     <button
                                       onClick={() =>
                                         cancelReturnRequest(order._id, item._id)
                                       }
                                       className="ml-2 text-xs text-red-600 hover:text-red-800"
                                     >
-                                      Cancel
+                                      Cancel Request
                                     </button>
                                   )}
-                                  {item.returnRequest.exchangeSize && (
+                                  {item.returnRequest.type === "exchange" && (
                                     <div className="text-xs text-blue-600 mt-1">
                                       Exchange to:{" "}
+                                      {item.returnRequest.exchangeColor}, Size:{" "}
                                       {item.returnRequest.exchangeSize}
                                     </div>
                                   )}
@@ -543,7 +688,7 @@ const UserOrders = () => {
         </div>
       )}
       {/* Exchange Modal */}
-      {/* // 2. Update the Exchange Modal JSX to properly display sizes: */}
+      {/* // Update the exchange modal JSX */}
       {showExchangeModal && selectedItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
@@ -551,8 +696,34 @@ const UserOrders = () => {
             <div className="mb-4">
               <p className="font-medium mb-2">Item: {selectedItem.name}</p>
               <p className="text-sm text-gray-600">
-                Current Size: {selectedItem.size}
+                Current: {selectedItem.color}, Size: {selectedItem.size}
               </p>
+            </div>
+
+            {/* Color Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Select New Color
+              </label>
+              {availableColors.length > 0 ? (
+                <select
+                  className="w-full border border-gray-300 rounded p-2"
+                  value={exchangeColor}
+                  onChange={(e) => setExchangeColor(e.target.value)}
+                  required
+                >
+                  <option value="">Select color</option>
+                  {availableColors.map((color) => (
+                    <option key={color} value={color}>
+                      {color}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p className="text-red-500 text-sm">
+                  No other colors available for exchange
+                </p>
+              )}
             </div>
 
             {/* Size Selection */}
@@ -607,11 +778,13 @@ const UserOrders = () => {
               <button
                 onClick={() => handleReturnRequest("exchange")}
                 className={`px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ${
-                  availableSizes.length === 0
+                  availableSizes.length === 0 || availableColors.length === 0
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}
-                disabled={availableSizes.length === 0}
+                disabled={
+                  availableSizes.length === 0 || availableColors.length === 0
+                }
               >
                 Submit Exchange Request
               </button>
