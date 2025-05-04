@@ -246,7 +246,7 @@ const HomePage = () => {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Shop by Category
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-yellow-400 max-w-2xl mx-auto">
               Discover our carefully curated collections for every style and
               occasion
             </p>
@@ -297,7 +297,7 @@ const HomePage = () => {
                       className={`absolute inset-0 bg-gradient-to-b ${category.bgGradient} opacity-70`}
                     ></div>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <h3 className="text-2xl font-bold text-white px-6 py-2 rounded-lg transform translate-y-10 group-hover:translate-y-0 transition-transform duration-300">
+                      <h3 className="text-2xl font-bold text-yellow-500 px-6 py-2 rounded-lg transform translate-y-10 group-hover:translate-y-0 transition-transform duration-300">
                         {category.name}
                       </h3>
                     </div>
@@ -305,7 +305,7 @@ const HomePage = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="px-6 py-2 bg-white text-gray-800 rounded-full text-sm font-semibold"
+                        className="px-6 py-2 bg-black text-white rounded-full text-sm font-semibold"
                       >
                         Shop Now
                       </motion.button>
@@ -326,14 +326,17 @@ const HomePage = () => {
         viewport={{ once: true }}
         variants={fadeIn}
       >
-        <div
+        <motion.div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(${gradientPos}deg, #f3e8ff, #e0f2fe, #ecfdf5)`,
+            backgroundImage: `linear-gradient(${gradientPos}deg, #f3e8ff, #e0f2fe, #ecfdf5)`,
             backgroundSize: "300% 300%",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
             animation: "gradient 15s ease infinite",
           }}
-        />
+        ></motion.div>
+
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-12">
             <motion.div
@@ -635,55 +638,6 @@ const HomePage = () => {
 
           <motion.div {...useStaggeredAnimation(0.1)}>
             <FAQComponent />
-          </motion.div>
-        </div>
-      </motion.section>
-
-      {/* Newsletter Subscription */}
-      <motion.section
-        className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-purple-600 to-pink-600 text-white"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        variants={fadeIn}
-      >
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.h2
-            className="text-3xl md:text-4xl font-bold mb-6"
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-          >
-            Stay Updated
-          </motion.h2>
-          <motion.p
-            className="text-xl mb-8 max-w-2xl mx-auto"
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-          >
-            Subscribe to our newsletter for exclusive offers and updates
-          </motion.p>
-          <motion.div
-            className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto"
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-          >
-            <input
-              type="email"
-              placeholder="Your email address"
-              className="flex-grow px-4 py-3 rounded-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-white"
-            />
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-6 py-3 bg-black text-white rounded-full font-semibold shadow-lg"
-            >
-              Subscribe
-            </motion.button>
           </motion.div>
         </div>
       </motion.section>
