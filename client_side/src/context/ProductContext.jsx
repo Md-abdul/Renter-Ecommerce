@@ -9,11 +9,12 @@ export const ProductProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
-
+//https://renter-ecommerce-2.onrender.com/
+//http://localhost:5000
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/products");
+        const response = await axios.get("https://renter-ecommerce-2.onrender.com/api/products");
         setProducts(response.data);
         console.log(response.data)
         setLoading(false);

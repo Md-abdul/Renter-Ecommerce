@@ -27,7 +27,7 @@ const UserProfile = () => {
         }
 
         const response = await axios.get(
-          "http://localhost:5000/api/user/userDetails",
+          "https://renter-ecommerce-2.onrender.com/api/user/userDetails",
           {
             headers: { Authorization: `Bearer ${token}` },
           }

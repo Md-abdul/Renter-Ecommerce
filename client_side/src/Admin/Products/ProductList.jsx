@@ -20,7 +20,7 @@ const ProductList = () => {
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("http://localhost:5000/api/products");
+      const response = await fetch("https://renter-ecommerce-2.onrender.com/api/products");
       const data = await response.json();
       setProducts(data);
     } catch (error) {
@@ -42,7 +42,7 @@ const ProductList = () => {
   const handleDelete = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/products/${productToDelete._id}`,
+        `https://renter-ecommerce-2.onrender.com/api/products/${productToDelete._id}`,
         { method: "DELETE" }
       );
       if (response.ok) {
@@ -71,7 +71,7 @@ const ProductList = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/products/upload-excel",
+        "https://renter-ecommerce-2.onrender.com/api/products/upload-excel",
         {
           method: "POST",
           body: formData,
@@ -81,7 +81,7 @@ const ProductList = () => {
       const data = await response.json();
       if (response.ok) {
         const productsResponse = await fetch(
-          "http://localhost:5000/api/products"
+          "https://renter-ecommerce-2.onrender.com/api/products"
         );
         const productsData = await productsResponse.json();
         setProducts(productsData);

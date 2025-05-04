@@ -16,8 +16,8 @@ export const CartProvider = ({ children }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  const API_BASE_URL = "http://localhost:5000/api";
+//https://renter-ecommerce-2.onrender.com/
+  const API_BASE_URL = "https://renter-ecommerce-2.onrender.com/api";
 
   // Calculate total price of items in cart
   // const getTotalPrice = () => {

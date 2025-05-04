@@ -24,7 +24,7 @@ const UserList = () => {
     const fetchUsers = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("http://localhost:5000/api/user/allUser");
+        const response = await fetch("https://renter-ecommerce-2.onrender.com/api/user/allUser");
         if (!response.ok) throw new Error("Failed to fetch users");
         const data = await response.json();
         setUsers(data);
@@ -66,8 +66,8 @@ const UserList = () => {
     try {
       const method = currentUser ? "PUT" : "POST";
       const url = currentUser
-        ? `http://localhost:5000/api/user/${currentUser._id}`
-        : "http://localhost:5000/api/user";
+        ? `https://renter-ecommerce-2.onrender.com/api/user/${currentUser._id}`
+        : "https://renter-ecommerce-2.onrender.com/api/user";
 
       const response = await fetch(url, {
         method,
@@ -95,7 +95,7 @@ const UserList = () => {
   const handleDelete = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/user/${userToDelete._id}`,
+        `https://renter-ecommerce-2.onrender.com/api/user/${userToDelete._id}`,
         { method: "DELETE" }
       );
       if (!response.ok) throw new Error("Failed to delete user");

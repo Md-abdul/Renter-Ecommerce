@@ -10,8 +10,8 @@ import {
   SIGNUP_SUCCESS,
 } from "./actionType";
 
-const API_URL = "http://localhost:5000/api/user";
-const ADMIN_API_URL = "http://localhost:5000/api/admin/login";
+const API_URL = "https://renter-ecommerce-2.onrender.com/api/user";
+const ADMIN_API_URL = "https://renter-ecommerce-2.onrender.com/api/admin/login";
 
 export const signIn = (userData) => async (dispatch) => {
   dispatch({ type: LOGIN_REQUEST });
