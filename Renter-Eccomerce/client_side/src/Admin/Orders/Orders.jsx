@@ -15,10 +15,9 @@ import {
   FiSave,
   FiX,
 } from "react-icons/fi";
-import { format } from "date-fns";
+import { format, parse, isValid } from "date-fns";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { parse } from "date-fns";
 
 export const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -111,7 +110,7 @@ export const Orders = () => {
     }
   };
 
-  // Update the status update function
+  // In the updateReturnStatus function
   const updateReturnStatus = async (orderId, itemId, newStatus) => {
     try {
       const token = localStorage.getItem("adminToken");
@@ -123,7 +122,7 @@ export const Orders = () => {
 
       toast.success(`Return request ${newStatus}`);
       fetchReturnRequests();
-      fetchOrders(); // Also refresh the orders list
+      fetchOrders();
     } catch (error) {
       console.error("Error updating return status:", error);
       toast.error(
@@ -131,7 +130,6 @@ export const Orders = () => {
       );
     }
   };
-
   const updateTrackingNumber = async (orderId, itemId) => {
     try {
       const token = localStorage.getItem("adminToken");
@@ -351,14 +349,16 @@ export const Orders = () => {
                             #{request.orderNumber}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {format(
-                              parse(
+                            {(() => {
+                              const parsedDate = parse(
                                 request.requestedAt,
                                 "yyyy-MM-dd",
                                 new Date()
-                              ),
-                              "MMM dd, yyyy"
-                            ) || "Invalid date"}
+                              );
+                              return isValid(parsedDate)
+                                ? format(parsedDate, "MM, dd, yyyy")
+                                : "Invalid date";
+                            })()}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -465,8 +465,8 @@ export const Orders = () => {
                                 : "bg-red-100 text-red-800"
                             }`}
                           >
-                            {request.status.charAt(0).toUpperCase() +
-                              request.status.slice(1)}
+                            {request.status?.charAt(0).toUpperCase() +
+                              request.status?.slice(1)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">

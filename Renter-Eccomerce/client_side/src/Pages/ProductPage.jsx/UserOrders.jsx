@@ -651,38 +651,78 @@ const UserOrders = () => {
       )}
       {/* Return Modal */}
       {showReturnModal && selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4">Request Return</h3>
-            <div className="mb-4">
-              <p className="font-medium mb-2">Item: {selectedItem.name}</p>
-              <p className="text-sm text-gray-600">Size: {selectedItem.size}</p>
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Reason for Return
-              </label>
-              <textarea
-                className="w-full border border-gray-300 rounded p-2"
-                rows="3"
-                value={returnReason}
-                onChange={(e) => setReturnReason(e.target.value)}
-                placeholder="Please specify the reason for return..."
-              />
-            </div>
-            <div className="flex justify-end space-x-3">
-              <button
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            {/* Background overlay with blur effect */}
+            <div
+              className="inset-0 bg-gray-500 opacity-75"
+              aria-hidden="true"
+            >
+              <div
+                className="absolute inset-0 bg-gray-500 bg-opacity-75 backdrop-blur-sm"
                 onClick={() => setShowReturnModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleReturnRequest("return")}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-              >
-                Submit Return Request
-              </button>
+              ></div>
+            </div>
+
+            {/* Modal positioning spacer */}
+            <span
+              className="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
+
+            {/* Modal container */}
+            <div className="inline-block align-bottom rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              {/* Modal content */}
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                      Request Return
+                    </h3>
+
+                    <div className="mb-4">
+                      <p className="font-medium text-gray-900">
+                        Item: {selectedItem.name}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Size: {selectedItem.size}
+                      </p>
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Reason for Return
+                      </label>
+                      <textarea
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        rows="4"
+                        value={returnReason}
+                        onChange={(e) => setReturnReason(e.target.value)}
+                        placeholder="Please specify the reason for return..."
+                      />
+                    </div>
+
+                    <div className="pt-4 flex justify-end space-x-3">
+                      <button
+                        type="button"
+                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 cursor-pointer"
+                        onClick={() => setShowReturnModal(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+                        onClick={() => handleReturnRequest("return")}
+                      >
+                        Submit Return Request
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
