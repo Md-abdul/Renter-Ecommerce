@@ -15,6 +15,7 @@ export const ProductProvider = ({ children }) => {
       try {
         const response = await axios.get("http://localhost:5000/api/products");
         setProducts(response.data);
+        console.log(response.data)
         setLoading(false);
       } catch (err) {
         setError(err.message);

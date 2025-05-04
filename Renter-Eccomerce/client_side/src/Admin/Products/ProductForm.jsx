@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 
-const ProductForm = ({ product, setProducts, products, onClose }) => {
+const ProductForm = ({
+  product,
+  setProducts,
+  products,
+  onClose,
+  onProductUpdate,
+}) => {
   const [formData, setFormData] = useState({
     title: "",
     summary: "",
@@ -10,7 +16,7 @@ const ProductForm = ({ product, setProducts, products, onClose }) => {
     wearCategory: "top",
     sku: "",
     discount: 0,
-    colors: [
+    colors: product?.colors || [
       {
         name: "",
         hexCode: "#000000",
@@ -29,6 +35,37 @@ const ProductForm = ({ product, setProducts, products, onClose }) => {
       },
     ],
   });
+
+  // Get size options based on category and wear type
+  const getSizeOptions = () => {
+    const { category, wearCategory } = formData;
+
+    if (category === "kids") {
+      return [
+        "0-6 months",
+        "6-12 months",
+        "1-2 years",
+        "2-4 years",
+        "4-6 years",
+        "6-8 years",
+        "8-10 years",
+        "10-12 years",
+        "12-14 years",
+        "14-16 years",
+      ];
+    }
+
+    if (wearCategory === "top") {
+      return ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"];
+    }
+
+    if (category === "womens" && wearCategory === "bottom") {
+      return Array.from({ length: 13 }, (_, i) => (26 + i).toString());
+    }
+
+    // Default for mens bottom
+    return Array.from({ length: 21 }, (_, i) => (28 + i).toString());
+  };
 
   useEffect(() => {
     if (product) {
@@ -77,6 +114,23 @@ const ProductForm = ({ product, setProducts, products, onClose }) => {
       });
     }
   }, [product]);
+
+  // Update size options when category or wearCategory changes
+  useEffect(() => {
+    if (!product) {
+      // Only for new products
+      setFormData((prev) => ({
+        ...prev,
+        sizes: [
+          {
+            size: getSizeOptions()[0] || "",
+            priceAdjustment: 0,
+            quantity: 0,
+          },
+        ],
+      }));
+    }
+  }, [formData.category, formData.wearCategory]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -141,12 +195,13 @@ const ProductForm = ({ product, setProducts, products, onClose }) => {
   };
 
   const addSize = () => {
+    const sizeOptions = getSizeOptions();
     setFormData({
       ...formData,
       sizes: [
         ...formData.sizes,
         {
-          size: "",
+          size: sizeOptions[0] || "",
           priceAdjustment: 0,
           quantity: 0,
         },
@@ -182,17 +237,20 @@ const ProductForm = ({ product, setProducts, products, onClose }) => {
       if (response.ok) {
         const updatedProduct = await response.json();
         if (product) {
-          setProducts(
-            products.map((p) =>
+          setProducts((prevProducts) =>
+            prevProducts.map((p) =>
               p._id === updatedProduct._id ? updatedProduct : p
             )
           );
           toast.success("Product updated successfully");
         } else {
-          setProducts([...products, updatedProduct]);
+          setProducts((prevProducts) => [...prevProducts, updatedProduct]);
           toast.success("Product added successfully");
         }
         onClose();
+        if (onProductUpdate) {
+          await onProductUpdate();
+        }
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to save product");
@@ -201,6 +259,11 @@ const ProductForm = ({ product, setProducts, products, onClose }) => {
       console.error("Error saving product:", error);
       toast.error(error.message);
     }
+  };
+
+  // Prevent number input scroll
+  const handleNumberInput = (e) => {
+    e.target.blur();
   };
 
   return (
@@ -502,7 +565,7 @@ const ProductForm = ({ product, setProducts, products, onClose }) => {
                 ))}
               </div>
 
-              {/* Sizes Section */}
+              {/* Size Section */}
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
                   <h4 className="text-md font-medium text-gray-900">Sizes</h4>
@@ -524,19 +587,20 @@ const ProductForm = ({ product, setProducts, products, onClose }) => {
                         <label className="block text-sm font-medium text-gray-700">
                           Size*
                         </label>
-                        <input
-                          type="text"
+                        <select
                           value={size.size}
                           onChange={(e) =>
-                            handleSizeChange(
-                              sizeIndex,
-                              "size",
-                              e.target.value
-                            )
+                            handleSizeChange(sizeIndex, "size", e.target.value)
                           }
                           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
                           required
-                        />
+                        >
+                          {getSizeOptions().map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700">
@@ -554,6 +618,7 @@ const ProductForm = ({ product, setProducts, products, onClose }) => {
                           }
                           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
                           step="0.01"
+                          onWheel={handleNumberInput}
                         />
                       </div>
                       <div>
@@ -573,6 +638,7 @@ const ProductForm = ({ product, setProducts, products, onClose }) => {
                           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
                           required
                           min="0"
+                          onWheel={handleNumberInput}
                         />
                       </div>
                     </div>
@@ -593,13 +659,13 @@ const ProductForm = ({ product, setProducts, products, onClose }) => {
                 <button
                   type="button"
                   onClick={onClose}
-                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300"
+                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-yellow-500 text-gray-900 px-4 py-2 rounded-lg hover:bg-yellow-600"
+                  className="bg-yellow-500 text-gray-900 px-4 py-2 rounded-lg hover:bg-yellow-600 cursor-pointer"
                 >
                   {product ? "Update Product" : "Add Product"}
                 </button>

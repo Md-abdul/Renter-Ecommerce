@@ -46,15 +46,23 @@ const ProductList = ({ category }) => {
     sort: true,
   });
 
-  // Get all unique colors from products
   useEffect(() => {
     const colors = new Set();
     filteredProducts(category).forEach((product) => {
       product.colors.forEach((color) => {
-        colors.add(color.name);
+        // Use both name and hexCode to create a unique key
+        const colorKey = `${color.name.toLowerCase()}-${color.hexCode.toLowerCase()}`;
+        colors.add(colorKey);
       });
     });
-    setAvailableColors(Array.from(colors));
+    
+    // Convert back to array of unique colors
+    const uniqueColors = Array.from(colors).map(colorKey => {
+      const [name, hexCode] = colorKey.split('-');
+      return { name, hexCode };
+    });
+    
+    setAvailableColors(uniqueColors);
   }, [filteredProducts, category]);
 
   const calculateDisplayPrice = (product) => {
@@ -174,9 +182,11 @@ const ProductList = ({ category }) => {
     setCurrentPage(1);
   };
 
-  const handleColorChange = (color) => {
+  const handleColorChange = (colorName) => {
     setColorFilter((prev) =>
-      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]
+      prev.includes(colorName) 
+        ? prev.filter((c) => c !== colorName) 
+        : [...prev, colorName]
     );
     setCurrentPage(1);
   };
@@ -417,24 +427,24 @@ const ProductList = ({ category }) => {
                     className="overflow-hidden"
                   >
                     <div className="grid grid-cols-5 gap-2">
-                      {availableColors.map((color) => (
-                        <div key={color} className="flex flex-col items-center">
-                          <motion.button
-                            onClick={() => handleColorChange(color)}
-                            className={`w-8 h-8 rounded-full border-2 ${
-                              colorFilter.includes(color)
-                                ? "border-yellow-500 scale-110"
-                                : "border-gray-200"
-                            } transition-all duration-200`}
-                            style={{ backgroundColor: color.toLowerCase() }}
-                            title={color}
-                            whileHover={{ scale: 1.1 }}
-                          />
-                          <span className="text-xs mt-1 text-gray-600 truncate w-full text-center">
-                            {color}
-                          </span>
-                        </div>
-                      ))}
+                    {availableColors.map((color) => (
+  <div key={`${color.name}-${color.hexCode}`} className="flex flex-col items-center">
+    <motion.button
+      onClick={() => handleColorChange(color.name)}
+      className={`w-8 h-8 rounded-full border-2 ${
+        colorFilter.includes(color.name)
+          ? "border-yellow-500 scale-110"
+          : "border-gray-200"
+      } transition-all duration-200`}
+      style={{ backgroundColor: color.hexCode }}
+      title={color.name}
+      whileHover={{ scale: 1.1 }}
+    />
+    <span className="text-xs mt-1 text-gray-600 truncate w-full text-center">
+      {color.name}
+    </span>
+  </div>
+))}
                     </div>
                   </motion.div>
                 )}

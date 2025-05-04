@@ -17,21 +17,27 @@ const ProductList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10); // 10 items per page
 
+  const fetchProducts = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("http://localhost:5000/api/products");
+      const data = await response.json();
+      setProducts(data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      toast.error("Failed to fetch products");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch("http://localhost:5000/api/products");
-        const data = await response.json();
-        setProducts(data);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchProducts();
   }, []);
+
+  const handleProductUpdate = async () => {
+    await fetchProducts(); // Refetch the latest data
+  };
 
   const handleDelete = async () => {
     try {
@@ -93,15 +99,18 @@ const ProductList = () => {
   };
 
   // Calculate total quantity for a product
-  const calculateTotalQuantity = (product) => {
-    return product.sizes.reduce((total, size) => total + size.quantity, 0);
-  };
+  // const calculateTotalQuantity = (product) => {
+  //   return product.sizes.reduce((total, size) => total + size.quantity, 0);
+  // };
 
-  // Filter products based on search term
+  const calculateTotalQuantity = (product) => {
+    return (product.sizes || []).reduce((total, size) => total + (size.quantity || 0), 0);
+  };
+  
   const filteredProducts = products.filter(
     (product) =>
-      product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase())
+      (product.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (product.category?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
   // Pagination logic
@@ -309,7 +318,7 @@ const ProductList = () => {
                                 }}
                               ></span>
                               {product.colors?.[0]?.name || "No Color"}
-                              {product.colors.length > 1 && (
+                              {product.colors?.length > 1 && (
                                 <span className="ml-2 text-gray-400">
                                   +{product.colors.length - 1} more
                                 </span>
@@ -556,6 +565,7 @@ const ProductList = () => {
                           setProducts={setProducts}
                           products={products}
                           onClose={() => setIsModalOpen(false)}
+                          onProductUpdate={handleProductUpdate}
                         />
                       </div>
                     </div>
