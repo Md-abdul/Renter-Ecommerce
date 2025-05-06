@@ -109,18 +109,17 @@ UserRoutes.post("/signup", async (req, res) => {
       password: hashedPassword,
       address: "",
       phoneNumber: null,
-      cart: {}, // Initialize as empty object (Map will be handled by Mongoose)
+      cart: {},
     });
 
     await newUser.save();
 
     return res.status(201).json({
-      message: "User registered successfully",
+      message: "User registered successfully. Please login.",
       user: {
         id: newUser._id,
         name: newUser.name,
         email: newUser.email,
-        cart: newUser.cart || {},
       },
     });
   } catch (error) {
