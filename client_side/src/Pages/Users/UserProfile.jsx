@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { CgProfile } from "react-icons/cg";
-import { FiLogOut } from "react-icons/fi";
+import { FiLogOut, FiMenu, FiX } from "react-icons/fi";
 import { RiLockPasswordLine, RiHistoryLine } from "react-icons/ri";
 import { IoMdArrowBack } from "react-icons/io";
 import { useDispatch } from "react-redux";
@@ -16,6 +16,24 @@ const UserProfile = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Initialize on first render
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -51,6 +69,10 @@ const UserProfile = () => {
     navigate("/login");
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   if (loading) {
     return (
       <div className="font-poppins min-h-screen bg-gray-50 flex items-center justify-center">
@@ -68,17 +90,42 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="font-poppins min-h-screen bg-gray-50 flex mt-5 relative">
-      {/* Sidebar - Scrollable */}
-      <div className="w-64 bg-white shadow-md h-screen overflow-y-auto">
-        <div className="p-6 sticky top-0 bg-white z-10">
+    <div className="font-poppins min-h-screen bg-gray-50 flex flex-col md:flex-row relative">
+      {/* Mobile Header with Menu Button */}
+      {isMobile && (
+        <div className="bg-white shadow-sm p-4 flex items-center justify-between md:hidden sticky top-0 z-20">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center text-gray-600 hover:text-yellow-400 mb-6"
+            className="flex items-center text-gray-600 hover:text-yellow-400"
           >
             <IoMdArrowBack className="mr-2" />
             Back
           </button>
+          <button
+            onClick={toggleSidebar}
+            className="text-gray-600 hover:text-yellow-400 p-2"
+          >
+            {sidebarOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+          </button>
+        </div>
+      )}
+
+      {/* Sidebar - Collapsible and Responsive */}
+      <div
+        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+        md:translate-x-0 transform transition-transform duration-300 ease-in-out
+        w-64 bg-white shadow-md fixed md:static h-screen overflow-y-auto z-10`}
+      >
+        <div className="p-6 sticky top-0 bg-white z-10">
+          {!isMobile && (
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center text-gray-600 hover:text-yellow-400 mb-6"
+            >
+              <IoMdArrowBack className="mr-2" />
+              Back
+            </button>
+          )}
 
           <div className="flex flex-col items-center mb-8">
             <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center mb-4 overflow-hidden">
@@ -105,6 +152,7 @@ const UserProfile = () => {
           <Link
             to="/user/profile"
             className="flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-400 hover:text-black rounded-lg transition-all"
+            onClick={() => isMobile && setSidebarOpen(false)}
           >
             <CgProfile className="mr-3" />
             My Profile
@@ -112,17 +160,11 @@ const UserProfile = () => {
           <Link
             to="/user/orders"
             className="flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-400 hover:text-black  rounded-lg transition-all"
+            onClick={() => isMobile && setSidebarOpen(false)}
           >
             <RiHistoryLine className="mr-3" />
             My Orders
           </Link>
-          {/* <Link
-            to="/user/change-password"
-            className="flex items-center px-4 py-3 text-gray-700 hover:bg-yellow-400 hover:text-black  rounded-lg transition-all"
-          >
-            <RiLockPasswordLine className="mr-3" />
-            Change Password
-          </Link> */}
           <button
             onClick={() => setShowLogoutModal(true)}
             className="w-full flex items-center px-4 py-3 text-gray-700 hover:bg-red-500 hover:text-black  rounded-lg transition-all cursor-pointer"
@@ -133,9 +175,21 @@ const UserProfile = () => {
         </nav>
       </div>
 
-      {/* Main Content - Scrollable */}
-      <div className="flex-1 overflow-y-auto h-screen">
-        <div className="p-8">
+      {/* Overlay for mobile when sidebar is open */}
+      {sidebarOpen && isMobile && (
+        <div
+          className="fixed inset-0 bg-white bg-opacity-50 z-0 md:hidden"
+          onClick={toggleSidebar}
+        ></div>
+      )}
+
+      {/* Main Content */}
+      <div 
+        className={`flex-1 overflow-y-auto h-screen transition-all duration-300 ${
+          sidebarOpen && !isMobile ? "md:ml-2" : ""
+        }`}
+      >
+        <div className="p-4 md:p-8">
           <Outlet />
         </div>
       </div>
