@@ -332,7 +332,7 @@ const ProductList = () => {
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
                           <span className="text-gray-900 font-semibold text-sm">
-                            ${product.basePrice}
+                           ₹{product.basePrice}
                           </span>
                           {product.discount > 0 && (
                             <span className="mt-1 text-green-600 text-xs font-medium">
@@ -341,7 +341,7 @@ const ProductList = () => {
                           )}
                           {product.basePrice !== product.price && (
                             <span className="text-xs text-gray-400 line-through">
-                              ${product.price}
+                              ₹{product.price}
                             </span>
                           )}
                           <span className="text-xs text-gray-400 mt-1">

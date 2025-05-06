@@ -14,6 +14,12 @@ import {
   FiEdit,
   FiSave,
   FiX,
+  FiChevronDown,
+  FiChevronUp,
+  FiShoppingBag,
+  FiCreditCard,
+  FiMapPin,
+  FiBox
 } from "react-icons/fi";
 import { format, parse, isValid } from "date-fns";
 import axios from "axios";
@@ -29,6 +35,7 @@ export const Orders = () => {
   const [showReturns, setShowReturns] = useState(false);
   const [editingTracking, setEditingTracking] = useState(null);
   const [trackingInput, setTrackingInput] = useState("");
+  const [expandedOrder, setExpandedOrder] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -110,7 +117,6 @@ export const Orders = () => {
     }
   };
 
-  // In the updateReturnStatus function
   const updateReturnStatus = async (orderId, itemId, newStatus) => {
     try {
       const token = localStorage.getItem("adminToken");
@@ -130,6 +136,7 @@ export const Orders = () => {
       );
     }
   };
+
   const updateTrackingNumber = async (orderId, itemId) => {
     try {
       const token = localStorage.getItem("adminToken");
@@ -156,6 +163,10 @@ export const Orders = () => {
   const cancelEditingTracking = () => {
     setEditingTracking(null);
     setTrackingInput("");
+  };
+
+  const toggleOrderExpansion = (orderId) => {
+    setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
 
   const filteredOrders = orders.filter((order) => {
@@ -215,6 +226,10 @@ export const Orders = () => {
     };
 
     return statusFlow[currentStatus] || [];
+  };
+
+  const formatDate = (dateString) => {
+    return format(new Date(dateString), "MMM dd, yyyy, hh:mm a");
   };
 
   return (
@@ -350,14 +365,18 @@ export const Orders = () => {
                           </div>
                           <div className="text-xs text-gray-500">
                             {(() => {
-                              const parsedDate = parse(
-                                request.requestedAt,
-                                "yyyy-MM-dd",
-                                new Date()
-                              );
-                              return isValid(parsedDate)
-                                ? format(parsedDate, "MM, dd, yyyy")
-                                : "Invalid date";
+                              const requestedAt = request.requestedAt;
+                              if (requestedAt) {
+                                const parsedDate = parse(
+                                  requestedAt,
+                                  "yyyy-MM-dd",
+                                  new Date()
+                                );
+                                return isValid(parsedDate)
+                                  ? format(parsedDate, "MM, dd, yyyy")
+                                  : "Invalid date";
+                              }
+                              return "N"; // Return something neutral if requestedAt is undefined
                             })()}
                           </div>
                         </td>
@@ -562,119 +581,197 @@ export const Orders = () => {
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-900">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        Order ID
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        Customer
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        <div className="flex items-center">
-                          <FiCalendar className="mr-2" />
-                          Date
+            <div className="space-y-4">
+              {filteredOrders.length === 0 ? (
+                <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+                  <FiPackage className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900">
+                    {orders.length === 0
+                      ? "No orders found"
+                      : "No orders match your filters"}
+                  </h3>
+                  {statusFilter !== "all" && (
+                    <button
+                      onClick={() => setStatusFilter("all")}
+                      className="mt-4 px-4 py-2 bg-yellow-500 text-gray-900 rounded-lg hover:bg-yellow-600 transition-colors"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
+                </div>
+              ) : (
+                filteredOrders.map((order) => (
+                  <div
+                    key={order._id}
+                    className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-200"
+                  >
+                    <div
+                      className="p-6 cursor-pointer flex justify-between items-center hover:bg-gray-50"
+                      onClick={() => toggleOrderExpansion(order._id)}
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="bg-yellow-100 p-3 rounded-lg">
+                          <FiShoppingBag className="text-yellow-600 h-6 w-6" />
                         </div>
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        <div className="flex items-center">
-                          <FiPackage className="mr-2" />
-                          Items
-                        </div>
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        <div className="flex items-center">
-                          <FiDollarSign className="mr-2" />
-                          Total
-                        </div>
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredOrders.length === 0 ? (
-                      <tr>
-                        <td colSpan="7" className="px-6 py-12 text-center">
-                          <div className="flex flex-col items-center justify-center">
-                            <FiPackage className="h-12 w-12 text-gray-400 mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900">
-                              {orders.length === 0
-                                ? "No orders found"
-                                : "No orders match your filters"}
-                            </h3>
-                            {statusFilter !== "all" && (
-                              <button
-                                onClick={() => setStatusFilter("all")}
-                                className="mt-4 px-4 py-2 bg-yellow-500 text-gray-900 rounded-lg hover:bg-yellow-600 transition-colors"
-                              >
-                                Clear Filters
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredOrders.map((order) => (
-                        <tr
-                          key={order._id}
-                          className="hover:bg-gray-50 transition-colors"
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {order._id.substring(0, 8)}...
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                <FiUser className="h-5 w-5 text-blue-600" />
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {order.userId?.name}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {order.userId?.email}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {format(new Date(order.createdAt), "MMM dd, yyyy")}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <div>
+                          <h3 className="font-bold text-gray-900">
+                            Order #{order._id.substring(0, 8)}...
+                          </h3>
+                          <p className="text-sm text-gray-500">
                             {order.items.reduce(
                               (sum, item) => sum + item.quantity,
                               0
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            ${order.totalAmount.toFixed(2)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                                order.status
-                              )}`}
-                            >
-                              {getStatusIcon(order.status)}{" "}
-                              {order.status.charAt(0).toUpperCase() +
-                                order.status.slice(1)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            )}{" "}
+                            items • ₹{order.totalAmount.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-6">
+                        <div className="text-right">
+                          <span
+                            className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
+                              order.status
+                            )}`}
+                          >
+                            {getStatusIcon(order.status)}{" "}
+                            {order.status.charAt(0).toUpperCase() +
+                              order.status.slice(1)}
+                          </span>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {formatDate(order.createdAt)}
+                          </p>
+                        </div>
+                        <div className="text-gray-400">
+                          {expandedOrder === order._id ? (
+                            <FiChevronUp className="h-5 w-5" />
+                          ) : (
+                            <FiChevronDown className="h-5 w-5" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {expandedOrder === order._id && (
+                      <div className="border-t border-gray-200 px-6 py-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Order Items */}
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                              <FiPackage className="mr-2" />
+                              Order Items
+                            </h4>
+                            <div className="space-y-4">
+                              {order.items.map((item, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg"
+                                >
+                                  <img
+                                    src={
+                                      item.image ||
+                                      "/default-product.png"
+                                    }
+                                    alt={item.name}
+                                    className="w-16 h-16 rounded-md object-cover"
+                                  />
+                                  <div className="flex-1">
+                                    <h5 className="font-medium text-gray-900">
+                                      {item.name}
+                                    </h5>
+                                    <div className="text-sm text-gray-500 mt-1">
+                                      <p>Color: {item.color}</p>
+                                      <p>Size: {item.size}</p>
+                                      <p>Qty: {item.quantity}</p>
+                                      <p>Price: ₹{item.price}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Order Details */}
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                              <FiShoppingBag className="mr-2" />
+                              Order Details
+                            </h4>
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">
+                                  Subtotal:
+                                </span>
+                                <span className="font-medium">
+                                  ₹{order.subTotal?.toFixed(2) || "0.00"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">
+                                  Shipping:
+                                </span>
+                                <span className="font-medium">
+                                  ₹{order.shippingCharges?.toFixed(2) || "0.00"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Tax:</span>
+                                <span className="font-medium">
+                                  ₹{order.tax?.toFixed(2) || "0.00"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between border-t border-gray-200 pt-2">
+                                <span className="text-gray-900 font-semibold">
+                                  Total:
+                                </span>
+                                <span className="font-bold text-gray-900">
+                                  ₹{order.totalAmount?.toFixed(2) || "0.00"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <h4 className="font-semibold text-gray-900 mt-6 mb-3 flex items-center">
+                              <FiUser className="mr-2" />
+                              Customer Details
+                            </h4>
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                              <p className="font-medium">
+                                {order.userId?.name}
+                              </p>
+                              <p className="text-gray-600">
+                                {order.userId?.email}
+                              </p>
+                              <p className="text-gray-600">
+                                {order.userId?.phone}
+                              </p>
+                            </div>
+
+                            <h4 className="font-semibold text-gray-900 mt-6 mb-3 flex items-center">
+                              <FiMapPin className="mr-2" />
+                              Shipping Address
+                            </h4>
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-1">
+                              <p>{order.shippingAddress?.street}</p>
+                              <p>
+                                {order.shippingAddress?.city},{" "}
+                                {order.shippingAddress?.state}{" "}
+                                {order.shippingAddress?.postalCode}
+                              </p>
+                              <p>{order.shippingAddress?.country}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-6 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center">
+                          <div className="mb-4 sm:mb-0">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Update Status
+                            </label>
                             <select
                               value={order.status}
                               onChange={(e) =>
                                 updateOrderStatus(order._id, e.target.value)
                               }
-                              className={`border rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${getStatusColor(
+                              className={`border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${getStatusColor(
                                 order.status
                               )}`}
                             >
@@ -684,13 +781,23 @@ export const Orders = () => {
                               <option value="delivered">Delivered</option>
                               <option value="cancelled">Cancelled</option>
                             </select>
-                          </td>
-                        </tr>
-                      ))
+                          </div>
+                          <div className="flex space-x-3">
+                            <button className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors">
+                              <FiBox className="inline mr-2" />
+                              View Packaging Slip
+                            </button>
+                            <button className="px-4 py-2 bg-yellow-500 text-gray-900 rounded-lg hover:bg-yellow-600 transition-colors">
+                              <FiCreditCard className="inline mr-2" />
+                              View Invoice
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     )}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </>

@@ -79,6 +79,14 @@ const StoreLocator = () => {
     { name: "Khopoli", coordinates: [73.3456, 18.789] },
   ];
 
+  // Function to generate Google Maps URL
+  const getGoogleMapsUrl = (store) => {
+    const address = encodeURIComponent(
+      `${store.address}, ${store.city}, ${store.state} ${store.pincode}, ${store.country}`
+    );
+    return `https://www.google.com/maps/dir/?api=1&destination=${address}`;
+  };
+
   useEffect(() => {
     if (!mapInitialized) {
       const initializeMap = new mapboxgl.Map({
@@ -99,10 +107,16 @@ const StoreLocator = () => {
             <div class="p-2 max-w-xs">
               <h3 class="font-bold text-lg text-gray-800">${store.name}</h3>
               <p class="text-gray-600">${store.address}</p>
-              <p class="text-gray-600">${store.city}, ${store.state} ${store.pincode}</p>
+              <p class="text-gray-600">${store.city}, ${store.state} ${
+              store.pincode
+            }</p>
               <p class="text-gray-600">${store.country}</p>
-              <p class="mt-2 text-yellow-600 font-medium">Phone: ${store.phone}</p>
-              <button class="mt-2 px-3 py-1 bg-yellow-400 text-black rounded-md text-sm font-medium hover:bg-yellow-500 transition">
+              <p class="mt-2 text-yellow-600 font-medium">Phone: ${
+                store.phone
+              }</p>
+              <button onclick="window.open('${getGoogleMapsUrl(
+                store
+              )}', '_blank')" class="mt-2 px-3 py-1 bg-yellow-400 text-black rounded-md text-sm font-medium hover:bg-yellow-500 transition">
                 Get Directions
               </button>
             </div>
@@ -210,7 +224,7 @@ const StoreLocator = () => {
               </div>
             </div>
           </form>
-          </div>
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Store List */}
@@ -264,7 +278,12 @@ const StoreLocator = () => {
                   <p className="mt-2 text-yellow-600 font-medium">
                     {selectedStore.phone}
                   </p>
-                  <button className="mt-3 px-4 py-2 bg-yellow-400 text-black rounded-lg font-medium hover:bg-yellow-500 transition w-full">
+                  <button
+                    onClick={() =>
+                      window.open(getGoogleMapsUrl(selectedStore), "_blank")
+                    }
+                    className="mt-3 px-4 py-2 bg-yellow-400 text-black rounded-lg font-medium hover:bg-yellow-500 transition w-full"
+                  >
                     Get Directions
                   </button>
                 </div>
