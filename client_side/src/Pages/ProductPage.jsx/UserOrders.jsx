@@ -387,6 +387,28 @@ const UserOrders = () => {
                                   {index ===
                                     getStatusSteps(order.status).length - 1 && (
                                     <div className="text-sm text-gray-500 mt-1 space-y-1">
+                                      {order.status === "delivered" &&
+                                      updatedDate ? (
+                                        <p className="flex items-center">
+                                          <FiCheckCircle className="mr-1.5 text-green-500" />
+                                          Delivered on{" "}
+                                          {format(updatedDate, "MMM dd, yyyy")}
+                                        </p>
+                                      ) : order.status === "cancelled" ? (
+                                        <p className="flex items-center">
+                                          <FiXCircle className="mr-1.5 text-red-500" />
+                                          Order was cancelled
+                                        </p>
+                                      ) : (
+                                        <p className="flex items-center">
+                                          <FiInfo className="mr-1.5 text-blue-500" />
+                                          Estimated delivery:{" "}
+                                          {format(
+                                            estimatedDeliveryDate,
+                                            "MMM dd, yyyy"
+                                          )}
+                                        </p>
+                                      )}
                                       {order.status === "delivered" && (
                                         <p
                                           className={`flex items-center ${
