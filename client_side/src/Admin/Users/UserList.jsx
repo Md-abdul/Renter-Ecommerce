@@ -24,7 +24,9 @@ const UserList = () => {
     const fetchUsers = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("https://renter-ecommerce-2.onrender.com/api/user/allUser");
+        const response = await fetch(
+          "https://renter-ecommerce-2.onrender.com/api/user/allUser"
+        );
         if (!response.ok) throw new Error("Failed to fetch users");
         const data = await response.json();
         setUsers(data);
@@ -102,7 +104,7 @@ const UserList = () => {
 
       setUsers(users.filter((u) => u._id !== userToDelete._id));
       setDeleteModalOpen(false);
-      toast.success('User Deleted Successfully')
+      toast.success("User Deleted Successfully");
     } catch (error) {
       console.error("Error deleting user:", error);
       alert("Failed to delete user. Please try again.");
@@ -357,10 +359,7 @@ const UserList = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto ">
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div
-              className="fixed transition-opacity"
-              aria-hidden="true"
-            >
+            <div className="fixed transition-opacity" aria-hidden="true">
               <div
                 className="absolute bg-gray-500 opacity-75"
                 onClick={() => setIsModalOpen(false)}
@@ -475,55 +474,32 @@ const UserList = () => {
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div
-              className="fixed transition-opacity"
-              aria-hidden="true"
-            >
-              <div
-                className="absolute bg-gray-500 opacity-75"
-                onClick={() => setDeleteModalOpen(false)}
-              ></div>
-            </div>
-            <span
-              className="hidden sm:inline-block sm:align-middle sm:h-screen"
-              aria-hidden="true"
-            >
-              &#8203;
-            </span>
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                      Confirm Delete
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Are you sure you want to delete user:{" "}
-                      <strong className="text-gray-900">
-                        {userToDelete?.name}
-                      </strong>
-                      ? This action cannot be undone.
-                    </p>
-                    <div className="pt-4 flex justify-end space-x-3">
-                      <button
-                        type="button"
-                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 cursor-pointer"
-                        onClick={() => setDeleteModalOpen(false)}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
-                        onClick={handleDelete}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl overflow-hidden w-full max-w-md mx-4">
+            <div className="p-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Confirm Delete
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete user:{" "}
+                <strong className="text-gray-900">{userToDelete?.name}</strong>?
+                This action cannot be undone.
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  className="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none transition-colors duration-200 cursor-pointer"
+                  onClick={() => setDeleteModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none transition-colors duration-200 cursor-pointer"
+                  onClick={handleDelete}
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>

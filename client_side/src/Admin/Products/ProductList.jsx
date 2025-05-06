@@ -20,7 +20,9 @@ const ProductList = () => {
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("https://renter-ecommerce-2.onrender.com/api/products");
+      const response = await fetch(
+        "https://renter-ecommerce-2.onrender.com/api/products"
+      );
       const data = await response.json();
       setProducts(data);
     } catch (error) {
@@ -30,7 +32,7 @@ const ProductList = () => {
       setIsLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -104,13 +106,16 @@ const ProductList = () => {
   // };
 
   const calculateTotalQuantity = (product) => {
-    return (product.sizes || []).reduce((total, size) => total + (size.quantity || 0), 0);
+    return (product.sizes || []).reduce(
+      (total, size) => total + (size.quantity || 0),
+      0
+    );
   };
-  
+
   const filteredProducts = products.filter(
     (product) =>
-      (product.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (product.category?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+      (product.title?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (product.category?.toLowerCase() || "").includes(searchTerm.toLowerCase())
   );
 
   // Pagination logic
@@ -579,132 +584,115 @@ const ProductList = () => {
 
       {/* Upload Excel Modal */}
       {uploadModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div
-              className="fixed  transition-opacity"
-              aria-hidden="true"
-            >
-              <div
-                className="absolute bg-gray-500 opacity-75"
-                onClick={() => setUploadModalOpen(false)}
-              ></div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl overflow-hidden w-full max-w-lg mx-4">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-2xl font-bold text-gray-900">
+                Upload Products
+              </h3>
             </div>
-            <span
-              className="hidden sm:inline-block sm:align-middle sm:h-screen"
-              aria-hidden="true"
-            >
-              &#8203;
-            </span>
 
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Upload Products
-                </h3>
+            {/* Modal Body */}
+            <div className="px-6 py-5">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Excel File
+                </label>
+                <label className="cursor-pointer">
+                  <div className="flex items-center justify-center px-6 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors duration-200">
+                    {excelFile ? (
+                      <div className="text-center">
+                        <svg
+                          className="mx-auto h-10 w-10 text-green-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <p className="mt-2 text-sm font-medium text-gray-900">
+                          {excelFile.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {Math.round(excelFile.size / 1024)} KB
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <svg
+                          className="mx-auto h-10 w-10 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          />
+                        </svg>
+                        <p className="mt-2 text-sm text-gray-600">
+                          <span className="font-medium text-yellow-600">
+                            Click to upload
+                          </span>{" "}
+                          or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Excel files only (.xlsx, .xls)
+                        </p>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                  </div>
+                </label>
               </div>
 
-              <div className="px-6 py-5">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Excel File
-                  </label>
-                  <label className="cursor-pointer">
-                    {" "}
-                    {/* Changed to label wrapping the entire area */}
-                    <div className="flex items-center justify-center px-6 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400">
-                      {excelFile ? (
-                        <div className="text-center">
-                          <svg
-                            className="mx-auto h-10 w-10 text-green-500"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                          <p className="mt-2 text-sm font-medium text-gray-900">
-                            {excelFile.name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {Math.round(excelFile.size / 1024)} KB
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="text-center">
-                          <svg
-                            className="mx-auto h-10 w-10 text-gray-400"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                            />
-                          </svg>
-                          <p className="mt-2 text-sm text-gray-600">
-                            <span className="font-medium text-yellow-600">
-                              Click to upload
-                            </span>{" "}
-                            or drag and drop
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Excel files only (.xlsx, .xls)
-                          </p>
-                        </div>
-                      )}
-                      <input
-                        type="file"
-                        accept=".xlsx,.xls"
-                        onChange={handleFileChange}
-                        className="hidden"
-                        id="file-upload" // Added ID for label association
-                      />
-                    </div>
-                  </label>
-                </div>
-
-                <div className="text-center text-sm text-gray-600">
-                  <p>
-                    Need the template file?{" "}
-                    <a
-                      href="/product_template.xlsx"
-                      download="product_template.xlsx"
-                      className="text-yellow-600 hover:text-yellow-500 font-medium"
-                    >
-                      Download template
-                    </a>
-                  </p>
-                </div>
+              <div className="text-center text-sm text-gray-600">
+                <p>
+                  Need the template file?{" "}
+                  <a
+                    href="/product_template.xlsx"
+                    download="product_template.xlsx"
+                    className="text-yellow-600 hover:text-yellow-500 font-medium transition-colors duration-200"
+                  >
+                    Download template
+                  </a>
+                </p>
               </div>
+            </div>
 
-              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end space-x-3">
-                <button
-                  onClick={() => setUploadModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleExcelUpload}
-                  disabled={!excelFile}
-                  className={`px-4 py-2 text-sm font-medium text-black rounded-md cursor-pointer ${
-                    excelFile
-                      ? "bg-yellow-600 hover:bg-yellow-700"
-                      : "bg-yellow-300 cursor-not-allowed"
-                  }`}
-                >
-                  Upload
-                </button>
-              </div>
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end space-x-3">
+              <button
+                onClick={() => setUploadModalOpen(false)}
+                className="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none transition-colors duration-200 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExcelUpload}
+                disabled={!excelFile}
+                className={`px-5 py-2 text-black rounded-lg focus:outline-none transition-colors duration-200 cursor-pointer ${
+                  excelFile
+                    ? "bg-yellow-600 hover:bg-yellow-700"
+                    : "bg-yellow-300 cursor-not-allowed"
+                }`}
+              >
+                Upload
+              </button>
             </div>
           </div>
         </div>
@@ -712,55 +700,34 @@ const ProductList = () => {
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div
-              className="fixed transition-opacity"
-              aria-hidden="true"
-            >
-              <div
-                className="absolute bg-gray-500 opacity-75"
-                onClick={() => setDeleteModalOpen(false)}
-              ></div>
-            </div>
-            <span
-              className="hidden sm:inline-block sm:align-middle sm:h-screen"
-              aria-hidden="true"
-            >
-              &#8203;
-            </span>
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                      Confirm Delete
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Are you sure you want to delete product:{" "}
-                      <strong className="text-gray-900">
-                        {productToDelete?.title}
-                      </strong>
-                      ? This action cannot be undone.
-                    </p>
-                    <div className="pt-4 flex justify-end space-x-3">
-                      <button
-                        type="button"
-                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                        onClick={() => setDeleteModalOpen(false)}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-                        onClick={handleDelete}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl overflow-hidden w-full max-w-md mx-4">
+            <div className="p-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Confirm Delete
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete product:{" "}
+                <strong className="text-gray-900">
+                  {productToDelete?.title}
+                </strong>
+                ? This action cannot be undone.
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  className="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none transition-colors duration-200"
+                  onClick={() => setDeleteModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none transition-colors duration-200 cursor-pointer"
+                  onClick={handleDelete}
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>
