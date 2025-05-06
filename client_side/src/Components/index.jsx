@@ -297,7 +297,7 @@ const HomePage = () => {
                       className={`absolute inset-0 bg-gradient-to-b ${category.bgGradient} opacity-70`}
                     ></div>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <h3 className="text-2xl font-bold text-yellow-500 px-6 py-2 rounded-lg transform translate-y-10 group-hover:translate-y-0 transition-transform duration-300">
+                      <h3 className="text-3xl font-bold text-yellow-300 px-6 py-2 rounded-lg transform translate-y-10 group-hover:translate-y-0 transition-transform duration-300">
                         {category.name}
                       </h3>
                     </div>

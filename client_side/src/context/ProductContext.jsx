@@ -16,7 +16,7 @@ export const ProductProvider = ({ children }) => {
       try {
         const response = await axios.get("https://renter-ecommerce-2.onrender.com/api/products");
         setProducts(response.data);
-        console.log(response.data)
+        // console.log(response.data)
         setLoading(false);
       } catch (err) {
         setError(err.message);

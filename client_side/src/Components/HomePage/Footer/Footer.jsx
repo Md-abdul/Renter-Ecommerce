@@ -6,13 +6,28 @@ import {
   FaLinkedin,
 } from "react-icons/fa";
 import backgroundImage from "../../../assets/wave.png";
+
 const Footer = () => {
   return (
     <div
-      className="relative bg-cover bg-center text-black py-16 px-6"
-      style={{ backgroundImage: `url(${backgroundImage})` }} // Update the path if needed
+      className="relative bg-yellow-400 lg:bg-transparent text-black py-20 px-6 -mb-20"
+      style={
+        {
+          // Remove backgroundImage from inline style and handle it via CSS
+          // border: "2px solid red",/
+          // marginTop:"-10px"
+        }
+      }
     >
-      <div className="max-w-7xl mx-auto flex flex-wrap justify-between gap-8 mt-30">
+      {/* Add a div for the background that will be hidden on small screens */}
+      <div
+        className="hidden lg:block absolute inset-0 bg-cover bg-center -z-10"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+        }}
+      ></div>
+
+      <div className="max-w-7xl mx-auto flex flex-wrap justify-between gap-8 -mt-10 sm:mt-30">
         {/* Account Section */}
         <div className="w-full sm:w-auto">
           <h4 className="mb-3 text-lg font-semibold">Account</h4>
@@ -98,7 +113,6 @@ const Footer = () => {
             </li>
           </ul>
         </div>
-        {/* Wrap for small screens */}
 
         {/* Support Section */}
         <div className="w-full sm:w-auto">
@@ -127,8 +141,7 @@ const Footer = () => {
           </div>
         </div>
       </div>
-
-      <div className="max-w-7xl mx-auto mt-8 flex flex-col sm:flex-row justify-between items-center px-6">
+      <div className="max-w-7xl mx-auto mt-8 flex flex-col sm:flex-row justify-between items-center px-6 lg:-mb-2.5">
         <p className="text-gray-700 text-sm">
           &copy; Copyright Ranter 2025. All rights reserved
         </p>

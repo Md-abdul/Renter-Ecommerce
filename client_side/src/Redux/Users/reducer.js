@@ -12,39 +12,6 @@ import {
   SIGNUP_SUCCESS,
 } from "./actionType";
 
-// const initalState = {
-//   isAuth: localStorage.getItem("token") ? true : false,
-//   isLoading: false,
-//   isError: false,
-//   token: localStorage.getItem("token") || null,
-// };
-
-// export const reducer = (state = initalState, { type, payload }) => {
-//   switch (type) {
-//     case LOGIN_REQUEST:
-//     case SIGNUP_REQUEST: {
-//       return { ...state, isLoading: true, isError: false };
-//     }
-//     case LOGIN_SUCCESS:
-//     case SIGNUP_SUCCESS: {
-//       return { ...state, isLoading: false, isAuth: true, token: payload };
-//     }
-//     case LOGIN_ERROR:
-//     case SIGNUP_ERROR: {
-//       return { ...state, isLoading: false, isError: true };
-//     }
-//     case LOGOUT: {
-//       return { ...initalState, isAuth: false, token: null }; 
-//     }
-//     default: {
-//       return state;
-//     }
-//   }
-// };
-
-
-
-
 const initialState = {
   isAuth: localStorage.getItem("token") ? true : false,
   isLoading: false,
@@ -60,9 +27,11 @@ export const reducer = (state = initialState, { type, payload }) => {
     case ADMIN_LOGIN_REQUEST: {
       return { ...state, isLoading: true, isError: false };
     }
-    case LOGIN_SUCCESS:
-    case SIGNUP_SUCCESS: {
+    case LOGIN_SUCCESS: {
       return { ...state, isLoading: false, isAuth: true, token: payload };
+    }
+    case SIGNUP_SUCCESS: {
+      return { ...state, isLoading: false, isError: false };
     }
     case ADMIN_LOGIN_SUCCESS: {
       return { ...state, isLoading: false, isAdmin: true };
