@@ -34,15 +34,31 @@ const Footer = () => {
           <ul className="space-y-2">
             <li>
               <a
-                href="#"
+                href="/womens"
                 className="text-gray-700 hover:text-gray-900 transition"
               >
-                My Account
+                Woman's Wears
               </a>
             </li>
             <li>
               <a
-                href="#"
+                href="/mens"
+                className="text-gray-700 hover:text-gray-900 transition"
+              >
+                Men's Wears
+              </a>
+            </li>
+            <li>
+              <a
+                href="/aboutpage"
+                className="text-gray-700 hover:text-gray-900 transition"
+              >
+                About
+              </a>
+            </li>
+            <li>
+              <a
+                href="/login"
                 className="text-gray-700 hover:text-gray-900 transition"
               >
                 Login / Register
@@ -50,26 +66,10 @@ const Footer = () => {
             </li>
             <li>
               <a
-                href="#"
+                href="/productCart"
                 className="text-gray-700 hover:text-gray-900 transition"
               >
                 Cart
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-700 hover:text-gray-900 transition"
-              >
-                Wishlist
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-700 hover:text-gray-900 transition"
-              >
-                Shop
               </a>
             </li>
           </ul>
@@ -81,7 +81,7 @@ const Footer = () => {
           <ul className="space-y-2">
             <li>
               <a
-                href="#"
+                href="/term-of-privacy"
                 className="text-gray-700 hover:text-gray-900 transition"
               >
                 Privacy Policy
@@ -89,7 +89,7 @@ const Footer = () => {
             </li>
             <li>
               <a
-                href="#"
+                href="/term-of-uses"
                 className="text-gray-700 hover:text-gray-900 transition"
               >
                 Terms Of Use
@@ -97,15 +97,15 @@ const Footer = () => {
             </li>
             <li>
               <a
-                href="#"
+                href="/term-of-return"
                 className="text-gray-700 hover:text-gray-900 transition"
               >
-                FAQ
+                Return Policy
               </a>
             </li>
             <li>
               <a
-                href="#"
+                href="/contactpage"
                 className="text-gray-700 hover:text-gray-900 transition"
               >
                 Contact

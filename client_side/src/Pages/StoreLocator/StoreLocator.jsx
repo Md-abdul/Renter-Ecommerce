@@ -116,7 +116,7 @@ const StoreLocator = () => {
               }</p>
               <button onclick="window.open('${getGoogleMapsUrl(
                 store
-              )}', '_blank')" class="mt-2 px-3 py-1 bg-yellow-400 text-black rounded-md text-sm font-medium hover:bg-yellow-500 transition">
+              )}', '_blank')" class="mt-2 px-3 py-1 bg-yellow-400 text-black rounded-md text-sm font-medium hover:bg-yellow-500 transition cursor-pointer">
                 Get Directions
               </button>
             </div>
@@ -282,7 +282,7 @@ const StoreLocator = () => {
                     onClick={() =>
                       window.open(getGoogleMapsUrl(selectedStore), "_blank")
                     }
-                    className="mt-3 px-4 py-2 bg-yellow-400 text-black rounded-lg font-medium hover:bg-yellow-500 transition w-full"
+                    className="mt-3 px-4 py-2 bg-yellow-400 text-black rounded-lg font-medium hover:bg-yellow-500 transition w-full cursor-pointer"
                   >
                     Get Directions
                   </button>

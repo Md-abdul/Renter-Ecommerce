@@ -15,6 +15,9 @@ import UserOrders from "../Pages/ProductPage.jsx/UserOrders";
 import UserProfile from "../Pages/Users/UserProfile";
 import ProfileDetails from "../Pages/Users/ProfileDetails";
 import AuthRedirect from "../Pages/AuthRedirect";
+import TermOfUses from "../Pages/ExtraPages/TermOfUses.jsx";
+import PrivacyPolicy from "../Pages/ExtraPages/PrivacyPolicy.jsx";
+import Return from "../Pages/ExtraPages/Return.jsx";
 
 const AllRoutes = () => {
   return (
@@ -40,6 +43,11 @@ const AllRoutes = () => {
       <Route path="/contactpage" element={<ContactPage />} />
       <Route path="/order" element={<UserOrders />} />
       <Route path="/*" element={<HomePage />} />
+
+
+      <Route path="/term-of-uses" element={<TermOfUses/>}/>
+      <Route path="/term-of-return" element={<Return/>}/>
+      <Route path="/term-of-privacy" element={<PrivacyPolicy/>}/>
 
       {/* User Profile Section with Nested Routes */}
       <Route
