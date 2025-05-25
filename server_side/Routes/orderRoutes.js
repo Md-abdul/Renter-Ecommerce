@@ -414,4 +414,53 @@ orderRoutes.get("/returns", verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
+// Add this route to orderRoutes.js
+orderRoutes.get("/sold-products", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    // Default to current month if no dates provided
+    const currentDate = new Date();
+    const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    
+    const filter = {
+      status: "delivered",
+      updatedAt: {
+        $gte: startDate ? new Date(startDate) : firstDayOfMonth,
+        $lte: endDate ? new Date(endDate + "T23:59:59.999Z") : lastDayOfMonth
+      }
+    };
+
+    const orders = await OrderModel.find(filter)
+      .populate({
+        path: "items.productId",
+        model: "Product"
+      })
+      .sort({ updatedAt: -1 });
+
+    // Extract sold products data
+    const soldProducts = orders.flatMap(order => 
+      order.items.map(item => ({
+        orderId: order._id,
+        deliveredDate: order.updatedAt,
+        title: item.productId?.title || item.name,
+        price: item.price,
+        category: item.productId?.category,
+        wearCategory: item.productId?.wearCategory,
+        color: item.color || "N/A",
+        size: item.size,
+        sku: item.productId?.sku || "N/A",
+        quantity: item.quantity,
+        total: item.price * item.quantity
+      }))
+    );
+
+    res.status(200).json(soldProducts);
+  } catch (error) {
+    console.error("Error fetching sold products:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 module.exports = { orderRoutes };
