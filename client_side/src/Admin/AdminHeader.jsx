@@ -24,6 +24,8 @@ const AdminHeader = ({ activeTab, sidebarOpen, setSidebarOpen }) => {
               {activeTab === "products" && "Product Management"}
               {activeTab === "users" && "User Management"}
               {activeTab === "orders" && "Order Management"}
+              {activeTab === "billingrecords" && "Sold Prodct Billing Records"}
+              {activeTab === "coupon" && "Create Coupons"}
             </h2>
             <p className="text-sm text-gray-500 mt-1">
               {activeTab === "dashboard" &&
@@ -32,6 +34,7 @@ const AdminHeader = ({ activeTab, sidebarOpen, setSidebarOpen }) => {
                 "Manage your product inventory and listings"}
               {activeTab === "users" && "View and manage customer accounts"}
               {activeTab === "orders" && "Track and process customer orders"}
+              {activeTab === "coupon" && "Make Coupons "}
             </p>
           </div>
         </div>

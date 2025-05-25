@@ -12,8 +12,9 @@ import { useNavigate } from "react-router-dom";
 import { ADMIN_LOGOUT } from "../Redux/Users/actionType";
 import { toast } from "react-toastify";
 import { BsBox } from "react-icons/bs";
+import { GoDatabase } from "react-icons/go";
 import { motion, AnimatePresence } from "framer-motion";
-
+import { VscGift } from "react-icons/vsc";
 const AdminSidebar = ({
   activeTab,
   setActiveTab,
@@ -37,6 +38,8 @@ const AdminSidebar = ({
     { id: "products", icon: <FiShoppingBag />, label: "Products" },
     { id: "users", icon: <FiUsers />, label: "Users" },
     { id: "orders", icon: <BsBox />, label: "Orders" },
+    { id: "billingrecords", icon: <GoDatabase />, label: "Billing Records" },
+    { id: "coupon", icon: <VscGift />, label: "Coupons" },
   ];
 
   return (

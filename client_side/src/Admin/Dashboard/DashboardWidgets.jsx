@@ -56,7 +56,7 @@ const DashboardWidgets = () => {
       </div>
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-gray-500 text-sm font-medium">Revenue</h3>
-        <p className="text-2xl font-bold mt-2">$12,345</p>{" "}
+        <p className="text-2xl font-bold mt-2">₹ 12,345</p>{" "}
         {/* You can later make this dynamic if needed */}
       </div>
     </div>
