@@ -7,6 +7,7 @@ import ProductsContent from "./Products";
 import UsersContent from "./Users";
 import { Orders } from "./Orders/Orders";
 import SoldProduct from "./SoldProductData/SoldProduct";
+import Coupons from "./SoldProductData/Coupons";
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
@@ -44,6 +45,7 @@ const AdminDashboard = () => {
           {activeTab === "users" && <UsersContent />}
           {activeTab === "orders" && <Orders />}
           {activeTab === "billingrecords" && <SoldProduct />}
+          {activeTab === "coupon" && <Coupons />}
         </main>
       </div>
     </div>

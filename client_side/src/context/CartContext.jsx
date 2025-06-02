@@ -15,9 +15,10 @@ export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
   const navigate = useNavigate();
-//https://renter-ecommerce-2.onrender.com/
-  const API_BASE_URL = "https://renter-ecommerce-2.onrender.com/api";
+
+  const API_BASE_URL = "http://localhost:5000/api";
 
   // Calculate total price of items in cart
   // const getTotalPrice = () => {
@@ -26,11 +27,27 @@ export const CartProvider = ({ children }) => {
   //   }, 0);
   // };
   const getTotalPrice = () => {
-    return Math.round(
-      cart.reduce((total, item) => {
-        return total + item.price * item.quantity; // Already using discounted price
-      }, 0)
-    );
+    const subtotal = cart.reduce((total, item) => {
+      return total + item.price * item.quantity;
+    }, 0);
+
+    if (!appliedCoupon) return Math.round(subtotal);
+
+    const discountAmount = (subtotal * appliedCoupon.discountPercentage) / 100;
+    const finalDiscount = Math.min(discountAmount, appliedCoupon.maxDiscountAmount);
+    
+    return Math.round(subtotal - finalDiscount);
+  };
+
+  const getDiscountAmount = () => {
+    if (!appliedCoupon) return 0;
+
+    const subtotal = cart.reduce((total, item) => {
+      return total + item.price * item.quantity;
+    }, 0);
+
+    const discountAmount = (subtotal * appliedCoupon.discountPercentage) / 100;
+    return Math.min(discountAmount, appliedCoupon.maxDiscountAmount);
   };
 
   // Fetch user's cart from server
@@ -231,15 +248,15 @@ export const CartProvider = ({ children }) => {
   // Checkout function
   const checkout = async (shippingDetails, paymentMethod) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       if (!token) {
-        toast.error("Please log in to complete checkout.");
-        navigate("/login");
+        toast.error('Please log in to complete checkout.');
+        navigate('/login');
         return;
       }
 
       if (cart.length === 0) {
-        toast.error("Your cart is empty");
+        toast.error('Your cart is empty');
         return;
       }
 
@@ -248,25 +265,78 @@ export const CartProvider = ({ children }) => {
         `${API_BASE_URL}/orders`,
         {
           shippingAddress: shippingDetails,
-          paymentMethod: paymentMethod || "card",
+          paymentMethod: paymentMethod || 'card',
+          couponCode: appliedCoupon?.couponCode
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
       );
 
       if (response.status === 201) {
         await clearCart();
         await fetchOrders();
-        toast.success("Order placed successfully!");
-        navigate("/orders");
+        setAppliedCoupon(null);
+        toast.success('Order placed successfully!');
+        navigate('/orders');
         return response.data.order;
       }
     } catch (error) {
-      console.error("Checkout error:", error);
-      toast.error(error.response?.data?.message || "Failed to place order");
+      console.error('Checkout error:', error);
+      toast.error(error.response?.data?.message || 'Failed to place order');
       throw error;
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTokenError = () => {
+    toast.error('Session expired. Please login again.');
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
+
+  const applyCoupon = async (couponCode) => {
+    try {
+      const token = localStorage.getItem('token'); // Use regular token for user actions
+      if (!token) {
+        toast.error('Please log in to apply coupon');
+        navigate('/login');
+        return;
+      }
+
+      setLoading(true);
+      const response = await axios.post(
+        `http://localhost:5000/api/coupons/apply`,
+        { couponCode },
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.coupon) {
+        setAppliedCoupon(response.data.coupon);
+        toast.success('Coupon applied successfully');
+        return response.data;
+      }
+    } catch (error) {
+      console.error('Coupon application error:', error);
+      toast.error(error.response?.data?.message || 'Failed to apply coupon');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    toast.success('Coupon removed');
   };
 
   // Initialize cart and orders when component mounts
@@ -283,14 +353,18 @@ export const CartProvider = ({ children }) => {
         cart,
         orders,
         loading,
+        appliedCoupon,
         addToCart,
         removeFromCart,
         updateQuantity,
         fetchCart,
         fetchOrders,
         getTotalPrice,
+        getDiscountAmount,
         clearCart,
         checkout,
+        applyCoupon,
+        removeCoupon,
       }}
     >
       {children}

@@ -8,10 +8,12 @@ import {
   FiHome,
   FiArrowLeft,
   FiLock,
+  FiTag,
 } from "react-icons/fi";
 import Modal from "react-modal";
+import { toast } from "react-toastify";
 
-// Payment card images (you would import these from your assets)
+// Payment card images
 const visaCard = "https://cdn-icons-png.flaticon.com/512/196/196578.png";
 const mastercard = "https://cdn-icons-png.flaticon.com/512/196/196561.png";
 const amexCard = "https://cdn-icons-png.flaticon.com/512/196/196548.png";
@@ -22,10 +24,21 @@ const codIllustration =
 Modal.setAppElement("#root");
 
 const CheckoutPage = () => {
-  const { cart, getTotalPrice, checkout } = useCart();
+  const { 
+    cart, 
+    getTotalPrice, 
+    getDiscountAmount, 
+    checkout, 
+    applyCoupon, 
+    removeCoupon, 
+    appliedCoupon,
+    loading: cartLoading 
+  } = useCart();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [orderDetails, setOrderDetails] = useState(null);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -100,6 +113,24 @@ const CheckoutPage = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     navigate("/orders");
+  };
+
+  const handleApplyCoupon = async (e) => {
+    e.preventDefault(); // Prevent form submission
+    if (!couponCode.trim()) {
+      toast.error('Please enter a coupon code');
+      return;
+    }
+
+    setCouponLoading(true);
+    try {
+      await applyCoupon(couponCode);
+      setCouponCode('');
+    } catch (error) {
+      console.error('Error applying coupon:', error);
+    } finally {
+      setCouponLoading(false);
+    }
   };
 
   if (cart.length === 0) {
@@ -204,6 +235,67 @@ const CheckoutPage = () => {
                     placeholder="10001"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Coupon Section */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-800">
+                <div className="bg-yellow-100 p-2 rounded-full mr-3">
+                  <FiTag className="text-yellow-600" />
+                </div>
+                Apply Coupon
+              </h2>
+              <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-green-600 font-medium">Coupon Applied!</p>
+                      <p className="text-sm text-gray-600">
+                        {appliedCoupon.couponCode} - {appliedCoupon.discountPercentage}% off
+                        {appliedCoupon.maxDiscountAmount && (
+                          <span> (Max ₹{appliedCoupon.maxDiscountAmount})</span>
+                        )}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeCoupon}
+                      className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-4"> {/* Changed from form to div */}
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="Enter coupon code"
+                      className="flex-1 p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all shadow-sm"
+                      disabled={couponLoading}
+                    />
+                    <button
+                      type="button" // Changed from submit to button
+                      onClick={handleApplyCoupon}
+                      disabled={couponLoading || !couponCode.trim()}
+                      className="bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {couponLoading ? (
+                        <span className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Applying...
+                        </span>
+                      ) : (
+                        'Apply'
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -436,7 +528,7 @@ const CheckoutPage = () => {
         </div>
 
         {/* Right Section - Order Summary */}
-        <div className="lg:w-1/3">
+         <div className="lg:w-1/3">
           <div className="bg-white shadow-xl rounded-2xl p-6 sticky top-4 border border-gray-100">
             <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-800">
               <div className="bg-yellow-100 p-2 rounded-full mr-3">
@@ -474,20 +566,27 @@ const CheckoutPage = () => {
             <div className="space-y-3 border-t pt-4">
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="font-medium">₹{getTotalPrice()}</span>
+                <span className="font-medium">₹{subtotal}</span>
               </div>
+              {appliedCoupon && (
+                <div className="flex justify-between text-green-600">
+                  <span>Discount ({appliedCoupon.discountPercentage}%)</span>
+                  <span className="font-medium">-₹{discountAmount}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-600">Shipping</span>
                 <span className="font-medium text-green-600">Free</span>
               </div>
               <div className="flex justify-between text-lg font-bold mt-4 pt-4 border-t">
                 <span className="text-gray-800">Total</span>
-                <span className="text-gray-800">₹{getTotalPrice()}</span>
+                <span className="text-gray-800">₹{total}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
+      {/* </div> */}
 
       {/* Order Confirmation Modal */}
       <Modal
@@ -527,6 +626,7 @@ const CheckoutPage = () => {
       </Modal>
 
       {/* Custom Modal Styles */}
+     {/* Custom Modal Styles */}
       <style jsx global>{`
         .modal {
           position: absolute;
