@@ -2,6 +2,7 @@ const express = require("express");
 const { UserModel, OrderModel } = require("../Modals/UserModal");
 const { verifyToken, verifyAdmin } = require("../Middlewares/VerifyToken");
 const ProductModal = require("../Modals/productModal");
+const CouponModel = require('../Modals/coupanModal');
 
 const orderRoutes = express.Router();
 
@@ -9,7 +10,7 @@ const orderRoutes = express.Router();
 orderRoutes.post("/", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { shippingAddress, paymentMethod } = req.body;
+    const { shippingAddress, paymentMethod, couponCode } = req.body;
 
     const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -28,13 +29,38 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
       size: item.size,
     }));
 
-    console.log("Processed items for order:", items);
-
     // Calculate total amount
-    const totalAmount = items.reduce(
+    let totalAmount = items.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
     );
+
+    // Apply coupon if provided
+    let appliedCoupon = null;
+    if (couponCode) {
+      const coupon = await CouponModel.findOne({
+        couponCode: couponCode.toUpperCase(),
+        isActive: true,
+        expiryDate: { $gt: new Date() }
+      });
+
+      if (coupon) {
+        // Check minimum purchase amount
+        if (totalAmount >= coupon.minimumPurchaseAmount) {
+          // Calculate discount
+          const discountAmount = (totalAmount * coupon.discountPercentage) / 100;
+          const finalDiscount = Math.min(discountAmount, coupon.maxDiscountAmount);
+          
+          // Apply discount
+          totalAmount -= finalDiscount;
+          appliedCoupon = coupon;
+
+          // Increment coupon usage
+          coupon.usedCount += 1;
+          await coupon.save();
+        }
+      }
+    }
 
     // Create new order
     const order = new OrderModel({
@@ -44,15 +70,16 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
       shippingAddress,
       paymentMethod,
       status: "pending",
+      appliedCoupon: appliedCoupon ? {
+        couponCode: appliedCoupon.couponCode,
+        discountPercentage: appliedCoupon.discountPercentage,
+        discountAmount: totalAmount - items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+      } : null
     });
 
-    // Update product quantities using $inc to avoid validation issues
+    // Update product quantities
     for (const item of items) {
       try {
-        console.log(
-          `Updating product ${item.productId}, size ${item.size}, deducting ${item.quantity}`
-        );
-
         await ProductModal.findByIdAndUpdate(
           item.productId,
           {
@@ -63,11 +90,8 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
             runValidators: false,
           }
         );
-
-        console.log(`Product ${item.productId} updated successfully`);
       } catch (updateError) {
         console.error(`Error updating product ${item.productId}:`, updateError);
-        // Consider failing the entire order if product update fails
         throw new Error(`Failed to update product ${item.productId}`);
       }
     }

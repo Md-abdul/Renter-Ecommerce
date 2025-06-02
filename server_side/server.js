@@ -54,6 +54,7 @@ const { UserRoutes } = require("./Routes/userRoutes");
 const { adminRoutes } = require("./Routes/adminRoutes");
 const { CartRoutes } = require("./Routes/cartRoutes");
 const { orderRoutes } = require("./Routes/orderRoutes");
+const { couponRoutes } = require("./Routes/couponRoutes");
 const router = require("./Routes/googleSignup");
 
 const app = express();
@@ -96,6 +97,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/cart", CartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/auth/google", router);
+app.use("/api/coupons", couponRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;

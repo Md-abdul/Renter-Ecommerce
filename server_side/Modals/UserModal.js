@@ -51,6 +51,11 @@ const orderSchema = new mongoose.Schema({
     enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
     default: "pending",
   },
+  appliedCoupon: {
+    couponCode: String,
+    discountPercentage: Number,
+    discountAmount: Number
+  },
   returnWindow: {
     type: Date,
     default: function () {
