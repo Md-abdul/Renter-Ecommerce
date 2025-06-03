@@ -18,7 +18,8 @@ export const CartProvider = ({ children }) => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const navigate = useNavigate();
 
-  const API_BASE_URL = "http://localhost:5000/api";
+  //https://renter-ecommerce-2.onrender.com/
+  const API_BASE_URL = "https://renter-ecommerce-2.onrender.com/api";
 
   // Calculate total price of items in cart
   // const getTotalPrice = () => {
@@ -313,7 +314,7 @@ export const CartProvider = ({ children }) => {
 
       setLoading(true);
       const response = await axios.post(
-        `http://localhost:5000/api/coupons/apply`,
+        `https://renter-ecommerce-2.onrender.com/api/coupons/apply`,
         { couponCode },
         {
           headers: {

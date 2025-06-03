@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { toast } from 'react-toastify';
-import { FiPlus, FiTrash2, FiEdit2 } from 'react-icons/fi';
-import Modal from 'react-modal';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { FiPlus, FiTrash2, FiEdit2 } from "react-icons/fi";
+import Modal from "react-modal";
+import { useNavigate } from "react-router-dom";
 
 const Coupons = () => {
   const [coupons, setCoupons] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState(null);
   const [formData, setFormData] = useState({
-    couponCode: '',
-    discountPercentage: '',
-    minimumPurchaseAmount: '',
-    maxDiscountAmount: '',
-    expiryDate: '',
-    usageLimit: 1
+    couponCode: "",
+    discountPercentage: "",
+    minimumPurchaseAmount: "",
+    maxDiscountAmount: "",
+    expiryDate: "",
+    usageLimit: 1,
   });
   const navigate = useNavigate();
 
@@ -24,113 +24,128 @@ const Coupons = () => {
   }, []);
 
   const handleTokenError = () => {
-    toast.error('Session expired. Please login again.');
-    localStorage.removeItem('adminToken');
-    navigate('/login');
+    toast.error("Session expired. Please login again.");
+    localStorage.removeItem("adminToken");
+    navigate("/login");
   };
 
   const fetchCoupons = async () => {
     try {
-      const token = localStorage.getItem('adminToken');
-      console.log('adminToken:', token); // Debug log
-      
+      const token = localStorage.getItem("adminToken");
+      console.log("adminToken:", token); // Debug log
+
       if (!token) {
         handleTokenError();
         return;
       }
-
-      console.log('Making request to:', `http://localhost:5000/api/coupons`); // Debug log
-      const response = await axios.get(`http://localhost:5000/api/coupons`, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      //https://renter-ecommerce-2.onrender.com/
+      console.log(
+        "Making request to:",
+        `https://renter-ecommerce-2.onrender.com/api/coupons`
+      ); // Debug log
+      const response = await axios.get(
+        `https://renter-ecommerce-2.onrender.com/api/coupons`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
-      console.log('Response:', response.data); // Debug log
+      );
+      console.log("Response:", response.data); // Debug log
       setCoupons(response.data);
     } catch (error) {
-      console.error('Error details:', error.response || error); // Debug log
+      console.error("Error details:", error.response || error); // Debug log
       if (error.response?.status === 401) {
         handleTokenError();
       } else {
-        toast.error(error.response?.data?.message || 'Failed to fetch coupons');
+        toast.error(error.response?.data?.message || "Failed to fetch coupons");
       }
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem("adminToken");
       if (!token) {
         handleTokenError();
         return;
       }
 
-      const url = editingCoupon 
-        ? `http://localhost:5000/api/coupons/${editingCoupon._id}`
-        : `http://localhost:5000/api/coupons`;
-      
-      const method = editingCoupon ? 'put' : 'post';
-      
+      const url = editingCoupon
+        ? `https://renter-ecommerce-2.onrender.com/api/coupons/${editingCoupon._id}`
+        : `https://renter-ecommerce-2.onrender.com/api/coupons`;
+
+      const method = editingCoupon ? "put" : "post";
+
       await axios[method](url, formData, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       });
 
-      toast.success(editingCoupon ? 'Coupon updated successfully' : 'Coupon created successfully');
+      toast.success(
+        editingCoupon
+          ? "Coupon updated successfully"
+          : "Coupon created successfully"
+      );
       setIsModalOpen(false);
       setEditingCoupon(null);
       setFormData({
-        couponCode: '',
-        discountPercentage: '',
-        minimumPurchaseAmount: '',
-        maxDiscountAmount: '',
-        expiryDate: '',
-        usageLimit: 1
+        couponCode: "",
+        discountPercentage: "",
+        minimumPurchaseAmount: "",
+        maxDiscountAmount: "",
+        expiryDate: "",
+        usageLimit: 1,
       });
       fetchCoupons();
     } catch (error) {
       if (error.response?.status === 401) {
         handleTokenError();
       } else {
-        toast.error(error.response?.data?.message || 'Failed to save coupon');
+        toast.error(error.response?.data?.message || "Failed to save coupon");
       }
     }
   };
 
   const handleDelete = async (couponId) => {
-    if (window.confirm('Are you sure you want to delete this coupon?')) {
+    if (window.confirm("Are you sure you want to delete this coupon?")) {
       try {
-        const token = localStorage.getItem('adminToken');
+        const token = localStorage.getItem("adminToken");
         if (!token) {
           handleTokenError();
           return;
         }
 
-        await axios.delete(`http://localhost:5000/api/coupons/${couponId}`, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+        await axios.delete(
+          `https://renter-ecommerce-2.onrender.com/api/coupons/${couponId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }
-        });
-        toast.success('Coupon deleted successfully');
+        );
+        toast.success("Coupon deleted successfully");
         fetchCoupons();
       } catch (error) {
         if (error.response?.status === 401) {
           handleTokenError();
         } else {
-          toast.error(error.response?.data?.message || 'Failed to delete coupon');
+          toast.error(
+            error.response?.data?.message || "Failed to delete coupon"
+          );
         }
       }
     }
@@ -143,8 +158,8 @@ const Coupons = () => {
       discountPercentage: coupon.discountPercentage,
       minimumPurchaseAmount: coupon.minimumPurchaseAmount,
       maxDiscountAmount: coupon.maxDiscountAmount,
-      expiryDate: new Date(coupon.expiryDate).toISOString().split('T')[0],
-      usageLimit: coupon.usageLimit
+      expiryDate: new Date(coupon.expiryDate).toISOString().split("T")[0],
+      usageLimit: coupon.usageLimit,
     });
     setIsModalOpen(true);
   };
@@ -157,12 +172,12 @@ const Coupons = () => {
           onClick={() => {
             setEditingCoupon(null);
             setFormData({
-              couponCode: '',
-              discountPercentage: '',
-              minimumPurchaseAmount: '',
-              maxDiscountAmount: '',
-              expiryDate: '',
-              usageLimit: 1
+              couponCode: "",
+              discountPercentage: "",
+              minimumPurchaseAmount: "",
+              maxDiscountAmount: "",
+              expiryDate: "",
+              usageLimit: 1,
             });
             setIsModalOpen(true);
           }}
@@ -177,30 +192,62 @@ const Coupons = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min. Purchase</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Discount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usage</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Code
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Discount
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Min. Purchase
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Max Discount
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Expiry
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Usage
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {coupons.map((coupon) => (
               <tr key={coupon._id}>
-                <td className="px-6 py-4 whitespace-nowrap font-medium">{coupon.couponCode}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{coupon.discountPercentage}%</td>
-                <td className="px-6 py-4 whitespace-nowrap">₹{coupon.minimumPurchaseAmount}</td>
-                <td className="px-6 py-4 whitespace-nowrap">₹{coupon.maxDiscountAmount}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{new Date(coupon.expiryDate).toLocaleDateString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{coupon.usedCount}/{coupon.usageLimit}</td>
+                <td className="px-6 py-4 whitespace-nowrap font-medium">
+                  {coupon.couponCode}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    coupon.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {coupon.isActive ? 'Active' : 'Inactive'}
+                  {coupon.discountPercentage}%
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  ₹{coupon.minimumPurchaseAmount}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  ₹{coupon.maxDiscountAmount}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {new Date(coupon.expiryDate).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {coupon.usedCount}/{coupon.usageLimit}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      coupon.isActive
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {coupon.isActive ? "Active" : "Inactive"}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -232,11 +279,13 @@ const Coupons = () => {
       >
         <div className="p-6">
           <h2 className="text-2xl font-bold mb-6">
-            {editingCoupon ? 'Edit Coupon' : 'Create New Coupon'}
+            {editingCoupon ? "Edit Coupon" : "Create New Coupon"}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Coupon Code</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Coupon Code
+              </label>
               <input
                 type="text"
                 name="couponCode"
@@ -247,7 +296,9 @@ const Coupons = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Discount Percentage</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Discount Percentage
+              </label>
               <input
                 type="number"
                 name="discountPercentage"
@@ -260,7 +311,9 @@ const Coupons = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Minimum Purchase Amount</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Minimum Purchase Amount
+              </label>
               <input
                 type="number"
                 name="minimumPurchaseAmount"
@@ -272,7 +325,9 @@ const Coupons = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Maximum Discount Amount</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Maximum Discount Amount
+              </label>
               <input
                 type="number"
                 name="maxDiscountAmount"
@@ -284,7 +339,9 @@ const Coupons = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Expiry Date</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Expiry Date
+              </label>
               <input
                 type="date"
                 name="expiryDate"
@@ -295,7 +352,9 @@ const Coupons = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Usage Limit</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Usage Limit
+              </label>
               <input
                 type="number"
                 name="usageLimit"
@@ -318,7 +377,7 @@ const Coupons = () => {
                 type="submit"
                 className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600"
               >
-                {editingCoupon ? 'Update' : 'Create'}
+                {editingCoupon ? "Update" : "Create"}
               </button>
             </div>
           </form>
