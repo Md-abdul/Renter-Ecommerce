@@ -17,7 +17,7 @@ const SoldProduct = () => {
   const [endDate, setEndDate] = useState("");
   const [isDefaultDate, setIsDefaultDate] = useState(true);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
-  const [totalAmount, setTotalAmount] = useState(0);
+  const [totalAmounts, setTotalAmounts] = useState(0);
 
   // Calculate total amount whenever soldProducts changes
   useEffect(() => {
@@ -25,7 +25,7 @@ const SoldProduct = () => {
       (sum, product) => sum + product.total,
       0
     );
-    setTotalAmount(calculatedTotal);
+    setTotalAmounts(calculatedTotal);
   }, [soldProducts]);
 
   // Safe date formatter
@@ -207,7 +207,7 @@ const SoldProduct = () => {
             </div>
             {soldProducts.length > 0 && (
               <div className="text-lg font-semibold">
-                Total: ₹{totalAmount.toFixed(2)}
+                Total: ₹{totalAmounts.toFixed(2)}
               </div>
             )}
           </div>
