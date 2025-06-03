@@ -1,5 +1,6 @@
 const express = require('express');
 const CouponModel = require('../Modals/coupanModal');
+const { UserModel } = require('../Modals/UserModal');
 const { verifyToken, verifyAdmin } = require('../Middlewares/VerifyToken');
 
 const couponRoutes = express.Router();
@@ -104,6 +105,7 @@ couponRoutes.post('/apply', verifyToken, async (req, res) => {
     const { couponCode } = req.body;
     const userId = req.user.userId;
 
+    // Find the coupon
     const coupon = await CouponModel.findOne({
       couponCode: couponCode.toUpperCase(),
       isActive: true,
@@ -119,16 +121,19 @@ couponRoutes.post('/apply', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'Coupon usage limit reached' });
     }
 
-    // Get user's cart total
+    // Get user's cart from the request
     const user = await UserModel.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const cartTotal = Array.from(user.cart.values()).reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+    // Calculate cart total from the cart items
+    let cartTotal = 0;
+    if (user.cart && user.cart instanceof Map) {
+      cartTotal = Array.from(user.cart.values()).reduce((total, item) => {
+        return total + (item.price * item.quantity);
+      }, 0);
+    }
 
     // Check minimum purchase amount
     if (cartTotal < coupon.minimumPurchaseAmount) {
@@ -137,11 +142,18 @@ couponRoutes.post('/apply', verifyToken, async (req, res) => {
       });
     }
 
+    // Return the coupon details
     res.status(200).json({
       message: 'Coupon applied successfully',
-      coupon
+      coupon: {
+        couponCode: coupon.couponCode,
+        discountPercentage: coupon.discountPercentage,
+        maxDiscountAmount: coupon.maxDiscountAmount,
+        minimumPurchaseAmount: coupon.minimumPurchaseAmount
+      }
     });
   } catch (error) {
+    console.error('Coupon application error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
