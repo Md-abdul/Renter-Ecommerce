@@ -20,14 +20,24 @@ const orderItemSchema = new mongoose.Schema({
     reason: String,
     status: {
       type: String,
-      enum: ["requested", "approved", "processing", "shipped", "delivered", "rejected", "completed", null],
+      enum: [
+        "requested",
+        "approved",
+        "processing",
+        "shipped",
+        "delivered",
+        "rejected",
+        "completed",
+        null,
+      ],
       default: null,
     },
     requestedAt: Date,
     updatedAt: Date,
     exchangeSize: String, // New size for exchange
     exchangeColor: String, // New color for exchange
-    exchangeProductId: {  // In case exchanging for a different product variant
+    exchangeProductId: {
+      // In case exchanging for a different product variant
       type: mongoose.Schema.Types.ObjectId,
       ref: "product",
     },
@@ -46,6 +56,16 @@ const orderSchema = new mongoose.Schema({
     zipCode: String,
   },
   paymentMethod: { type: String, required: true },
+  paymentDetails: {
+    merchantTransactionId: String,
+    paymentStatus: {
+      type: String,
+      enum: ["INITIATED", "COMPLETED", "FAILED", "PENDING"],
+      default: "PENDING",
+    },
+    transactionId: String,
+    verificationResponse: Object,
+  },
   status: {
     type: String,
     enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
@@ -54,7 +74,7 @@ const orderSchema = new mongoose.Schema({
   appliedCoupon: {
     couponCode: String,
     discountPercentage: Number,
-    discountAmount: Number
+    discountAmount: Number,
   },
   returnWindow: {
     type: Date,
@@ -90,10 +110,12 @@ const userSchema = new mongoose.Schema(
         return !this.isGoogleAuth;
       },
     },
-    tokens: [{
-      token: { type: String, required: true },
-      createdAt: { type: Date, default: Date.now }
-    }],
+    tokens: [
+      {
+        token: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
     isGoogleAuth: { type: Boolean, default: false },
     address: { type: String, default: "" },
     phoneNumber: {
