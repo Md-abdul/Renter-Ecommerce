@@ -20,6 +20,12 @@ PaymentRoutes.post("/initiate", verifyToken, async (req, res) => {
         .json({ message: "Amount and orderId are required" });
     }
 
+    // Check if order exists
+    const order = await OrderModel.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
     // Generate a unique merchant transaction ID
     const merchantTransactionId = `ORDER_${orderId}_${Date.now()}`;
 
@@ -39,16 +45,24 @@ PaymentRoutes.post("/initiate", verifyToken, async (req, res) => {
       },
     });
 
+    // Check if payment response has the required data
+    if (!paymentResponse.data || !paymentResponse.data.instrumentResponse) {
+      throw new Error("Invalid payment response from PhonePe");
+    }
+
     res.status(200).json({
       success: true,
-      data: paymentResponse,
+      data: paymentResponse.data,
     });
   } catch (error) {
-    console.error("Payment initiation error:", error);
+    console.error(
+      "Payment initiation error:",
+      error.response?.data || error.message
+    );
     res.status(500).json({
       success: false,
       message: "Payment initiation failed",
-      error: error.message,
+      error: error.response?.data?.message || error.message,
     });
   }
 });
@@ -104,11 +118,14 @@ PaymentRoutes.post("/verify", verifyToken, async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Payment verification error:", error);
+    console.error(
+      "Payment verification error:",
+      error.response?.data || error.message
+    );
     res.status(500).json({
       success: false,
       message: "Payment verification failed",
-      error: error.message,
+      error: error.response?.data?.message || error.message,
     });
   }
 });
