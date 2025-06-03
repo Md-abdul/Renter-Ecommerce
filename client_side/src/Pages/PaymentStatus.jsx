@@ -1,0 +1,52 @@
+import React, { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import { toast } from "react-toastify";
+
+const PaymentStatus = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { verifyPhonePePayment } = useCart();
+
+  useEffect(() => {
+    const handlePaymentStatus = async () => {
+      try {
+        const params = new URLSearchParams(location.search);
+        const merchantTransactionId = params.get("merchantTransactionId");
+        const orderId = params.get("orderId");
+        const code = params.get("code");
+
+        if (code === "PAYMENT_SUCCESS") {
+          await verifyPhonePePayment(merchantTransactionId, orderId);
+        } else {
+          toast.error("Payment failed. Please try again.");
+          navigate("/checkout");
+        }
+      } catch (error) {
+        console.error("Payment status error:", error);
+        toast.error("Error processing payment status");
+        navigate("/checkout");
+      }
+    };
+
+    handlePaymentStatus();
+  }, [location, verifyPhonePePayment, navigate]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto"></div>
+          <h2 className="mt-4 text-xl font-semibold text-gray-800">
+            Processing Payment...
+          </h2>
+          <p className="mt-2 text-gray-600">
+            Please wait while we verify your payment.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PaymentStatus;

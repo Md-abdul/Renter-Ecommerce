@@ -34,8 +34,11 @@ export const CartProvider = ({ children }) => {
     if (!appliedCoupon) return Math.round(subtotal);
 
     const discountAmount = (subtotal * appliedCoupon.discountPercentage) / 100;
-    const finalDiscount = Math.min(discountAmount, appliedCoupon.maxDiscountAmount);
-    
+    const finalDiscount = Math.min(
+      discountAmount,
+      appliedCoupon.maxDiscountAmount
+    );
+
     return Math.round(subtotal - finalDiscount);
   };
 
@@ -248,15 +251,15 @@ export const CartProvider = ({ children }) => {
   // Checkout function
   const checkout = async (shippingDetails, paymentMethod) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        toast.error('Please log in to complete checkout.');
-        navigate('/login');
+        toast.error("Please log in to complete checkout.");
+        navigate("/login");
         return;
       }
 
       if (cart.length === 0) {
-        toast.error('Your cart is empty');
+        toast.error("Your cart is empty");
         return;
       }
 
@@ -265,14 +268,14 @@ export const CartProvider = ({ children }) => {
         `${API_BASE_URL}/orders`,
         {
           shippingAddress: shippingDetails,
-          paymentMethod: paymentMethod || 'card',
-          couponCode: appliedCoupon?.couponCode
+          paymentMethod: paymentMethod || "card",
+          couponCode: appliedCoupon?.couponCode,
         },
-        { 
-          headers: { 
+        {
+          headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
 
@@ -280,13 +283,13 @@ export const CartProvider = ({ children }) => {
         await clearCart();
         await fetchOrders();
         setAppliedCoupon(null);
-        toast.success('Order placed successfully!');
-        navigate('/orders');
+        toast.success("Order placed successfully!");
+        navigate("/orders");
         return response.data.order;
       }
     } catch (error) {
-      console.error('Checkout error:', error);
-      toast.error(error.response?.data?.message || 'Failed to place order');
+      console.error("Checkout error:", error);
+      toast.error(error.response?.data?.message || "Failed to place order");
       throw error;
     } finally {
       setLoading(false);
@@ -294,17 +297,17 @@ export const CartProvider = ({ children }) => {
   };
 
   const handleTokenError = () => {
-    toast.error('Session expired. Please login again.');
-    localStorage.removeItem('token');
-    navigate('/login');
+    toast.error("Session expired. Please login again.");
+    localStorage.removeItem("token");
+    navigate("/login");
   };
 
   const applyCoupon = async (couponCode) => {
     try {
-      const token = localStorage.getItem('token'); // Use regular token for user actions
+      const token = localStorage.getItem("token"); // Use regular token for user actions
       if (!token) {
-        toast.error('Please log in to apply coupon');
-        navigate('/login');
+        toast.error("Please log in to apply coupon");
+        navigate("/login");
         return;
       }
 
@@ -312,22 +315,22 @@ export const CartProvider = ({ children }) => {
       const response = await axios.post(
         `http://localhost:5000/api/coupons/apply`,
         { couponCode },
-        { 
-          headers: { 
+        {
+          headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
 
       if (response.data.coupon) {
         setAppliedCoupon(response.data.coupon);
-        toast.success('Coupon applied successfully');
+        toast.success("Coupon applied successfully");
         return response.data;
       }
     } catch (error) {
-      console.error('Coupon application error:', error);
-      toast.error(error.response?.data?.message || 'Failed to apply coupon');
+      console.error("Coupon application error:", error);
+      toast.error(error.response?.data?.message || "Failed to apply coupon");
       throw error;
     } finally {
       setLoading(false);
@@ -336,7 +339,83 @@ export const CartProvider = ({ children }) => {
 
   const removeCoupon = () => {
     setAppliedCoupon(null);
-    toast.success('Coupon removed');
+    toast.success("Coupon removed");
+  };
+
+  // Add new function for PhonePe payment
+  const initiatePhonePePayment = async (orderId, amount) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please log in to complete payment.");
+        navigate("/login");
+        return;
+      }
+
+      setLoading(true);
+      const response = await axios.post(
+        `${API_BASE_URL}/payments/initiate`,
+        { orderId, amount },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        // Redirect to PhonePe payment page
+        window.location.href =
+          response.data.data.instrumentResponse.redirectInfo.url;
+      } else {
+        toast.error("Failed to initiate payment");
+      }
+    } catch (error) {
+      console.error("Payment initiation error:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to initiate payment"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add function to verify payment
+  const verifyPhonePePayment = async (merchantTransactionId, orderId) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please log in to verify payment.");
+        navigate("/login");
+        return;
+      }
+
+      setLoading(true);
+      const response = await axios.post(
+        `${API_BASE_URL}/payments/verify`,
+        { merchantTransactionId, orderId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Payment successful!");
+        await fetchOrders();
+        navigate("/orders");
+      } else {
+        toast.error("Payment verification failed");
+      }
+    } catch (error) {
+      console.error("Payment verification error:", error);
+      toast.error(error.response?.data?.message || "Failed to verify payment");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Initialize cart and orders when component mounts
@@ -365,6 +444,8 @@ export const CartProvider = ({ children }) => {
         checkout,
         applyCoupon,
         removeCoupon,
+        initiatePhonePePayment,
+        verifyPhonePePayment,
       }}
     >
       {children}

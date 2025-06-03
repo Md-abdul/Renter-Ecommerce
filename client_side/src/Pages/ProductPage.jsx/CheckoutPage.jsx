@@ -9,6 +9,7 @@ import {
   FiArrowLeft,
   FiLock,
   FiTag,
+  FiSmartphone,
 } from "react-icons/fi";
 import Modal from "react-modal";
 import { toast } from "react-toastify";
@@ -24,20 +25,21 @@ const codIllustration =
 Modal.setAppElement("#root");
 
 const CheckoutPage = () => {
-  const { 
-    cart, 
-    getTotalPrice, 
-    getDiscountAmount, 
-    checkout, 
-    applyCoupon, 
-    removeCoupon, 
+  const {
+    cart,
+    getTotalPrice,
+    getDiscountAmount,
+    checkout,
+    applyCoupon,
+    removeCoupon,
     appliedCoupon,
-    loading: cartLoading 
+    loading: cartLoading,
+    initiatePhonePePayment,
   } = useCart();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [orderDetails, setOrderDetails] = useState(null);
-  const [couponCode, setCouponCode] = useState('');
+  const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -53,10 +55,13 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(false);
 
   // Calculate subtotal
-  const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  const subtotal = cart.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
 
   // Calculate discount amount
-  const discountAmount = appliedCoupon 
+  const discountAmount = appliedCoupon
     ? Math.min(
         (subtotal * appliedCoupon.discountPercentage) / 100,
         appliedCoupon.maxDiscountAmount
@@ -112,11 +117,17 @@ const CheckoutPage = () => {
       };
 
       const order = await checkout(shippingDetails, formData.paymentMethod);
-      setOrderDetails({
-        amount: getTotalPrice(),
-        orderId: order._id,
-      });
-      setIsModalOpen(true);
+
+      if (formData.paymentMethod === "phonepe") {
+        // Initiate PhonePe payment
+        await initiatePhonePePayment(order._id, getTotalPrice());
+      } else {
+        setOrderDetails({
+          amount: getTotalPrice(),
+          orderId: order._id,
+        });
+        setIsModalOpen(true);
+      }
     } catch (error) {
       console.error("Checkout failed:", error);
     } finally {
@@ -132,16 +143,16 @@ const CheckoutPage = () => {
   const handleApplyCoupon = async (e) => {
     e.preventDefault(); // Prevent form submission
     if (!couponCode.trim()) {
-      toast.error('Please enter a coupon code');
+      toast.error("Please enter a coupon code");
       return;
     }
 
     setCouponLoading(true);
     try {
       await applyCoupon(couponCode);
-      setCouponCode('');
+      setCouponCode("");
     } catch (error) {
-      console.error('Error applying coupon:', error);
+      console.error("Error applying coupon:", error);
     } finally {
       setCouponLoading(false);
     }
@@ -264,9 +275,12 @@ const CheckoutPage = () => {
                 {appliedCoupon ? (
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-green-600 font-medium">Coupon Applied!</p>
+                      <p className="text-green-600 font-medium">
+                        Coupon Applied!
+                      </p>
                       <p className="text-sm text-gray-600">
-                        {appliedCoupon.couponCode} - {appliedCoupon.discountPercentage}% off
+                        {appliedCoupon.couponCode} -{" "}
+                        {appliedCoupon.discountPercentage}% off
                         {appliedCoupon.maxDiscountAmount && (
                           <span> (Max ₹{appliedCoupon.maxDiscountAmount})</span>
                         )}
@@ -281,11 +295,15 @@ const CheckoutPage = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex gap-4"> {/* Changed from form to div */}
+                  <div className="flex gap-4">
+                    {" "}
+                    {/* Changed from form to div */}
                     <input
                       type="text"
                       value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      onChange={(e) =>
+                        setCouponCode(e.target.value.toUpperCase())
+                      }
                       placeholder="Enter coupon code"
                       className="flex-1 p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all shadow-sm"
                       disabled={couponLoading}
@@ -298,14 +316,30 @@ const CheckoutPage = () => {
                     >
                       {couponLoading ? (
                         <span className="flex items-center">
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <svg
+                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
                           </svg>
                           Applying...
                         </span>
                       ) : (
-                        'Apply'
+                        "Apply"
                       )}
                     </button>
                   </div>
@@ -502,6 +536,35 @@ const CheckoutPage = () => {
                     </div>
                   </label>
                 </div>
+
+                {/* PhonePe Option */}
+                <div
+                  className={`border-2 rounded-xl overflow-hidden transition-all ${
+                    formData.paymentMethod === "phonepe"
+                      ? "border-yellow-400 shadow-md"
+                      : "border-gray-200"
+                  }`}
+                >
+                  <label className="flex items-center p-4 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="phonepe"
+                      checked={formData.paymentMethod === "phonepe"}
+                      onChange={handleInputChange}
+                      className="h-5 w-5 text-yellow-600 focus:ring-yellow-500 border-gray-300"
+                    />
+                    <div className="bg-yellow-100 p-2 rounded-full ml-3">
+                      <FiSmartphone className="text-yellow-600 text-xl" />
+                    </div>
+                    <div className="ml-3">
+                      <div className="font-medium">PhonePe</div>
+                      <div className="text-sm text-gray-500">
+                        Pay using PhonePe UPI
+                      </div>
+                    </div>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -542,7 +605,7 @@ const CheckoutPage = () => {
         </div>
 
         {/* Right Section - Order Summary */}
-         <div className="lg:w-1/3">
+        <div className="lg:w-1/3">
           <div className="bg-white shadow-xl rounded-2xl p-6 sticky top-4 border border-gray-100">
             <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-800">
               <div className="bg-yellow-100 p-2 rounded-full mr-3">
@@ -640,7 +703,7 @@ const CheckoutPage = () => {
       </Modal>
 
       {/* Custom Modal Styles */}
-     {/* Custom Modal Styles */}
+      {/* Custom Modal Styles */}
       <style jsx global>{`
         .modal {
           position: absolute;
