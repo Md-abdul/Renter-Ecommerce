@@ -13,18 +13,32 @@ const PaymentStatus = () => {
       try {
         const params = new URLSearchParams(location.search);
         const merchantTransactionId = params.get("merchantTransactionId");
-        const orderId = params.get("orderId");
         const code = params.get("code");
+        const orderId = localStorage.getItem("pendingOrderId");
+
+        if (!orderId) {
+          toast.error("Order information not found");
+          navigate("/orders");
+          return;
+        }
 
         if (code === "PAYMENT_SUCCESS") {
           await verifyPhonePePayment(merchantTransactionId, orderId);
+          // Clear the pending order ID
+          localStorage.removeItem("pendingOrderId");
         } else {
           toast.error("Payment failed. Please try again.");
+          // Clear the pending order ID
+          localStorage.removeItem("pendingOrderId");
           navigate("/checkout");
         }
       } catch (error) {
         console.error("Payment status error:", error);
-        toast.error("Error processing payment status");
+        toast.error(
+          error.response?.data?.message || "Error processing payment status"
+        );
+        // Clear the pending order ID
+        localStorage.removeItem("pendingOrderId");
         navigate("/checkout");
       }
     };

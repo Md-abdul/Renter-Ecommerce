@@ -116,21 +116,43 @@ const CheckoutPage = () => {
         zipCode: formData.zipCode,
       };
 
+      // Create order first
       const order = await checkout(shippingDetails, formData.paymentMethod);
 
       if (formData.paymentMethod === "phonepe") {
         // Initiate PhonePe payment
-        await initiatePhonePePayment(order._id, getTotalPrice());
+        const paymentResponse = await initiatePhonePePayment(
+          order._id,
+          getTotalPrice()
+        );
+
+        if (
+          paymentResponse.success &&
+          paymentResponse.data?.instrumentResponse?.redirectInfo?.url
+        ) {
+          // Store order ID in localStorage for payment status page
+          localStorage.setItem("pendingOrderId", order._id);
+          // Redirect to PhonePe payment page
+          window.location.href =
+            paymentResponse.data.instrumentResponse.redirectInfo.url;
+        } else {
+          toast.error("Failed to initiate payment. Please try again.");
+          setLoading(false);
+        }
       } else {
+        // For other payment methods, show success modal
         setOrderDetails({
           amount: getTotalPrice(),
           orderId: order._id,
         });
         setIsModalOpen(true);
+        setLoading(false);
       }
     } catch (error) {
       console.error("Checkout failed:", error);
-    } finally {
+      toast.error(
+        error.response?.data?.message || "Checkout failed. Please try again."
+      );
       setLoading(false);
     }
   };
@@ -595,8 +617,12 @@ const CheckoutPage = () => {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Processing...
+                  {formData.paymentMethod === "phonepe"
+                    ? "Initiating Payment..."
+                    : "Processing..."}
                 </span>
+              ) : formData.paymentMethod === "phonepe" ? (
+                "Pay with PhonePe"
               ) : (
                 "Place Order & Pay"
               )}
