@@ -52,6 +52,20 @@ const CheckoutPage = () => {
   });
   const [loading, setLoading] = useState(false);
 
+  // Calculate subtotal
+  const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+
+  // Calculate discount amount
+  const discountAmount = appliedCoupon 
+    ? Math.min(
+        (subtotal * appliedCoupon.discountPercentage) / 100,
+        appliedCoupon.maxDiscountAmount
+      )
+    : 0;
+
+  // Calculate total
+  const total = subtotal - discountAmount;
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -566,7 +580,7 @@ const CheckoutPage = () => {
             <div className="space-y-3 border-t pt-4">
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="font-medium">₹{subtotal}</span>
+                <span className="font-medium">₹{Math.round(subtotal)}</span>
               </div>
               {appliedCoupon && (
                 <div className="flex justify-between text-green-600">
@@ -580,7 +594,7 @@ const CheckoutPage = () => {
               </div>
               <div className="flex justify-between text-lg font-bold mt-4 pt-4 border-t">
                 <span className="text-gray-800">Total</span>
-                <span className="text-gray-800">₹{total}</span>
+                <span className="text-gray-800">₹{Math.round(total)}</span>
               </div>
             </div>
           </div>

@@ -590,9 +590,9 @@ const UserOrders = () => {
                                 )}
                               </div>
                               <div className="flex flex-col items-end mt-4 sm:mt-0 ml-auto">
-                                <span className="font-bold text-gray-900 text-lg">
+                                {/* <span className="font-bold text-gray-900 text-lg">
                                   ₹{(item.price * item.quantity).toFixed(2)}
-                                </span>
+                                </span> */}
                                 {order.status === "delivered" && (
                                   <div className="flex space-x-3 mt-4">
                                     <button
