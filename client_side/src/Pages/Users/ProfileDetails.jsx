@@ -28,7 +28,7 @@ const ProfileDetails = () => {
 
       setLoading(true);
       const response = await axios.get(
-        `https://renter-ecommerce-2.onrender.com/api/user/userDetails`,
+        `https://renter-ecommerce.onrender.com/api/user/userDetails`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -92,7 +92,7 @@ const ProfileDetails = () => {
       if (!token) return;
 
       setLoading(true);
-      await axios.put(`https://renter-ecommerce-2.onrender.com/api/user/${userId}`, editData, {
+      await axios.put(`https://renter-ecommerce.onrender.com/api/user/${userId}`, editData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

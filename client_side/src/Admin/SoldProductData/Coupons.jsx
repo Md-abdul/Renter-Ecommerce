@@ -38,13 +38,13 @@ const Coupons = () => {
         handleTokenError();
         return;
       }
-      //https://renter-ecommerce-2.onrender.com/
+      //https://renter-ecommerce.onrender.com/
       console.log(
         "Making request to:",
-        `https://renter-ecommerce-2.onrender.com/api/coupons`
+        `https://renter-ecommerce.onrender.com/api/coupons`
       ); // Debug log
       const response = await axios.get(
-        `https://renter-ecommerce-2.onrender.com/api/coupons`,
+        `https://renter-ecommerce.onrender.com/api/coupons`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -82,8 +82,8 @@ const Coupons = () => {
       }
 
       const url = editingCoupon
-        ? `https://renter-ecommerce-2.onrender.com/api/coupons/${editingCoupon._id}`
-        : `https://renter-ecommerce-2.onrender.com/api/coupons`;
+        ? `https://renter-ecommerce.onrender.com/api/coupons/${editingCoupon._id}`
+        : `https://renter-ecommerce.onrender.com/api/coupons`;
 
       const method = editingCoupon ? "put" : "post";
 
@@ -129,7 +129,7 @@ const Coupons = () => {
         }
 
         await axios.delete(
-          `https://renter-ecommerce-2.onrender.com/api/coupons/${couponId}`,
+          `https://renter-ecommerce.onrender.com/api/coupons/${couponId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
