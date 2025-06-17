@@ -23,9 +23,24 @@ const PaymentStatus = () => {
         }
 
         if (code === "PAYMENT_SUCCESS") {
+          // First verify the payment
           await verifyPhonePePayment(merchantTransactionId, orderId);
+
+          // Then complete the order
+          await axios.post(
+            `${API_BASE_URL}/orders/complete/${orderId}`,
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+
           // Clear the pending order ID
           localStorage.removeItem("pendingOrderId");
+          await fetchCart(); // Refresh cart
+          navigate("/orders");
         } else {
           toast.error("Payment failed. Please try again.");
           // Clear the pending order ID
@@ -44,7 +59,7 @@ const PaymentStatus = () => {
     };
 
     handlePaymentStatus();
-  }, [location, verifyPhonePePayment, navigate]);
+  }, [location, verifyPhonePePayment, navigate, fetchCart]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

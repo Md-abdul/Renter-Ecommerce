@@ -63,7 +63,6 @@ const SingleProductPage = () => {
         }
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching product:", error);
         setLoading(false);
       }
     };
@@ -76,8 +75,6 @@ const SingleProductPage = () => {
       console.log("Selected size:", selectedSize);
       if (selectedSize) {
         const sizeObj = product.sizes.find((s) => s.size === selectedSize);
-        console.log("Size object:", sizeObj);
-        console.log("Available quantity:", sizeObj?.quantity);
       }
     }
   }, [product, selectedSize]);

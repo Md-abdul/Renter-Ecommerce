@@ -13,6 +13,7 @@ import {
 } from "react-icons/fi";
 import Modal from "react-modal";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 // Payment card images
 const visaCard = "https://cdn-icons-png.flaticon.com/512/196/196578.png";
@@ -116,11 +117,42 @@ const CheckoutPage = () => {
         zipCode: formData.zipCode,
       };
 
-      // Create order first
-      const order = await checkout(shippingDetails, formData.paymentMethod);
-
+      // For PhonePe payment, create a pending order first
       if (formData.paymentMethod === "phonepe") {
-        // Initiate PhonePe payment
+        // Create pending order data
+        const pendingOrderData = {
+          shippingAddress: shippingDetails,
+          paymentMethod: formData.paymentMethod,
+          couponCode: appliedCoupon?.couponCode,
+          items: cart.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+            name: item.name,
+            image: item.image,
+            size: item.size,
+          })),
+          totalAmount: getTotalPrice(),
+        };
+
+        // Create pending order
+        const response = await axios.post(
+          `http://localhost:5000/api/orders/pending`,
+          pendingOrderData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        const order = response.data.order;
+        
+        // Store the pending order ID in localStorage
+        localStorage.setItem("pendingOrderId", order._id);
+        
+        // Then initiate payment
         const paymentResponse = await initiatePhonePePayment(
           order._id,
           getTotalPrice()
@@ -130,8 +162,6 @@ const CheckoutPage = () => {
           paymentResponse.success &&
           paymentResponse.data?.instrumentResponse?.redirectInfo?.url
         ) {
-          // Store order ID in localStorage for payment status page
-          localStorage.setItem("pendingOrderId", order._id);
           // Redirect to PhonePe payment page
           window.location.href =
             paymentResponse.data.instrumentResponse.redirectInfo.url;
@@ -139,15 +169,20 @@ const CheckoutPage = () => {
           toast.error("Failed to initiate payment. Please try again.");
           setLoading(false);
         }
-      } else {
-        // For other payment methods, show success modal
-        setOrderDetails({
-          amount: getTotalPrice(),
-          orderId: order._id,
-        });
-        setIsModalOpen(true);
-        setLoading(false);
+        return;
       }
+
+      // For other payment methods (card, cod, etc.)
+      const order = await checkout(shippingDetails, formData.paymentMethod);
+      
+      // Show success modal for non-PhonePe payments
+      setOrderDetails({
+        amount: getTotalPrice(),
+        orderId: order._id,
+      });
+      setIsModalOpen(true);
+      setLoading(false);
+
     } catch (error) {
       console.error("Checkout failed:", error);
       toast.error(
@@ -379,7 +414,7 @@ const CheckoutPage = () => {
 
               <div className="space-y-4">
                 {/* Credit Card Option */}
-                <div
+                {/* <div
                   className={`border-2 rounded-xl overflow-hidden transition-all ${
                     formData.paymentMethod === "card"
                       ? "border-yellow-400 shadow-md"
@@ -501,10 +536,10 @@ const CheckoutPage = () => {
                       </div>
                     )}
                   </label>
-                </div>
+                </div> */}
 
                 {/* PayPal Option */}
-                <div
+                {/* <div
                   className={`border-2 rounded-xl overflow-hidden transition-all ${
                     formData.paymentMethod === "paypal"
                       ? "border-yellow-400 shadow-md"
@@ -526,7 +561,7 @@ const CheckoutPage = () => {
                       Pay with your PayPal account
                     </span>
                   </label>
-                </div>
+                </div> */}
 
                 {/* Cash on Delivery Option */}
                 <div
@@ -587,6 +622,7 @@ const CheckoutPage = () => {
                     </div>
                   </label>
                 </div>
+
               </div>
             </div>
 

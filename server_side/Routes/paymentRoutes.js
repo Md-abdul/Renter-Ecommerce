@@ -67,7 +67,6 @@ PaymentRoutes.post("/initiate", verifyToken, async (req, res) => {
   }
 });
 
-// Verify PhonePe payment
 PaymentRoutes.post("/verify", verifyToken, async (req, res) => {
   try {
     const { merchantTransactionId, orderId } = req.body;
@@ -88,13 +87,13 @@ PaymentRoutes.post("/verify", verifyToken, async (req, res) => {
     }
 
     if (verificationResponse.success) {
+      // Only update payment details, don't change order status here
       order.paymentDetails = {
         ...order.paymentDetails,
         paymentStatus: "COMPLETED",
         transactionId: merchantTransactionId,
         verificationResponse: verificationResponse,
       };
-      order.status = "processing"; // Update order status
       await order.save();
 
       res.status(200).json({
@@ -103,6 +102,7 @@ PaymentRoutes.post("/verify", verifyToken, async (req, res) => {
         data: verificationResponse,
       });
     } else {
+      // Mark payment as failed
       order.paymentDetails = {
         ...order.paymentDetails,
         paymentStatus: "FAILED",
@@ -129,5 +129,6 @@ PaymentRoutes.post("/verify", verifyToken, async (req, res) => {
     });
   }
 });
+
 
 module.exports = { PaymentRoutes };
