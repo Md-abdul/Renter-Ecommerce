@@ -567,4 +567,33 @@ orderRoutes.post("/pending", verifyToken, async (req, res) => {
     }
   });
 
+// Get order by ID
+orderRoutes.get("/:orderId", verifyToken, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await OrderModel.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check if the user is authorized to view this order
+    if (order.user.toString() !== req.user.userId) {
+      return res.status(403).json({ message: "Not authorized to view this order" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: order
+    });
+  } catch (error) {
+    console.error("Error fetching order:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch order",
+      error: error.message
+    });
+  }
+});
+
 module.exports = { orderRoutes };
