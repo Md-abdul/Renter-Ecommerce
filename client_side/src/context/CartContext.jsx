@@ -18,8 +18,8 @@ export const CartProvider = ({ children }) => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const navigate = useNavigate();
 
-  //https://renter-ecommerce.onrender.com/
-  const API_BASE_URL = "https://renter-ecommerce.onrender.com/api";
+  // Use local backend for development
+  const API_BASE_URL = "http://localhost:5000/api";
 
   // Calculate total price of items in cart
   // const getTotalPrice = () => {
@@ -391,78 +391,21 @@ export const CartProvider = ({ children }) => {
     toast.success("Coupon removed");
   };
 
-  const initiatePhonePePayment = async (orderId, amount) => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("Please log in to complete payment.");
-      navigate("/login");
-      return;
-    }
-
-    setLoading(true);
-    const response = await axios.post(
-      `http://localhost:5000/api/payments/initiate`,
-      { orderId, amount },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (response.data.success) {
-      return response.data;
-    } else {
-      toast.error("Failed to initiate payment");
-      throw new Error("Failed to initiate payment");
-    }
-  } catch (error) {
-    console.error("Payment initiation error:", error);
-    toast.error(
-      error.response?.data?.message || "Failed to initiate payment"
-    );
-    throw error;
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // Add function to verify payment
-  const verifyPhonePePayment = async (merchantTransactionId, orderId) => {
+  // PhonePe Payment Integration (new backend logic)
+  const initiatePhonePePayment = async (orderData) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Please log in to verify payment.");
-        navigate("/login");
-        return;
-      }
-
-      setLoading(true);
-      const response = await axios.post(
-        `${API_BASE_URL}/payments/verify`,
-        { merchantTransactionId, orderId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.data.success) {
-        toast.success("Payment successful!");
-        await fetchOrders();
-        navigate("/orders");
-      } else {
-        toast.error("Payment verification failed");
+      // orderData should include: name, amount, transactionId, MUID, number
+      const response = await axios.post(`${API_BASE_URL}/phonepe/v`, orderData, {
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true,
+      });
+      // The backend will redirect, but in case of local dev, handle redirect here if URL is returned
+      if (response.data && response.data.redirectUrl) {
+        window.location.href = response.data.redirectUrl;
       }
     } catch (error) {
-      console.error("Payment verification error:", error);
-      toast.error(error.response?.data?.message || "Failed to verify payment");
-    } finally {
-      setLoading(false);
+      toast.error('Failed to initiate PhonePe payment.');
+      console.error('PhonePe payment error:', error);
     }
   };
 
@@ -493,7 +436,6 @@ export const CartProvider = ({ children }) => {
         applyCoupon,
         removeCoupon,
         initiatePhonePePayment,
-        verifyPhonePePayment,
       }}
     >
       {children}
