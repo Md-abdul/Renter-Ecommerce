@@ -43,8 +43,8 @@ const CheckoutPage = () => {
   const [orderDetails, setOrderDetails] = useState(null);
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
-  console.log(orderDetails);
-  
+  // console.log(orderDetails);
+
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -64,7 +64,7 @@ const CheckoutPage = () => {
     0
   );
 
-  const API_BASE_URL = 'http://localhost:5000'
+  const API_BASE_URL = "http://localhost:5000";
   // Calculate discount amount
   const discountAmount = appliedCoupon
     ? Math.min(
@@ -146,26 +146,15 @@ const CheckoutPage = () => {
       };
 
       if (formData.paymentMethod === "phonepe") {
-        // Prepare orderData for PhonePe
-        const orderData = {
-          name: formData.name,
+        await initiatePhonePePayment({
+          shippingDetails,
           amount: total,
-          transactionId: `TXN_${Date.now()}`,
-          MUID: localStorage.getItem("userId") || "testuser", // Replace with actual user ID logic
-          number: "9999999999", // Replace with actual user phone logic if available
-        };
-        await initiatePhonePePayment(orderData);
+        });
         setLoading(false);
         return;
       }
 
-      // For other payment methods
-      const order = await checkout(shippingDetails, formData.paymentMethod);
-      setOrderDetails({
-        amount: total,
-        orderId: order._id,
-      });
-      setIsModalOpen(true);
+      // Rest of your existing code for other payment methods...
     } catch (error) {
       console.error("Checkout failed:", error);
       toast.error(
@@ -612,7 +601,18 @@ const CheckoutPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-white py-3 px-6 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all shadow-md flex justify-center items-center font-medium text-lg cursor-pointer"
+              className={`w-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-white py-3 px-6 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all shadow-md flex justify-center items-center font-medium text-lg ${
+                loading ? "opacity-75 cursor-not-allowed" : "cursor-pointer"
+              }`}
+              // disabled={loading}
+              onClick={(e) => {
+                if (formData.paymentMethod === "phonepe") {
+                  e.preventDefault();
+                  if (!loading) {
+                    handleSubmit(e);
+                  }
+                }
+              }}
             >
               {loading ? (
                 <span className="flex items-center">
@@ -636,14 +636,10 @@ const CheckoutPage = () => {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  {formData.paymentMethod === "phonepe"
-                    ? "Initiating Payment..."
-                    : "Processing..."}
+                  Preparing Payment...
                 </span>
-              ) : formData.paymentMethod === "phonepe" ? (
-                "Pay with PhonePe"
               ) : (
-                "Place Order & Pay"
+                "Pay with PhonePe"
               )}
             </button>
           </form>

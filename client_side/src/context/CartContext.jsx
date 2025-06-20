@@ -250,32 +250,73 @@ export const CartProvider = ({ children }) => {
   };
 
   const checkout = async (shippingDetails, paymentMethod) => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("Please log in to complete checkout.");
-      navigate("/login");
-      return;
-    }
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please log in to complete checkout.");
+        navigate("/login");
+        return;
+      }
 
-    if (cart.length === 0) {
-      toast.error("Your cart is empty");
-      return;
-    }
+      if (cart.length === 0) {
+        toast.error("Your cart is empty");
+        return;
+      }
 
-    setLoading(true);
+      setLoading(true);
 
-    // For PhonePe payment, we'll handle it differently
-    if (paymentMethod === "phonepe") {
-      // First create a pending order
-      const response = await axios.post(
-        `${API_BASE_URL}/orders/pending`,
+      // For PhonePe payment, we'll handle it differently
+      if (paymentMethod === "phonepe") {
+        // First create a pending order
+        const response = await axios.post(
+          `${API_BASE_URL}/orders/pending`,
+          {
+            shippingAddress: shippingDetails,
+            paymentMethod: paymentMethod,
+            couponCode: appliedCoupon?.couponCode,
+            items: cart,
+            totalAmount: getTotalPrice(),
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        const order = response.data.order;
+
+        // Store the pending order ID in localStorage
+        localStorage.setItem("pendingOrderId", order._id);
+
+        // Then initiate payment
+        const paymentResponse = await initiatePhonePePayment(
+          order._id,
+          getTotalPrice()
+        );
+
+        if (
+          paymentResponse.success &&
+          paymentResponse.data?.instrumentResponse?.redirectInfo?.url
+        ) {
+          // Redirect to PhonePe payment page
+          window.location.href =
+            paymentResponse.data.instrumentResponse.redirectInfo.url;
+        } else {
+          toast.error("Failed to initiate payment. Please try again.");
+          setLoading(false);
+        }
+        return;
+      }
+
+      // For other payment methods (card, cod, etc.)
+      const order = await axios.post(
+        `${API_BASE_URL}/orders`,
         {
           shippingAddress: shippingDetails,
           paymentMethod: paymentMethod,
           couponCode: appliedCoupon?.couponCode,
-          items: cart,
-          totalAmount: getTotalPrice(),
         },
         {
           headers: {
@@ -285,64 +326,23 @@ export const CartProvider = ({ children }) => {
         }
       );
 
-      const order = response.data.order;
-      
-      // Store the pending order ID in localStorage
-      localStorage.setItem("pendingOrderId", order._id);
-      
-      // Then initiate payment
-      const paymentResponse = await initiatePhonePePayment(
-        order._id,
-        getTotalPrice()
+      if (order.status === 201) {
+        await clearCart();
+        await fetchOrders();
+        setAppliedCoupon(null);
+        toast.success("Order placed successfully!");
+        navigate("/orders");
+        return order.data.order;
+      }
+    } catch (error) {
+      console.error("Checkout failed:", error);
+      toast.error(
+        error.response?.data?.message || "Checkout failed. Please try again."
       );
-
-      if (
-        paymentResponse.success &&
-        paymentResponse.data?.instrumentResponse?.redirectInfo?.url
-      ) {
-        // Redirect to PhonePe payment page
-        window.location.href =
-          paymentResponse.data.instrumentResponse.redirectInfo.url;
-      } else {
-        toast.error("Failed to initiate payment. Please try again.");
-        setLoading(false);
-      }
-      return;
+      throw error;
+    } finally {
+      setLoading(false);
     }
-
-    // For other payment methods (card, cod, etc.)
-    const order = await axios.post(
-      `${API_BASE_URL}/orders`,
-      {
-        shippingAddress: shippingDetails,
-        paymentMethod: paymentMethod,
-        couponCode: appliedCoupon?.couponCode,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (order.status === 201) {
-      await clearCart();
-      await fetchOrders();
-      setAppliedCoupon(null);
-      toast.success("Order placed successfully!");
-      navigate("/orders");
-      return order.data.order;
-    }
-  } catch (error) {
-    console.error("Checkout failed:", error);
-    toast.error(
-      error.response?.data?.message || "Checkout failed. Please try again."
-    );
-    throw error;
-  } finally {
-    setLoading(false);
-  }
   };
 
   const handleTokenError = () => {
@@ -391,23 +391,73 @@ export const CartProvider = ({ children }) => {
     toast.success("Coupon removed");
   };
 
-  // PhonePe Payment Integration (new backend logic)
-  const initiatePhonePePayment = async (orderData) => {
-    try {
-      // orderData should include: name, amount, transactionId, MUID, number
-      const response = await axios.post(`${API_BASE_URL}/phonepe/v`, orderData, {
-        headers: { 'Content-Type': 'application/json' },
-        withCredentials: true,
-      });
-      // The backend will redirect, but in case of local dev, handle redirect here if URL is returned
-      if (response.data && response.data.redirectUrl) {
-        window.location.href = response.data.redirectUrl;
-      }
-    } catch (error) {
-      toast.error('Failed to initiate PhonePe payment.');
-      console.error('PhonePe payment error:', error);
+const initiatePhonePePayment = async ({ shippingDetails, amount }) => {
+  try {
+    const token = localStorage.getItem("token");
+    const userData = JSON.parse(localStorage.getItem("user"));
+    if (!token || !userData) {
+      toast.error("Please log in to complete payment");
+      navigate("/login");
+      return;
     }
-  };
+
+    setLoading(true);
+
+    // Create pending order first (if not already created)
+    const orderResponse = await axios.post(
+      `${API_BASE_URL}/orders/pending`,
+      {
+        shippingAddress: shippingDetails,
+        paymentMethod: "phonepe",
+        couponCode: appliedCoupon?.couponCode,
+        items: cart,
+        totalAmount: amount,
+        userId: userData.userId,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const order = orderResponse.data.order;
+
+    // Initiate payment
+    const paymentResponse = await axios.post(
+      `${API_BASE_URL}/phonepe/payment`,
+      {
+        orderId: order._id,
+        amount,
+        userId: userData.userId,
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone || "8207473188",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (paymentResponse.data.success) {
+      window.location.href = paymentResponse.data.paymentUrl;
+    } else {
+      toast.error(paymentResponse.data.message || "Payment initiation failed");
+      setLoading(false);
+    }
+  } catch (error) {
+    console.error("Payment error:", error);
+    toast.error(
+      error.response?.data?.message ||
+      "Payment failed. Please try again in a moment."
+    );
+    setLoading(false);
+  }
+};
 
   // Initialize cart and orders when component mounts
   useEffect(() => {
