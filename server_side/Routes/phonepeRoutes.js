@@ -313,11 +313,11 @@
 
 
 
-const {newPayment, checkStatus} = require('../Services/phonepeService');
+const { newPayment, checkStatus } = require('../Services/phonepeService');
 const express = require('express');
-const phonepeRoutes = express();
+const phonepeRoutes = express.Router();
 
-phonepeRoutes.post('/v', newPayment);
+phonepeRoutes.post('/payment', newPayment);
 phonepeRoutes.post('/validate/:merchantTransactionId', checkStatus);
 
 module.exports = phonepeRoutes;
