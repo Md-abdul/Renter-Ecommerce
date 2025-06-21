@@ -154,6 +154,15 @@ const CheckoutPage = () => {
         return;
       }
 
+      if (formData.paymentMethod === "cod") {
+        const order = await checkout(shippingDetails, "cod");
+        if (order) {
+          navigate("/orders");
+        }
+        setLoading(false);
+        return;
+      }
+
       // Rest of your existing code for other payment methods...
     } catch (error) {
       console.error("Checkout failed:", error);
@@ -568,7 +577,7 @@ const CheckoutPage = () => {
                 </div>
 
                 {/* PhonePe Option */}
-                <div
+                {/* <div
                   className={`border-2 rounded-xl overflow-hidden transition-all ${
                     formData.paymentMethod === "phonepe"
                       ? "border-yellow-400 shadow-md"
@@ -594,7 +603,7 @@ const CheckoutPage = () => {
                       </div>
                     </div>
                   </label>
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -636,10 +645,12 @@ const CheckoutPage = () => {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Preparing Payment...
+                  Preparing ...
                 </span>
-              ) : (
+              ) : formData.paymentMethod === "phonepe" ? (
                 "Pay with PhonePe"
+              ) : (
+                "Place Order"
               )}
             </button>
           </form>
@@ -675,7 +686,7 @@ const CheckoutPage = () => {
                     </div>
                   </div>
                   <p className="font-medium text-gray-800">
-                    ₹{(item.offerPrice || item.price) * item.quantity}
+                    ₹{Math.round((item.offerPrice || item.price) * item.quantity)}
                   </p>
                 </div>
               ))}

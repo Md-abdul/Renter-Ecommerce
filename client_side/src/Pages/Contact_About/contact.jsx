@@ -3,7 +3,7 @@ import React from "react";
 const ContactPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-16 px-6">
-      <div className="max-w-3xl w-full bg-gray-50 p-12 rounded-2xl ">
+      <div className="max-w-3xl w-full bg-white p-12 rounded-2xl shadow-lg">
         <h1 className="text-4xl font-extrabold text-center text-gray-900 mb-8">
           Get in Touch
         </h1>
@@ -71,6 +71,32 @@ const ContactPage = () => {
             </button>
           </div>
         </form>
+
+        <div className="mt-12 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Other Ways to Reach Us
+          </h2>
+          <div className="space-y-2 text-lg text-gray-700">
+            <p>
+              Email:{" "}
+              <a
+                href="mailto:info.ranter@gmail.com"
+                className="text-yellow-600 hover:underline"
+              >
+                info.ranter@gmail.com
+              </a>
+            </p>
+            <p>
+              Phone:{" "}
+              <a
+                href="tel:9029297732"
+                className="text-yellow-600 hover:underline"
+              >
+                9029297732
+              </a>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

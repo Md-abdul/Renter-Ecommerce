@@ -317,7 +317,7 @@ const UserOrders = () => {
                     </div>
                     <div className="flex items-center">
                       <span className="font-bold text-gray-900 mr-4">
-                        ₹{order.totalAmount.toFixed(2)}
+                        ₹{Math.round(order.totalAmount.toFixed(2))}
                       </span>
                       {expandedOrder === order._id ? (
                         <FiChevronUp className="text-gray-500 h-5 w-5" />
@@ -474,18 +474,18 @@ const UserOrders = () => {
                           <div className="space-y-4 text-gray-700">
                             <div>
                               <p className="font-medium">Payment Method</p>
-                              <p className="capitalize">
+                              <p className="capitalize text-red-600 font-medium">
                                 {order.paymentMethod}
                               </p>
                             </div>
                             <div>
                               <p className="font-medium">Payment Status</p>
-                              <p className="text-green-600 font-medium">Paid</p>
+                              <p className="text-green-600 font-medium">{order.paymentMethod === "cod" ? "Pending" : "Done" }</p>
                             </div>
                             <div>
                               <p className="font-medium">Total Amount</p>
                               <p className="text-xl font-bold text-gray-900">
-                                ₹{order.totalAmount.toFixed(2)}
+                                ₹{Math.round(order.totalAmount.toFixed(2))}
                               </p>
                             </div>
                           </div>

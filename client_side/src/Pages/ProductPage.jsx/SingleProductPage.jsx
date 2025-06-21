@@ -341,7 +341,7 @@ const SingleProductPage = () => {
             <div className="p-4 bg-gray-50 rounded-lg shadow-sm">
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold text-gray-900">
-                  ₹{discountedPrice.toFixed(2)}
+                  ₹{Math.round(discountedPrice.toFixed(2))}
                 </span>
                 {product.discount > 0 && (
                   <>

@@ -84,9 +84,27 @@ const AboutPage = () => {
           <p className="text-lg text-gray-700 mb-6">
             Stay updated with the latest trends and exclusive offers.
           </p>
-          <button className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-semibold rounded-full shadow-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300">
+          <button className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-semibold rounded-full shadow-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 mb-6">
             Sign Up Now
           </button>
+           <div className="pt-6 border-t border-gray-200">
+            <p className="text-gray-700 mb-2">Have questions? Contact us at:</p>
+            <div className="flex justify-center space-x-4">
+              <a 
+                href="mailto:info.ranter@gmail.com" 
+                className="text-lg text-purple-600 hover:underline"
+              >
+                info.ranter@gmail.com
+              </a>
+              <span className="text-gray-400">|</span>
+              <a 
+                href="tel:9029297732" 
+                className="text-lg text-purple-600 hover:underline"
+              >
+                9029297732
+              </a>
+            </div>
+            </div>
         </div>
       </div>
     </div>
