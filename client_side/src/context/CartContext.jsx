@@ -19,7 +19,7 @@ export const CartProvider = ({ children }) => {
   const navigate = useNavigate();
 
   // Use local backend for development
-  const API_BASE_URL="http://localhost:5000/api";
+  const API_BASE_URL = "https://renter-ecommerce.onrender.com/api";
 
   // Calculate total price of items in cart
   // const getTotalPrice = () => {
@@ -266,8 +266,51 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
 
       // For PhonePe payment, we'll handle it differently
+      // if (paymentMethod === "phonepe") {
+      //   // First create a pending order
+      //   const response = await axios.post(
+      //     `${API_BASE_URL}/orders/pending`,
+      //     {
+      //       shippingAddress: shippingDetails,
+      //       paymentMethod: paymentMethod,
+      //       couponCode: appliedCoupon?.couponCode,
+      //       items: cart,
+      //       totalAmount: getTotalPrice(),
+      //     },
+      //     {
+      //       headers: {
+      //         Authorization: `Bearer ${token}`,
+      //         "Content-Type": "application/json",
+      //       },
+      //     }
+      //   );
+
+      //   const order = response.data.order;
+
+      //   // Store the pending order ID in localStorage
+      //   localStorage.setItem("pendingOrderId", order._id);
+
+      //   // Then initiate payment
+      //   const paymentResponse = await initiatePhonePePayment(
+      //     order._id,
+      //     getTotalPrice()
+      //   );
+
+      //   if (
+      //     paymentResponse.success &&
+      //     paymentResponse.data?.instrumentResponse?.redirectInfo?.url
+      //   ) {
+      //     // Redirect to PhonePe payment page
+      //     window.location.href =
+      //       paymentResponse.data.instrumentResponse.redirectInfo.url;
+      //   } else {
+      //     toast.error("Failed to initiate payment. Please try again.");
+      //     setLoading(false);
+      //   }
+      //   return;
+      // }
+
       if (paymentMethod === "phonepe") {
-        // First create a pending order
         const response = await axios.post(
           `${API_BASE_URL}/orders/pending`,
           {
@@ -286,27 +329,23 @@ export const CartProvider = ({ children }) => {
         );
 
         const order = response.data.order;
-
-        // Store the pending order ID in localStorage
         localStorage.setItem("pendingOrderId", order._id);
 
-        // Then initiate payment
-        const paymentResponse = await initiatePhonePePayment(
-          order._id,
-          getTotalPrice()
-        );
+        const paymentResponse = await initiatePhonePePayment({
+          shippingDetails,
+          amount: getTotalPrice(),
+        });
 
-        if (
-          paymentResponse.success &&
-          paymentResponse.data?.instrumentResponse?.redirectInfo?.url
-        ) {
-          // Redirect to PhonePe payment page
-          window.location.href =
-            paymentResponse.data.instrumentResponse.redirectInfo.url;
-        } else {
+        if (!paymentResponse || !paymentResponse.success) {
+          // OPTIONAL: delete the pending order
+          await axios.delete(`${API_BASE_URL}/orders/${order._id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
           toast.error("Failed to initiate payment. Please try again.");
           setLoading(false);
+          return;
         }
+
         return;
       }
 
@@ -391,19 +430,21 @@ export const CartProvider = ({ children }) => {
     toast.success("Coupon removed");
   };
 
-const initiatePhonePePayment = async ({ shippingDetails, amount }) => {
-  try {
-    const token = localStorage.getItem("token");
-    const userData = JSON.parse(localStorage.getItem("user"));
-    if (!token || !userData) {
-      toast.error("Please log in to complete payment");
-      navigate("/login");
-      return;
-    }
+  const initiatePhonePePayment = async ({ shippingDetails, amount }) => {
+  let orderId = null;
+  const token = localStorage.getItem("token");
+  const userData = JSON.parse(localStorage.getItem("user"));
 
+  if (!token || !userData) {
+    toast.error("Please log in to complete payment");
+    navigate("/login");
+    return { success: false };
+  }
+
+  try {
     setLoading(true);
 
-    // Create pending order first (if not already created)
+    // Step 1: Create a pending order
     const orderResponse = await axios.post(
       `${API_BASE_URL}/orders/pending`,
       {
@@ -422,13 +463,14 @@ const initiatePhonePePayment = async ({ shippingDetails, amount }) => {
       }
     );
 
-    const order = orderResponse.data.order;
+    orderId = orderResponse.data.order._id;
+    localStorage.setItem("pendingOrderId", orderId);
 
-    // Initiate payment
+    // Step 2: Initiate payment
     const paymentResponse = await axios.post(
       `${API_BASE_URL}/phonepe/payment`,
       {
-        orderId: order._id,
+        orderId,
         amount,
         userId: userData.userId,
         name: userData.name,
@@ -443,21 +485,37 @@ const initiatePhonePePayment = async ({ shippingDetails, amount }) => {
       }
     );
 
-    if (paymentResponse.data.success) {
-      window.location.href = paymentResponse.data.paymentUrl;
-    } else {
-      toast.error(paymentResponse.data.message || "Payment initiation failed");
-      setLoading(false);
+    if (!paymentResponse.data.success) {
+      throw new Error(paymentResponse.data.message || "Payment failed");
     }
+
+    // Step 3: Redirect to payment page
+    window.location.href = paymentResponse.data.paymentUrl;
+    return { success: true };
+
   } catch (error) {
     console.error("Payment error:", error);
+
+    // Rollback: Delete the pending order if payment failed
+    if (orderId) {
+      try {
+        await axios.delete(`${API_BASE_URL}/orders/${orderId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        localStorage.removeItem("pendingOrderId");
+      } catch (rollbackError) {
+        console.error("Failed to rollback order:", rollbackError);
+      }
+    }
+
     toast.error(
-      error.response?.data?.message ||
-      "Payment failed. Please try again in a moment."
+      error.response?.data?.message || "Payment failed. Please try again."
     );
+    return { success: false, error: error.message };
+  } finally {
     setLoading(false);
   }
-};
+  };
 
   // Initialize cart and orders when component mounts
   useEffect(() => {

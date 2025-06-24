@@ -120,8 +120,8 @@ const Footer = () => {
           <p className="text-gray-800">
             111 Bijoy Sarani, Mumbai, DH 1515, India
           </p>
-          <p className="text-gray-800">Email: ranter@gmail.com</p>
-          <p className="text-gray-800">Phone: +88015-88888-9999</p>
+          <p className="text-gray-800">Email: info.ranter@gmail.com</p>
+          <p className="text-gray-800">Phone: +91 9029297732</p>
         </div>
 
         {/* Exclusive Section */}

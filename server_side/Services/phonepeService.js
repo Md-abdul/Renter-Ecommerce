@@ -1,127 +1,22 @@
-// const crypto = require("crypto");
-// const axios = require("axios");
-
-// const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
-// const SALT_KEY = process.env.PHONEPE_SALT_KEY;
-// const SALT_INDEX = process.env.PHONEPE_SALT_INDEX;
-// // Update to UAT environment URL
-// //https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay
-// // const BASE_URL = "https://api.phonepe.com/apis/hermes/pg/v1";
-// const BASE_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1";
-
-// const generateXVerify = (payload) => {
-//   const data = payload + SALT_KEY;
-//   const sha256 = crypto.createHash("sha256").update(data).digest("hex");
-//   return sha256 + "###" + SALT_INDEX;
-// };
-
-// const generatePayload = (amount, merchantTransactionId, userId) => {
-//   return {
-//     merchantId: MERCHANT_ID,
-//     merchantTransactionId: merchantTransactionId,
-//     merchantUserId: userId,
-//     amount: amount * 100, // Convert to paise
-//     redirectUrl: `${process.env.FRONTEND_URL}/payment-status`,
-//     redirectMode: "POST",
-//     callbackUrl: `${process.env.FRONTEND_URL}/payment-status`,
-//     mobileNumber: "",
-//     paymentInstrument: {
-//       type: "PAY_PAGE",
-//     },
-//   };
-// };
-
-// const initiatePayment = async (amount, merchantTransactionId, userId) => {
-//   try {
-//     const payload = generatePayload(amount, merchantTransactionId, userId);
-//     const base64Payload = Buffer.from(JSON.stringify(payload)).toString("base64");
-//     const xVerify = generateXVerify(base64Payload);
-
-//     console.log("Initiating payment with payload:", {
-//       merchantId: MERCHANT_ID,
-//       amount,
-//       merchantTransactionId,
-//       base64Payload,
-//     });
-
-//     const response = await axios.post(
-//       `${BASE_URL}/pay`,
-//       { request: base64Payload },
-//       {
-//         headers: {
-//           "Content-Type": "application/json",
-//           "X-VERIFY": xVerify,
-//         },
-//       }
-//     );
-
-//     console.log("PhonePe API Response:", response.data);
-
-//     if (!response.data || !response.data.data || !response.data.data.instrumentResponse) {
-//       throw new Error("Invalid response from PhonePe");
-//     }
-
-//     return {
-//       success: true,
-//       data: response.data.data,
-//     };
-//   } catch (error) {
-//     console.error("PhonePe payment initiation error:", error.response?.data || error.message);
-//     return {
-//       success: false,
-//       error: error.response?.data?.message || error.message,
-//     };
-//   }
-// };
-
-// const verifyPayment = async (merchantTransactionId) => {
-//   try {
-//     const payload = `/status/${MERCHANT_ID}/${merchantTransactionId}`;
-//     const xVerify = generateXVerify(payload);
-
-//     const response = await axios.get(`${BASE_URL}${payload}`, {
-//       headers: {
-//         "Content-Type": "application/json",
-//         "X-VERIFY": xVerify,
-//         "X-MERCHANT-ID": MERCHANT_ID,
-//       },
-//     });
-
-//     if (!response.data || !response.data.data) {
-//       throw new Error("Invalid response from PhonePe");
-//     }
-
-//     return {
-//       success: true,
-//       data: response.data.data,
-//     };
-//   } catch (error) {
-//     console.error("PhonePe payment verification error:", error.response?.data || error.message);
-//     return {
-//       success: false,
-//       error: error.response?.data?.message || error.message,
-//     };
-//   }
-// };
-
-// module.exports = {
-//   initiatePayment,
-//   verifyPayment,
-// };
-
-
-
+require("dotenv").config();
 const crypto = require("crypto");
 const axios = require("axios");
 
+const salt_key=process.env.PHONEPE_SALT_KEY || "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
+const merchant_id=process.env.PHONEPE_MERCHANT_ID || "PGTESTPAYUAT";
+const phonepe_host=process.env.PHONE_PE_HOST_URL ||
+  "https://api-preprod.phonepe.com/apis/pg-sandbox";
+const SALT_INDEX=process.env.PHONEPE_SALT_INDEX || 1;
+
 // Configuration
-const salt_key="099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
-const merchant_id="PGTESTPAYUAT";
-const phonepe_host="https://api-preprod.phonepe.com/apis/pg-sandbox";
-const SALT_INDEX=1;
+// const salt_key="099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
+// const merchant_id="PGTESTPAYUAT";
+// const phonepe_host="https://api-preprod.phonepe.com/apis/pg-sandbox";
+// const SALT_INDEX=1
 // Rate limiting configuration
-const MAX_REQUESTS=5; // Maximum number of requests allowed within the time window
-const TIME_WINDOW=60 * 1000; // Time window in milliseconds (1 minute)
+
+const MAX_REQUESTS = 5; // Maximum number of requests allowed within the time window
+const TIME_WINDOW = 60 * 1000; // Time window in milliseconds (1 minute)
 
 // Map to store request timestamps
 const requestTimestamps = new Map();
@@ -139,7 +34,9 @@ const newPayment = async (req, res) => {
     }
 
     // Generate unique transaction ID
-    const merchantTransactionId = `TXN_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const merchantTransactionId = `TXN_${Date.now()}_${Math.floor(
+      Math.random() * 1000
+    )}`;
     const callbackUrl = `${process.env.BACKEND_URL}/api/phonepe/validate/${merchantTransactionId}`;
 
     // Prepare payload
@@ -228,7 +125,12 @@ const newPayment = async (req, res) => {
   }
 };
 
-const storeOrderDetails = async (orderId, merchantTransactionId, amount, userId) => {
+const storeOrderDetails = async (
+  orderId,
+  merchantTransactionId,
+  amount,
+  userId
+) => {
   try {
     const order = {
       orderId,
@@ -255,7 +157,8 @@ const checkStatus = async (req, res) => {
     const merchantId = merchant_id;
 
     const keyIndex = 1;
-    const string = `/pg/v1/status/${merchantId}/${merchantTransactionId}` + salt_key;
+    const string =
+      `/pg/v1/status/${merchantId}/${merchantTransactionId}` + salt_key;
     const sha256 = crypto.createHash("sha256").update(string).digest("hex");
     const checksum = sha256 + "###" + keyIndex;
 
@@ -275,7 +178,10 @@ const checkStatus = async (req, res) => {
 
     if (paymentData.code === "PAYMENT_SUCCESS") {
       // Update order status and store transaction details
-      await updateOrderStatusAndStoreTransactionDetails(merchantTransactionId, paymentData);
+      await updateOrderStatusAndStoreTransactionDetails(
+        merchantTransactionId,
+        paymentData
+      );
       return res.redirect(`${process.env.FRONTEND_URL}/payment-success`);
     } else {
       return res.redirect(`${process.env.FRONTEND_URL}/payment-failed`);
@@ -286,7 +192,10 @@ const checkStatus = async (req, res) => {
   }
 };
 
-const updateOrderStatusAndStoreTransactionDetails = async (merchantTransactionId, paymentData) => {
+const updateOrderStatusAndStoreTransactionDetails = async (
+  merchantTransactionId,
+  paymentData
+) => {
   try {
     const order = await OrderModel.findOneAndUpdate(
       { merchantTransactionId },
@@ -304,9 +213,15 @@ const updateOrderStatusAndStoreTransactionDetails = async (merchantTransactionId
       throw new Error("Order not found");
     }
 
-    console.log("Order updated and transaction details stored successfully:", order);
+    console.log(
+      "Order updated and transaction details stored successfully:",
+      order
+    );
   } catch (error) {
-    console.error("Error updating order status and storing transaction details:", error);
+    console.error(
+      "Error updating order status and storing transaction details:",
+      error
+    );
     throw error;
   }
 };
@@ -315,5 +230,3 @@ module.exports = {
   newPayment,
   checkStatus,
 };
-
-// warning in the working copy of client side/src /content

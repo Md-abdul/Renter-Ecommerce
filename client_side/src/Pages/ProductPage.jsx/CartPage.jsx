@@ -159,10 +159,12 @@ const CartPage = () => {
                           );
                         }}
                         disabled={
-                          updating === item._id || item.quantity >= item.maxQuantity
+                          updating === item._id ||
+                          item.quantity >= item.maxQuantity
                         }
                         className={`px-3 py-1 ${
-                          updating === item._id || item.quantity >= item.maxQuantity
+                          updating === item._id ||
+                          item.quantity >= item.maxQuantity
                             ? "bg-gray-100 text-gray-400"
                             : "bg-gray-50 hover:bg-yellow-100 text-gray-700"
                         } transition-colors`}
@@ -171,7 +173,7 @@ const CartPage = () => {
                       </button>
                     </div>
                     <span className="ml-auto text-sm text-gray-500">
-                      ₹{(item.price * item.quantity).toFixed(2)}
+                      ₹{Math.round((item.price * item.quantity).toFixed(2))}
                     </span>
                   </div>
                 </div>
@@ -201,8 +203,12 @@ const CartPage = () => {
 
             <div className="space-y-4">
               <div className="flex justify-between">
-                <span className="text-gray-600">Subtotal ({cart.length} items)</span>
-                <span className="font-medium text-gray-800">₹{getTotalPrice()}</span>
+                <span className="text-gray-600">
+                  Subtotal ({cart.length} items)
+                </span>
+                <span className="font-medium text-gray-800">
+                  ₹{getTotalPrice()}
+                </span>
               </div>
               {/* <div className="flex justify-between">
                 <span className="text-gray-600">Delivery</span>
