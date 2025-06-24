@@ -115,13 +115,13 @@ const crypto = require("crypto");
 const axios = require("axios");
 
 // Configuration
-const salt_key = "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
-const merchant_id = "PGTESTPAYUAT";
-const phonepe_host = "https://api-preprod.phonepe.com/apis/pg-sandbox";
-
+const salt_key="099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
+const merchant_id="PGTESTPAYUAT";
+const phonepe_host="https://api-preprod.phonepe.com/apis/pg-sandbox";
+const SALT_INDEX=1;
 // Rate limiting configuration
-const MAX_REQUESTS = 5; // Maximum number of requests allowed within the time window
-const TIME_WINDOW = 60 * 1000; // Time window in milliseconds (1 minute)
+const MAX_REQUESTS=5; // Maximum number of requests allowed within the time window
+const TIME_WINDOW=60 * 1000; // Time window in milliseconds (1 minute)
 
 // Map to store request timestamps
 const requestTimestamps = new Map();
@@ -160,7 +160,7 @@ const newPayment = async (req, res) => {
     const payloadMain = Buffer.from(JSON.stringify(payload)).toString("base64");
     const string = payloadMain + "/pg/v1/pay" + salt_key;
     const sha256 = crypto.createHash("sha256").update(string).digest("hex");
-    const checksum = sha256 + "###" + 1; // Using salt index 1
+    const checksum = sha256 + "###" + SALT_INDEX; // Using salt index 1
 
     // Make API request
     const options = {
@@ -315,3 +315,5 @@ module.exports = {
   newPayment,
   checkStatus,
 };
+
+// warning in the working copy of client side/src /content
