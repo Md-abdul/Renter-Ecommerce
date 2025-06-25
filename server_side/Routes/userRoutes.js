@@ -5,7 +5,7 @@ const { UserModel, OrderModel } = require("../Modals/UserModal");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const { verifyToken } = require("../Middlewares/VerifyToken");
-
+const { sendOTPEmail } = require("../utils/emailService");
 dotenv.config();
 const UserRoutes = express.Router();
 UserRoutes.use(cookieParser());
@@ -243,6 +243,65 @@ UserRoutes.put("/:id", verifyToken, async (req, res) => {
 UserRoutes.post("/logout", (req, res) => {
   res.clearCookie("token");
   return res.status(200).json({ message: "Logout successful" });
+});
+
+// POST /forgot-password
+UserRoutes.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  const user = await UserModel.findOne({ email });
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  user.otp = { code: otpCode, expiresAt };
+  await user.save();
+
+  try {
+    await sendOTPEmail(email, otpCode);
+    res.json({ message: "OTP sent to email" });
+  } catch (error) {
+    res.status(500).json({ message: "Email failed", error: error.message });
+  }
+});
+
+// POST /verify-otp
+UserRoutes.post("/verify-otp", async (req, res) => {
+  const { email, otp } = req.body;
+  const user = await UserModel.findOne({ email });
+
+  if (
+    !user ||
+    !user.otp ||
+    user.otp.code !== otp ||
+    new Date(user.otp.expiresAt) < new Date()
+  ) {
+    return res.status(400).json({ message: "Invalid or expired OTP" });
+  }
+
+  res.json({ message: "OTP verified" });
+});
+
+// POST /reset-password
+UserRoutes.post("/reset-password", async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  const user = await UserModel.findOne({ email });
+
+  if (
+    !user ||
+    !user.otp ||
+    user.otp.code !== otp ||
+    new Date(user.otp.expiresAt) < new Date()
+  ) {
+    return res.status(400).json({ message: "Invalid or expired OTP" });
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  user.password = hashedPassword;
+  user.otp = undefined;
+  await user.save();
+
+  res.json({ message: "Password reset successful" });
 });
 
 module.exports = { UserRoutes };

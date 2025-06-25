@@ -117,7 +117,16 @@ const userSchema = new mongoose.Schema(
       },
     ],
     isGoogleAuth: { type: Boolean, default: false },
-    address: { type: String, default: "" },
+    // address: String,
+    // city: String,
+    // zipCode: String,
+    // // address: { type: String, default: "" },
+    address: {
+    street: String,
+    city: String,
+    zipCode: String,
+    state: String,
+  },
     phoneNumber: {
       type: String,
       validate: {
@@ -146,6 +155,10 @@ const userSchema = new mongoose.Schema(
         _id: { type: String, required: true },
       }),
       default: {},
+    },
+    otp: {
+      code: { type: String },
+      expiresAt: { type: Date }
     },
     orders: [orderSchema],
     createdAt: { type: Date, default: Date.now },
