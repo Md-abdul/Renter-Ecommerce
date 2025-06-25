@@ -750,7 +750,7 @@ export const Orders = () => {
                               Shipping Address
                             </h4>
                             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
-                              <p>{order.shippingAddress?.street}</p>
+                              <p>{order.shippingAddress?.address}</p>
                               <p>
                                 {order.shippingAddress?.city},{" "}
                                 {order.shippingAddress?.state}{" "}

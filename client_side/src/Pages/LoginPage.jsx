@@ -1,7 +1,7 @@
 // export default LoginPage;
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { adminLogin, signIn } from "../Redux/Users/action";
@@ -94,12 +94,13 @@ const LoginPage = () => {
               </div>
 
               <div className="text-right">
-                <a
-                  href="#"
-                  className="text-sm text-gray-600 hover:text-gray-800"
-                >
-                  Forgot Password?
-                </a>
+                <Link to={"/forgot_password"}>
+                  <p
+                    className="text-sm text-gray-600 hover:text-gray-800"
+                  >
+                    Forgot Password?
+                  </p>
+                </Link>
               </div>
 
               <button

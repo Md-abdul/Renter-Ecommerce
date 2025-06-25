@@ -18,6 +18,7 @@ import AuthRedirect from "../Pages/AuthRedirect";
 import TermOfUses from "../Pages/ExtraPages/TermOfUses.jsx";
 import PrivacyPolicy from "../Pages/ExtraPages/PrivacyPolicy.jsx";
 import Return from "../Pages/ExtraPages/Return.jsx";
+import ForgotPasswordPage from "../Pages/ForgotPasswordPage.jsx";
 
 const AllRoutes = () => {
   return (
@@ -42,6 +43,7 @@ const AllRoutes = () => {
       <Route path="/aboutpage" element={<AboutPage />} />
       <Route path="/contactpage" element={<ContactPage />} />
       <Route path="/order" element={<UserOrders />} />
+      <Route path="/forgot_password" element={<ForgotPasswordPage />} />
       <Route path="/*" element={<HomePage />} />
 
 
