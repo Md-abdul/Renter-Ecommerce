@@ -139,7 +139,7 @@ const UserOrders = () => {
       }
 
       const response = await axios.post(
-        `http://localhost:5000/apiorders/${selectedItem.orderId}/return`,
+        `http://localhost:5000/api/orders/${selectedItem.orderId}/return`,
         {
           itemId: selectedItem._id,
           type,
@@ -193,7 +193,7 @@ const UserOrders = () => {
   const cancelReturnRequest = async (orderId, itemId) => {
     try {
       const response = await axios.put(
-        `http://localhost:5000/apiorders/${orderId}/return/${itemId}`,
+        `http://localhost:5000/api/orders/${orderId}/return/${itemId}`,
         { status: "cancelled" },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
