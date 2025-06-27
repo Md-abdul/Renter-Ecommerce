@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { FiEdit2, FiUser, FiMail, FiPhone, FiHome, FiArrowLeft } from "react-icons/fi";
+import {
+  FiEdit2,
+  FiUser,
+  FiMail,
+  FiPhone,
+  FiHome,
+  FiArrowLeft,
+} from "react-icons/fi";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 
@@ -12,10 +19,19 @@ const ProfileDetails = () => {
     name: "",
     email: "",
     phoneNumber: "",
-    address: "",
+    address: {
+      street: "",
+      city: "",
+      zipCode: "",
+      state: "",
+      alternatePhone: "",
+      addressType: "home",
+    },
   });
+
   const [errors, setErrors] = useState({
     phoneNumber: "",
+    alternatePhone: "",
   });
 
   const userDataa = JSON.parse(localStorage.getItem("user"));
@@ -28,17 +44,27 @@ const ProfileDetails = () => {
 
       setLoading(true);
       const response = await axios.get(
-        `https://renter-ecommerce.onrender.com/api/user/userDetails`,
+        `http://localhost:5000/api/user/userDetails`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setUserData(response.data.user);
+
+      const user = response.data.user;
+      setUserData(user);
+
       setEditData({
-        name: response.data.user.name,
-        email: response.data.user.email,
-        phoneNumber: response.data.user.phoneNumber || "",
-        address: response.data.user.address || "",
+        name: user.name,
+        email: user.email,
+        phoneNumber: user.phoneNumber || "",
+        address: {
+          street: user.address?.street || "",
+          city: user.address?.city || "",
+          zipCode: user.address?.zipCode || "",
+          state: user.address?.state || "",
+          alternatePhone: user.address?.alternatePhone || "",
+          addressType: user.address?.addressType || "home",
+        },
       });
     } catch (error) {
       console.error("Error fetching user details:", error);
@@ -50,39 +76,47 @@ const ProfileDetails = () => {
 
   const handleEditClick = () => {
     setIsEditing(true);
-    setErrors({ phoneNumber: "" });
+    setErrors({ phoneNumber: "", alternatePhone: "" });
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
-    if (name === "phoneNumber") {
+
+    // Validation for phone numbers
+    if (name === "phoneNumber" || name === "alternatePhone") {
       if (value.length > 10) {
         setErrors({
           ...errors,
-          phoneNumber: "Phone number must be 10 digits or less",
+          [name]: "Phone number must be 10 digits or less",
         });
         return;
       } else {
         setErrors({
           ...errors,
-          phoneNumber: "",
+          [name]: "",
         });
       }
-      
+
       if (!/^\d*$/.test(value)) {
         return;
       }
     }
-    
-    setEditData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    if (name === "alternatePhone") {
+      setEditData((prev) => ({
+        ...prev,
+        address: { ...prev.address, alternatePhone: value },
+      }));
+    } else {
+      setEditData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSave = async () => {
-    if (errors.phoneNumber) {
+    if (errors.phoneNumber || errors.alternatePhone) {
       toast.error("Please fix validation errors before saving");
       return;
     }
@@ -92,9 +126,26 @@ const ProfileDetails = () => {
       if (!token) return;
 
       setLoading(true);
-      await axios.put(`https://renter-ecommerce.onrender.com/api/user/${userId}`, editData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+
+      await axios.put(
+        `http://localhost:5000/api/user/${userId}`,
+        {
+          name: editData.name,
+          email: editData.email,
+          phoneNumber: editData.phoneNumber,
+          address: {
+            street: editData.address.street,
+            city: editData.address.city,
+            zipCode: editData.address.zipCode,
+            state: editData.address.state,
+            alternatePhone: editData.address.alternatePhone,
+            addressType: editData.address.addressType,
+          },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       toast.success("Profile updated successfully");
       fetchUserDetails();
@@ -135,7 +186,7 @@ const ProfileDetails = () => {
                   onClick={handleEditClick}
                   className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition-colors shadow-md cursor-pointer"
                 >
-                  <FiEdit2 className="text-lg" /> Edit Profile
+                  <FiEdit2 className="text-lg" /> Complete Profile
                 </button>
               )}
             </div>
@@ -146,10 +197,11 @@ const ProfileDetails = () => {
               </div>
             ) : isEditing ? (
               <div className="space-y-6">
+                {/* Name field - editable */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <label className="flex items-center text-gray-700 text-sm font-medium mb-2">
-                      <FiUser className="mr-2 text-yellow-800" /> Name
+                      <FiUser className="mr-2 text-yellow-500" /> Name
                     </label>
                     <input
                       type="text"
@@ -159,6 +211,7 @@ const ProfileDetails = () => {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
                     />
                   </div>
+                  {/* Email field - read-only */}
                   <div className="space-y-1">
                     <label className="flex items-center text-gray-700 text-sm font-medium mb-2">
                       <FiMail className="mr-2 text-yellow-500" /> Email
@@ -167,11 +220,12 @@ const ProfileDetails = () => {
                       type="email"
                       name="email"
                       value={editData.email}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                      readOnly
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
                     />
                   </div>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <label className="flex items-center text-gray-700 text-sm font-medium mb-2">
@@ -195,41 +249,136 @@ const ProfileDetails = () => {
                         {errors.phoneNumber}
                       </p>
                     )}
-                    <div className="flex items-center mt-2">
-                      <input
-                        type="checkbox"
-                        id="phoneValidation"
-                        checked={editData.phoneNumber.length <= 10}
-                        readOnly
-                        className="mr-2 accent-yellow-400"
-                      />
-                      <label
-                        htmlFor="phoneValidation"
-                        className={`text-xs ${
-                          editData.phoneNumber.length <= 10
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {editData.phoneNumber.length <= 10
-                          ? "Valid phone number length"
-                          : "Phone number too long"}
-                      </label>
-                    </div>
                   </div>
                   <div className="space-y-1">
                     <label className="flex items-center text-gray-700 text-sm font-medium mb-2">
-                      <FiHome className="mr-2 text-yellow-500" /> Address
+                      <FiPhone className="mr-2 text-yellow-500" /> Alternate
+                      Phone
+                    </label>
+                    <input
+                      type="tel"
+                      name="alternatePhone"
+                      value={editData.address.alternatePhone}
+                      onChange={handleInputChange}
+                      maxLength={10}
+                      placeholder="10-digit number"
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
+                        errors.alternatePhone
+                          ? "border-red-500 focus:ring-red-500"
+                          : "border-gray-300 focus:ring-yellow-400"
+                      }`}
+                    />
+                    {errors.alternatePhone && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.alternatePhone}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Rest of the editing form remains the same */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="flex items-center text-gray-700 text-sm font-medium mb-2">
+                      <FiHome className="mr-2 text-yellow-500" /> Street
                     </label>
                     <input
                       type="text"
-                      name="address"
-                      value={editData.address}
-                      onChange={handleInputChange}
+                      name="street"
+                      value={editData.address.street}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          address: { ...prev.address, street: e.target.value },
+                        }))
+                      }
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="flex items-center text-gray-700 text-sm font-medium mb-2">
+                      <FiHome className="mr-2 text-yellow-500" /> City
+                    </label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={editData.address.city}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          address: { ...prev.address, city: e.target.value },
+                        }))
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                      required
                     />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="flex items-center text-gray-700 text-sm font-medium mb-2">
+                      <FiHome className="mr-2 text-yellow-500" /> State
+                    </label>
+                    <input
+                      type="text"
+                      name="state"
+                      value={editData.address.state}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          address: { ...prev.address, state: e.target.value },
+                        }))
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="flex items-center text-gray-700 text-sm font-medium mb-2">
+                      <FiHome className="mr-2 text-yellow-500" /> Zip Code
+                    </label>
+                    <input
+                      type="text"
+                      name="zipCode"
+                      value={editData.address.zipCode}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          address: { ...prev.address, zipCode: e.target.value },
+                        }))
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="flex items-center text-gray-700 text-sm font-medium mb-2">
+                    <FiHome className="mr-2 text-yellow-500" /> Address Type
+                  </label>
+                  <select
+                    name="addressType"
+                    value={editData.address.addressType}
+                    onChange={(e) =>
+                      setEditData((prev) => ({
+                        ...prev,
+                        address: {
+                          ...prev.address,
+                          addressType: e.target.value,
+                        },
+                      }))
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                  >
+                    <option value="home">Home</option>
+                    <option value="work">Work</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
                 <div className="flex justify-end gap-4 pt-6">
                   <button
                     onClick={() => setIsEditing(false)}
@@ -239,9 +388,10 @@ const ProfileDetails = () => {
                   </button>
                   <button
                     onClick={handleSave}
-                    disabled={loading || errors.phoneNumber}
-                    className={`px-6 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition-colors shadow-md ${
-                      (loading || errors.phoneNumber) && "opacity-70 cursor-not-allowed"
+                    disabled={loading || errors.phoneNumber || errors.alternatePhone}
+                    className={`px-6 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition-colors shadow-md cursor-pointer ${
+                      (loading || errors.phoneNumber || errors.alternatePhone) &&
+                      "opacity-70 cursor-not-allowed"
                     }`}
                   >
                     {loading ? "Saving..." : "Save Changes"}
@@ -250,13 +400,16 @@ const ProfileDetails = () => {
               </div>
             ) : userData ? (
               <div className="space-y-6">
+                {/* Display mode remains the same */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 hover:border-yellow-200 transition-colors group">
                     <div className="flex items-center mb-3">
                       <div className="p-2 bg-yellow-100 rounded-full mr-3 group-hover:bg-yellow-200 transition-colors">
                         <FiUser className="text-yellow-500" />
                       </div>
-                      <h3 className="text-sm font-medium text-gray-500">Name</h3>
+                      <h3 className="text-sm font-medium text-gray-500">
+                        Name
+                      </h3>
                     </div>
                     <p className="text-xl font-semibold text-gray-800">
                       {userData.name}
@@ -267,13 +420,16 @@ const ProfileDetails = () => {
                       <div className="p-2 bg-yellow-100 rounded-full mr-3 group-hover:bg-yellow-200 transition-colors">
                         <FiMail className="text-yellow-500" />
                       </div>
-                      <h3 className="text-sm font-medium text-gray-500">Email</h3>
+                      <h3 className="text-sm font-medium text-gray-500">
+                        Email
+                      </h3>
                     </div>
                     <p className="text-xl font-semibold text-gray-800">
                       {userData.email}
                     </p>
                   </div>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 hover:border-yellow-200 transition-colors group">
                     <div className="flex items-center mb-3">
@@ -293,17 +449,39 @@ const ProfileDetails = () => {
                   <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 hover:border-yellow-200 transition-colors group">
                     <div className="flex items-center mb-3">
                       <div className="p-2 bg-yellow-100 rounded-full mr-3 group-hover:bg-yellow-200 transition-colors">
-                        <FiHome className="text-yellow-500" />
+                        <FiPhone className="text-yellow-500" />
                       </div>
                       <h3 className="text-sm font-medium text-gray-500">
-                        Address
+                        Alternate Phone
                       </h3>
                     </div>
                     <p className="text-xl font-semibold text-gray-800">
-                      {userData.address || (
+                      {userData.address?.alternatePhone || (
                         <span className="text-gray-400">Not provided</span>
                       )}
                     </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 hover:border-yellow-200 transition-colors group">
+                    <div className="flex items-center mb-3">
+                      <div className="p-2 bg-yellow-100 rounded-full mr-3 group-hover:bg-yellow-200 transition-colors">
+                        <FiHome className="text-yellow-500" />
+                      </div>
+                      <h3 className="text-sm font-medium text-gray-500">
+                        Address ({userData.address?.addressType || "home"})
+                      </h3>
+                    </div>
+                    <div className="text-xl font-semibold text-gray-800">
+                      {userData.address?.street || (
+                        <span className="text-gray-400">Not provided</span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      {userData.address?.city}, {userData.address?.state}{" "}
+                      {userData.address?.zipCode}
+                    </div>
                   </div>
                 </div>
               </div>

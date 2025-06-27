@@ -26,7 +26,7 @@ const PrivacyPolicy = () => {
       <div>
         <h2 className="text-2xl font-bold mb-4">INTRODUCTION</h2>
         <p className="mb-4">
-          The Terms of Use outlined below are for Levi in. For Levi's Loop
+          The Terms of Use outlined below are for Levi in. For ranter Loop
           Member Program Terms & Conditions, please click here.
         </p>
         <p className="mb-4">

@@ -6,6 +6,7 @@ import {
   ShoppingCart,
   Star,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import mensBanner from "../../../assets/mens banners.png";
 import mensBanner1 from "../../../assets/banner-jens1.webp";
 const carouselSlides = [
@@ -193,9 +194,11 @@ const ProductCard = () => {
                   <p className="text-2xl mb-8 text-gray-100">
                     {slide.subtitle}
                   </p>
-                  <button className="bg-yellow-400 text-black px-8 py-3 rounded-lg font-semibold hover:bg-yellow-300 transition-colors shadow-lg">
-                    Shop Collection
-                  </button>
+                  <Link to={"/mens"}>
+                    <button className="bg-yellow-400 text-black px-8 py-3 rounded-lg font-semibold hover:bg-yellow-300 transition-colors shadow-lg">
+                      Shop Collection
+                    </button>
+                  </Link>
                 </div>
               </div>
             </div>
