@@ -87,7 +87,7 @@ const MAX_CART_TOTAL = 40000; // Maximum cart total limit in rupees
 
 CartRoutes.post("/add", verifyToken, async (req, res) => {
   try {
-    const { productId, quantity, color, size, price } = req.body; // Add price to destructuring
+    const { productId, quantity, color, size, price } = req.body;
     const userId = req.user.userId;
 
     // Validate required fields
@@ -100,15 +100,21 @@ CartRoutes.post("/add", verifyToken, async (req, res) => {
     }
 
     if (!color || typeof color !== "string") {
-      return res.status(400).json({ message: "Color is required and must be a string" });
+      return res
+        .status(400)
+        .json({ message: "Color is required and must be a string" });
     }
 
     if (!size || typeof size !== "string") {
-      return res.status(400).json({ message: "Size is required and must be a string" });
+      return res
+        .status(400)
+        .json({ message: "Size is required and must be a string" });
     }
 
     if (!price || typeof price !== "number") {
-      return res.status(400).json({ message: "Price is required and must be a number" });
+      return res
+        .status(400)
+        .json({ message: "Price is required and must be a number" });
     }
 
     const user = await UserModel.findById(userId);
@@ -117,9 +123,14 @@ CartRoutes.post("/add", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "User or product not found" });
     }
 
+    // ✅ FIX: Ensure addressType is valid before saving
+    if (!["home", "work", "other"].includes(user.address?.addressType)) {
+      user.address.addressType = "home";
+    }
+
     // Find matching size (case-insensitive)
-    const sizeObj = product.sizes?.find((s) =>
-      s.size?.toString().toLowerCase() === size.toLowerCase()
+    const sizeObj = product.sizes?.find(
+      (s) => s.size?.toString().toLowerCase() === size.toLowerCase()
     );
 
     if (!sizeObj || sizeObj.quantity < quantity) {
@@ -129,29 +140,27 @@ CartRoutes.post("/add", verifyToken, async (req, res) => {
       });
     }
 
-    // Generate a unique ID for the cart item
     const itemId = new mongoose.Types.ObjectId().toString();
 
-    // In the /add endpoint, modify the newCartItem construction:
     const newCartItem = {
       _id: itemId,
       productId,
       name: product.title,
-      image: product.colors.find(c => c.name === color)?.images.main || "https://via.placeholder.com/150",
-      originalPrice: product.basePrice + (sizeObj.priceAdjustment || 0), // Original price before discount
-      price: price, // This is the final discounted price
+      image:
+        product.colors.find((c) => c.name === color)?.images.main ||
+        "https://via.placeholder.com/150",
+      originalPrice: product.basePrice + (sizeObj.priceAdjustment || 0),
+      price: price,
       quantity,
       color,
       size,
       maxQuantity: sizeObj.quantity,
-      discount: product.discount || 0, // Include the discount percentage
+      discount: product.discount || 0,
     };
 
-    // Add to cart
     user.cart.set(itemId, newCartItem);
     await user.save();
 
-    // Return the added item and updated cart
     res.status(200).json({
       message: "Added to cart",
       addedItem: newCartItem,
@@ -162,6 +171,7 @@ CartRoutes.post("/add", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
+
 
 CartRoutes.get("/items", verifyToken, async (req, res) => {
   try {

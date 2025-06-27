@@ -324,10 +324,6 @@ const StoreLocator = () => {
                 ))
               )}
             </div>
-
-            <div className="p-4 text-center text-sm text-gray-500 bg-gray-100">
-              Powered by <span className="font-bold">Stocklist</span>
-            </div>
           </div>
 
           {/* Map */}

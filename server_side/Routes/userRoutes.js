@@ -14,28 +14,94 @@ const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
 const TOKEN_EXPIRY = "24h"; // Token expires in 24 hours
 
 // Update user route (PUT)
-UserRoutes.put("/:id", async (req, res) => {
+// UserRoutes.put("/:id", async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { name, email, address, phoneNumber } = req.body;
+
+//     // Validate input
+//     if (!name || !email) {
+//       return res.status(400).json({ message: "Name and email are required" });
+//     }
+
+//     // Validate phone number if provided
+//     if (phoneNumber && !/^\d{10}$/.test(phoneNumber)) {
+//       return res
+//         .status(400)
+//         .json({ message: "Phone number must be 10 digits" });
+//     }
+
+//     const updatedUser = await UserModel.findByIdAndUpdate(
+//       id,
+//       { name, email, address, phoneNumber },
+//       { new: true, runValidators: true }
+//     ).select("-password -cart"); // Exclude password and cart from response
+
+//     if (!updatedUser) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     res.status(200).json({
+//       message: "User updated successfully",
+//       user: updatedUser,
+//     });
+//   } catch (error) {
+//     console.error("Update user error:", error);
+//     if (error.code === 11000) {
+//       return res.status(409).json({ message: "Email already exists" });
+//     }
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// });
+
+UserRoutes.put("/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, address, phoneNumber } = req.body;
+    const { name, email, phoneNumber, address } = req.body;
+
+    // Verify the ID from params matches the ID from token
+    if (id !== req.user.userId) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to update this user" });
+    }
 
     // Validate input
     if (!name || !email) {
       return res.status(400).json({ message: "Name and email are required" });
     }
 
-    // Validate phone number if provided
     if (phoneNumber && !/^\d{10}$/.test(phoneNumber)) {
       return res
         .status(400)
         .json({ message: "Phone number must be 10 digits" });
     }
 
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      id,
-      { name, email, address, phoneNumber },
-      { new: true, runValidators: true }
-    ).select("-password -cart"); // Exclude password and cart from response
+    // Validate address if provided
+    if (address) {
+      if (
+        !address.street ||
+        !address.city ||
+        !address.state ||
+        !address.zipCode
+      ) {
+        return res
+          .status(400)
+          .json({ message: "All address fields are required" });
+      }
+    }
+
+    const updateData = {
+      name,
+      email,
+      phoneNumber,
+      ...(address && { address }),
+    };
+
+    const updatedUser = await UserModel.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    }).select("-password -cart");
 
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
@@ -165,7 +231,7 @@ UserRoutes.post("/login", async (req, res) => {
     return res.status(200).json({
       message: "Login successful",
       token,
-      user: { name: user.name, email: user.email, userId:user._id }, // Return user name and email
+      user: { name: user.name, email: user.email, userId: user._id }, // Return user name and email
     });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error });
@@ -194,50 +260,6 @@ UserRoutes.get("/userDetails", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
-
-// Keep only this update route (with verifyToken middleware)
-UserRoutes.put("/:id", verifyToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, email, address, phoneNumber } = req.body;
-
-    // Verify the ID from params matches the ID from token
-    if (id !== req.user.userId) {
-      return res.status(403).json({ message: "Unauthorized to update this user" });
-    }
-
-    // Rest of your existing update logic...
-    if (!name || !email) {
-      return res.status(400).json({ message: "Name and email are required" });
-    }
-
-    if (phoneNumber && !/^\d{10}$/.test(phoneNumber)) {
-      return res.status(400).json({ message: "Phone number must be 10 digits" });
-    }
-
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      id,
-      { name, email, address, phoneNumber },
-      { new: true, runValidators: true }
-    ).select("-password -cart");
-
-    if (!updatedUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(200).json({
-      message: "User updated successfully",
-      user: updatedUser,
-    });
-  } catch (error) {
-    console.error("Update user error:", error);
-    if (error.code === 11000) {
-      return res.status(409).json({ message: "Email already exists" });
-    }
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
-
 
 // Logout Route
 UserRoutes.post("/logout", (req, res) => {

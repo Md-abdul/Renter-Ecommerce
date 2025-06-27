@@ -104,7 +104,7 @@ const UserOrders = () => {
       setReturnReason("");
 
       const productResponse = await axios.get(
-        `https://renter-ecommerce.onrender.com/api/products/${item.productId}`
+        `http://localhost:5000/api/products/${item.productId}`
       );
 
       const product = productResponse.data;
@@ -139,7 +139,7 @@ const UserOrders = () => {
       }
 
       const response = await axios.post(
-        `https://renter-ecommerce.onrender.com/api/orders/${selectedItem.orderId}/return`,
+        `http://localhost:5000/api/orders/${selectedItem.orderId}/return`,
         {
           itemId: selectedItem._id,
           type,
@@ -193,7 +193,7 @@ const UserOrders = () => {
   const cancelReturnRequest = async (orderId, itemId) => {
     try {
       const response = await axios.put(
-        `https://renter-ecommerce.onrender.com/api/orders/${orderId}/return/${itemId}`,
+        `http://localhost:5000/api/orders/${orderId}/return/${itemId}`,
         { status: "cancelled" },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -443,26 +443,30 @@ const UserOrders = () => {
                       {/* Order Details Grid */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Shipping Address */}
-                        <div className="bg-gray-50 rounded-xl p-6">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                            <FiHome className="mr-2 text-indigo-500" />
-                            Shipping Address
-                          </h3>
-                          <div className="space-y-2 text-gray-700">
-                            <p className="font-medium">
-                              {order.shippingAddress.name}
-                            </p>
-                            <p>{order.shippingAddress.address}</p>
+                        <div className="space-y-2 text-gray-700">
+                          <p className="font-medium">
+                            {order.shippingAddress.name}
+                          </p>
+                          <p>{order.shippingAddress.address.street}</p>
+                          <p>
+                            {order.shippingAddress.address.city},{" "}
+                            {order.shippingAddress.address.state} -{" "}
+                            {order.shippingAddress.address.zipCode}
+                          </p>
+                          <p className="mt-3">
+                            <span className="font-medium">Phone:</span>{" "}
+                            {order.shippingAddress.phoneNumber}
+                          </p>
+                          {order.shippingAddress.address.alternatePhone && (
                             <p>
-                              {order.shippingAddress.city},{" "}
-                              {order.shippingAddress.state} -{" "}
-                              {order.shippingAddress.zipCode}
+                              <span className="font-medium">Alternate:</span>{" "}
+                              {order.shippingAddress.address.alternatePhone}
                             </p>
-                            <p className="mt-3">
-                              <span className="font-medium">Phone:</span>{" "}
-                              {order.shippingAddress.phone}
-                            </p>
-                          </div>
+                          )}
+                          <p className="text-sm text-gray-500 capitalize">
+                            ({order.shippingAddress.address.addressType}{" "}
+                            address)
+                          </p>
                         </div>
 
                         {/* Payment Information */}
@@ -480,7 +484,11 @@ const UserOrders = () => {
                             </div>
                             <div>
                               <p className="font-medium">Payment Status</p>
-                              <p className="text-green-600 font-medium">{order.paymentMethod === "cod" ? "Pending" : "Done" }</p>
+                              <p className="text-green-600 font-medium">
+                                {order.paymentMethod === "cod"
+                                  ? "Pending"
+                                  : "Done"}
+                              </p>
                             </div>
                             <div>
                               <p className="font-medium">Total Amount</p>
@@ -650,104 +658,84 @@ const UserOrders = () => {
 
         {/* Return Modal */}
         {showReturnModal && selectedItem && (
-          <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-              <div
-                className="fixed inset-0 transition-opacity"
-                aria-hidden="true"
-              >
-                <div
-                  className="absolute inset-0 bg-gray-500 opacity-75 backdrop-blur-sm"
-                  onClick={() => setShowReturnModal(false)}
-                ></div>
-              </div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Blur Backdrop */}
+            <div
+              className="absolute inset-0 bg-gray-500 opacity-75"
+              onClick={() => setShowReturnModal(false)}
+            ></div>
 
-              <span
-                className="hidden sm:inline-block sm:align-middle sm:h-screen"
-                aria-hidden="true"
-              >
-                &#8203;
-              </span>
+            {/* Glass Modal */}
+            <div className="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 max-w-lg w-full mx-4">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
+                Request Return
+              </h3>
 
-              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div className="bg-white px-6 py-6 sm:p-6">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                      <h3 className="text-xl font-bold text-gray-900 mb-4">
-                        Request Return
-                      </h3>
-
-                      <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                        <div className="flex items-start">
-                          <img
-                            src={selectedItem.image}
-                            alt={selectedItem.name}
-                            className="w-16 h-16 object-cover rounded mr-4"
-                          />
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {selectedItem.name}
-                            </p>
-                            <p className="text-sm text-gray-500 mt-1">
-                              Size: {selectedItem.size} | Color:{" "}
-                              {selectedItem.color}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              Quantity: {selectedItem.quantity}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Reason for Return{" "}
-                          <span className="text-red-500">*</span>
-                        </label>
-                        <textarea
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          rows="4"
-                          value={returnReason}
-                          onChange={(e) => setReturnReason(e.target.value)}
-                          placeholder="Please specify the reason for return..."
-                          required
-                        />
-                      </div>
-
-                      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-                        <div className="flex">
-                          <div className="flex-shrink-0">
-                            <FiInfo className="h-5 w-5 text-yellow-400" />
-                          </div>
-                          <div className="ml-3">
-                            <p className="text-sm text-yellow-700">
-                              Return requests are typically processed within 3-5
-                              business days. You'll receive instructions for
-                              returning the item after approval.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="pt-4 flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
-                        <button
-                          type="button"
-                          className="px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
-                          onClick={() => setShowReturnModal(false)}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm transition-all"
-                          onClick={() => handleReturnRequest("return")}
-                        >
-                          Submit Return Request
-                        </button>
-                      </div>
-                    </div>
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <div className="flex items-start">
+                  <img
+                    src={selectedItem.image}
+                    alt={selectedItem.name}
+                    className="w-16 h-16 object-cover rounded mr-4"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {selectedItem.name}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Size: {selectedItem.size} | Color: {selectedItem.color}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Quantity: {selectedItem.quantity}
+                    </p>
                   </div>
                 </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for Return <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows="4"
+                  value={returnReason}
+                  onChange={(e) => setReturnReason(e.target.value)}
+                  placeholder="Please specify the reason for return..."
+                  required
+                />
+              </div>
+
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <FiInfo className="h-5 w-5 text-yellow-400" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-yellow-700">
+                      Return requests are typically processed within 3-5
+                      business days. You'll receive instructions for returning
+                      the item after approval.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors text-gray-700"
+                  onClick={() => setShowReturnModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                  onClick={() => handleReturnRequest("return")}
+                >
+                  Submit Return Request
+                </button>
               </div>
             </div>
           </div>
@@ -755,185 +743,160 @@ const UserOrders = () => {
 
         {/* Exchange Modal */}
         {showExchangeModal && selectedItem && (
-          <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-              <div
-                className="fixed inset-0 transition-opacity"
-                aria-hidden="true"
-              >
-                <div
-                  className="absolute inset-0 bg-gray-500 opacity-75 backdrop-blur-sm"
-                  onClick={() => setShowExchangeModal(false)}
-                ></div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Blur Backdrop */}
+            <div
+              className="absolute inset-0 bg-gray-500 opacity-75"
+              onClick={() => setShowExchangeModal(false)}
+            ></div>
+
+            {/* Glass Modal */}
+            <div className="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 max-w-lg w-full mx-4">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
+                Request Exchange
+              </h3>
+
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <div className="flex items-start">
+                  <img
+                    src={selectedItem.image}
+                    alt={selectedItem.name}
+                    className="w-16 h-16 object-cover rounded mr-4"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {selectedItem.name}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Current: {selectedItem.color}, Size: {selectedItem.size}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Quantity: {selectedItem.quantity}
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <span
-                className="hidden sm:inline-block sm:align-middle sm:h-screen"
-                aria-hidden="true"
-              >
-                &#8203;
-              </span>
-
-              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div className="bg-white px-6 py-6 sm:p-6">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                      <h3 className="text-xl font-bold text-gray-900 mb-4">
-                        Request Exchange
-                      </h3>
-
-                      <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                        <div className="flex items-start">
-                          <img
-                            src={selectedItem.image}
-                            alt={selectedItem.name}
-                            className="w-16 h-16 object-cover rounded mr-4"
-                          />
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {selectedItem.name}
-                            </p>
-                            <p className="text-sm text-gray-500 mt-1">
-                              Current: {selectedItem.color}, Size:{" "}
-                              {selectedItem.size}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              Quantity: {selectedItem.quantity}
-                            </p>
-                          </div>
-                        </div>
+              {/* Color Selection */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select New Color <span className="text-red-500">*</span>
+                </label>
+                {availableColors.length > 0 ? (
+                  <select
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={exchangeColor}
+                    onChange={(e) => setExchangeColor(e.target.value)}
+                    required
+                  >
+                    <option value="">Select color</option>
+                    {availableColors.map((color) => (
+                      <option key={color} value={color}>
+                        {color}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <FiXCircle className="h-5 w-5 text-red-400" />
                       </div>
-
-                      {/* Color Selection */}
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Select New Color{" "}
-                          <span className="text-red-500">*</span>
-                        </label>
-                        {availableColors.length > 0 ? (
-                          <select
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            value={exchangeColor}
-                            onChange={(e) => setExchangeColor(e.target.value)}
-                            required
-                          >
-                            <option value="">Select color</option>
-                            {availableColors.map((color) => (
-                              <option key={color} value={color}>
-                                {color}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                            <div className="flex">
-                              <div className="flex-shrink-0">
-                                <FiXCircle className="h-5 w-5 text-red-400" />
-                              </div>
-                              <div className="ml-3">
-                                <p className="text-sm text-red-700">
-                                  No other colors available for exchange
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Size Selection */}
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Select New Size{" "}
-                          <span className="text-red-500">*</span>
-                        </label>
-                        {availableSizes.length > 0 ? (
-                          <select
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            value={exchangeSize}
-                            onChange={(e) => setExchangeSize(e.target.value)}
-                            required
-                          >
-                            <option value="">Select size</option>
-                            {availableSizes.map((size) => (
-                              <option key={size} value={size}>
-                                {size}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                            <div className="flex">
-                              <div className="flex-shrink-0">
-                                <FiXCircle className="h-5 w-5 text-red-400" />
-                              </div>
-                              <div className="ml-3">
-                                <p className="text-sm text-red-700">
-                                  No other sizes available for exchange
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Reason for Exchange */}
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Reason for Exchange{" "}
-                          <span className="text-red-500">*</span>
-                        </label>
-                        <textarea
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          rows="4"
-                          value={returnReason}
-                          onChange={(e) => setReturnReason(e.target.value)}
-                          placeholder="Please specify the reason for exchange..."
-                          required
-                        />
-                      </div>
-
-                      <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
-                        <div className="flex">
-                          <div className="flex-shrink-0">
-                            <FiInfo className="h-5 w-5 text-blue-400" />
-                          </div>
-                          <div className="ml-3">
-                            <p className="text-sm text-blue-700">
-                              Exchange requests are typically processed within
-                              3-5 business days. You'll receive instructions for
-                              returning the item and getting your replacement
-                              after approval.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="pt-4 flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
-                        <button
-                          onClick={() => setShowExchangeModal(false)}
-                          className="px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => handleReturnRequest("exchange")}
-                          className={`px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all ${
-                            availableSizes.length === 0 ||
-                            availableColors.length === 0
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
-                          }`}
-                          disabled={
-                            availableSizes.length === 0 ||
-                            availableColors.length === 0
-                          }
-                        >
-                          Submit Exchange Request
-                        </button>
+                      <div className="ml-3">
+                        <p className="text-sm text-red-700">
+                          No other colors available for exchange
+                        </p>
                       </div>
                     </div>
                   </div>
+                )}
+              </div>
+
+              {/* Size Selection */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select New Size <span className="text-red-500">*</span>
+                </label>
+                {availableSizes.length > 0 ? (
+                  <select
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={exchangeSize}
+                    onChange={(e) => setExchangeSize(e.target.value)}
+                    required
+                  >
+                    <option value="">Select size</option>
+                    {availableSizes.map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <FiXCircle className="h-5 w-5 text-red-400" />
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-red-700">
+                          No other sizes available for exchange
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Reason for Exchange */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for Exchange <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows="4"
+                  value={returnReason}
+                  onChange={(e) => setReturnReason(e.target.value)}
+                  placeholder="Please specify the reason for exchange..."
+                  required
+                />
+              </div>
+
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <FiInfo className="h-5 w-5 text-blue-400" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-blue-700">
+                      Exchange requests are typically processed within 3-5
+                      business days. You'll receive instructions for returning
+                      the item and getting your replacement after approval.
+                    </p>
+                  </div>
                 </div>
+              </div>
+
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={() => setShowExchangeModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors text-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleReturnRequest("exchange")}
+                  className={`px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors ${
+                    availableSizes.length === 0 || availableColors.length === 0
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                  disabled={
+                    availableSizes.length === 0 || availableColors.length === 0
+                  }
+                >
+                  Submit Exchange Request
+                </button>
               </div>
             </div>
           </div>

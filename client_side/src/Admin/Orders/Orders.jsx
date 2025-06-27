@@ -19,11 +19,13 @@ import {
   FiShoppingBag,
   FiCreditCard,
   FiMapPin,
-  FiBox
+  FiBox,
 } from "react-icons/fi";
 import { format, parse, isValid } from "date-fns";
 import axios from "axios";
 import { toast } from "react-toastify";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 export const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -51,7 +53,7 @@ export const Orders = () => {
       }
 
       const response = await axios.get(
-        "https://renter-ecommerce.onrender.com/api/orders/admin",
+        "http://localhost:5000/api/orders/admin",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -78,7 +80,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.get(
-        "https://renter-ecommerce.onrender.com/api/orders/returns",
+        "http://localhost:5000/api/orders/returns",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -98,7 +100,7 @@ export const Orders = () => {
       }
 
       await axios.put(
-        `https://renter-ecommerce.onrender.com/api/orders/${orderId}/status`,
+        `http://localhost:5000/api/orders/${orderId}/status`,
         { status: newStatus },
         {
           headers: {
@@ -121,7 +123,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.put(
-        `https://renter-ecommerce.onrender.com/api/orders/${orderId}/return/${itemId}`,
+        `http://localhost:5000/api/orders/${orderId}/return/${itemId}`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -141,7 +143,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       await axios.put(
-        `https://renter-ecommerce.onrender.com/api/orders/${orderId}/return/${itemId}/tracking`,
+        `http://localhost:5000/api/orders/${orderId}/return/${itemId}/tracking`,
         { trackingNumber: trackingInput },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -167,6 +169,191 @@ export const Orders = () => {
 
   const toggleOrderExpansion = (orderId) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
+  };
+
+  const generateInvoice = async (order) => {
+    try {
+      // Create a temporary div to render the invoice content
+      const invoiceElement = document.createElement("div");
+      invoiceElement.style.position = "absolute";
+      invoiceElement.style.left = "-9999px";
+      invoiceElement.style.width = "800px";
+      invoiceElement.style.padding = "20px";
+      invoiceElement.style.backgroundColor = "white";
+
+      // Populate the invoice content
+      invoiceElement.innerHTML = `
+        <div style="font-family: Arial, sans-serif;">
+          <h1 style="text-align: center; color: #333; margin-bottom: 30px;">INVOICE</h1>
+          
+          <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+            <div style="flex: 1;">
+              <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px;">From</h3>
+              <p><strong>Renter E-commerce</strong></p>
+              <p>123 Business Street</p>
+              <p>Commerce City, CC 12345</p>
+              <p>India</p>
+            </div>
+            
+            <div style="flex: 1; text-align: right;">
+              <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px;">Invoice Details</h3>
+              <p><strong>Invoice #:</strong> ${order._id.substring(0, 8)}</p>
+              <p><strong>Date:</strong> ${new Date(
+                order.createdAt
+              ).toLocaleDateString()}</p>
+              <p><strong>Status:</strong> ${
+                order.status.charAt(0).toUpperCase() + order.status.slice(1)
+              }</p>
+            </div>
+          </div>
+          
+          <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+            <div style="flex: 1;">
+              <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px;">Bill To</h3>
+              <p><strong>${order.userId?.name || "N/A"}</strong></p>
+              <p>${
+                order.shippingAddress?.email || order.userId?.email || "N/A"
+              }</p>
+              <p>${order.shippingAddress?.phoneNumber || "N/A"}</p>
+            </div>
+            
+            <div style="flex: 1; text-align: right;">
+              <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px;">Ship To</h3>
+              <p>${
+                order.shippingAddress?.street ||
+                order.shippingAddress?.address?.street ||
+                "N/A"
+              }</p>
+              <p>${
+                order.shippingAddress?.city ||
+                order.shippingAddress?.address?.city ||
+                "N/A"
+              }, 
+                 ${
+                   order.shippingAddress?.state ||
+                   order.shippingAddress?.address?.state ||
+                   "N/A"
+                 }</p>
+              <p>${
+                order.shippingAddress?.zipCode ||
+                order.shippingAddress?.address?.zipCode ||
+                "N/A"
+              }</p>
+            </div>
+          </div>
+          
+          <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 15px;">Order Items</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+            <thead>
+              <tr style="background-color: #f5f5f5;">
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Item</th>
+                <th style="padding: 10px; text-align: right; border: 1px solid #ddd;">Price</th>
+                <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Qty</th>
+                <th style="padding: 10px; text-align: right; border: 1px solid #ddd;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${order.items
+                .map(
+                  (item) => `
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #ddd; vertical-align: top;">
+                    <strong>${item.name}</strong>
+                    ${
+                      item.color
+                        ? `<div style="font-size: 0.9em;">Color: ${item.color}</div>`
+                        : ""
+                    }
+                    ${
+                      item.size
+                        ? `<div style="font-size: 0.9em;">Size: ${item.size}</div>`
+                        : ""
+                    }
+                  </td>
+                  <td style="padding: 10px; border: 1px solid #ddd; text-align: right; vertical-align: top;">₹${item.price.toFixed(
+                    2
+                  )}</td>
+                  <td style="padding: 10px; border: 1px solid #ddd; text-align: center; vertical-align: top;">${
+                    item.quantity
+                  }</td>
+                  <td style="padding: 10px; border: 1px solid #ddd; text-align: right; vertical-align: top;">₹${(
+                    item.price * item.quantity
+                  ).toFixed(2)}</td>
+                </tr>
+              `
+                )
+                .join("")}
+            </tbody>
+          </table>
+          
+          <div style="float: right; width: 300px;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;"><strong>Subtotal:</strong></td>
+                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">₹${order.items
+                  .reduce((sum, item) => sum + item.price * item.quantity, 0)
+                  .toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;"><strong>Shipping:</strong></td>
+                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">₹${
+                  order.shippingCharges?.toFixed(2) || "0.00"
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;"><strong>Tax:</strong></td>
+                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">₹${
+                  order.tax?.toFixed(2) || "0.00"
+                }</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; text-align: right;"><strong>Total:</strong></td>
+                <td style="padding: 8px; text-align: right;"><strong>₹${
+                  order.totalAmount?.toFixed(2) || "0.00"
+                }</strong></td>
+              </tr>
+            </table>
+          </div>
+          
+          <div style="clear: both; margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 0.9em; color: #777;">
+            <p>Thank you for your business!</p>
+            <p>Renter E-commerce | support@renter.com | +91 9876543210</p>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(invoiceElement);
+
+      // Convert the HTML to canvas then to PDF
+      const canvas = await html2canvas(invoiceElement);
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Clean up
+      document.body.removeChild(invoiceElement);
+
+      // Save the PDF
+      pdf.save(`invoice_${order._id.substring(0, 8)}.pdf`);
+      toast.success("Invoice downloaded successfully");
+    } catch (error) {
+      console.error("Error generating invoice:", error);
+      toast.error("Failed to generate invoice");
+    }
   };
 
   const filteredOrders = orders.filter((order) => {
@@ -232,6 +419,26 @@ export const Orders = () => {
     return format(new Date(dateString), "MMM dd, yyyy, hh:mm a");
   };
 
+  // Helper function to get address fields safely
+  const getAddressField = (shippingAddress, field) => {
+    if (
+      shippingAddress[field] !== undefined &&
+      shippingAddress[field] !== null
+    ) {
+      return shippingAddress[field];
+    }
+    if (
+      shippingAddress.address &&
+      shippingAddress.address[field] !== undefined &&
+      shippingAddress.address[field] !== null
+    ) {
+      return shippingAddress.address[field];
+    }
+    return "N/A";
+  };
+
+  console.log(orders);
+  
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -667,10 +874,7 @@ export const Orders = () => {
                                   className="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg"
                                 >
                                   <img
-                                    src={
-                                      item.image ||
-                                      "/default-product.png"
-                                    }
+                                    src={item.image || "/default-product.png"}
                                     alt={item.name}
                                     className="w-16 h-16 rounded-md object-cover"
                                   />
@@ -679,14 +883,36 @@ export const Orders = () => {
                                       {item.name}
                                     </h5>
                                     <div className="text-sm text-gray-500 mt-1">
-                                      <p>Color: {item.color}</p>
-                                      <p>Size: {item.size}</p>
+                                      {item.color && <p>Color: {item.color}</p>}
+                                      {item.size && <p>Size: {item.size}</p>}
                                       <p>Qty: {item.quantity}</p>
-                                      <p>Price: ₹{item.price}</p>
+                                      <p>Price: ₹{Math.floor(item.price)}</p>
                                     </div>
                                   </div>
                                 </div>
                               ))}
+                            </div>
+                            {/* Customer Details */}
+                            <h4 className="font-semibold text-gray-900 mt-6 mb-3 flex items-center">
+                              <FiUser className="mr-2" />
+                              Customer Details
+                            </h4>
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                              <p className="font-medium">
+                                {order.userId?.name}
+                              </p>
+                              <p className="text-gray-600">
+                                {order.userId?.email}
+                              </p>
+                              <p className="text-gray-600">
+                                Phone No: {order.shippingAddress?.phoneNumber}
+                              </p>
+                              <p className="text-gray-600">
+                                Payment Method: {order?.paymentMethod}
+                              </p>
+                              <p className="text-gray-600">
+                                Status: {order?.status}
+                              </p>
                             </div>
                           </div>
 
@@ -698,17 +924,22 @@ export const Orders = () => {
                             </h4>
                             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                               <div className="flex justify-between">
-                                <span className="text-gray-600">
-                                  Subtotal:
-                                </span>
+                                <span className="text-gray-600">Subtotal:</span>
                                 <span className="font-medium">
-                                  ₹{order.subTotal?.toFixed(2) || "0.00"}
+                                  ₹
+                                  {Math.floor(
+                                    order.items
+                                      .reduce(
+                                        (sum, item) =>
+                                          sum + item.price * item.quantity,
+                                        0
+                                      )
+                                      .toFixed(2)
+                                  )}
                                 </span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-gray-600">
-                                  Shipping:
-                                </span>
+                                <span className="text-gray-600">Shipping:</span>
                                 <span className="font-medium">
                                   ₹{order.shippingCharges?.toFixed(2) || "0.00"}
                                 </span>
@@ -724,39 +955,49 @@ export const Orders = () => {
                                   Total:
                                 </span>
                                 <span className="font-bold text-gray-900">
-                                  ₹{order.totalAmount?.toFixed(2) || "0.00"}
+                                  ₹
+                                  {Math.floor(
+                                    order.totalAmount?.toFixed(2) || "0.00"
+                                  )}
                                 </span>
                               </div>
                             </div>
 
-                            <h4 className="font-semibold text-gray-900 mt-6 mb-3 flex items-center">
-                              <FiUser className="mr-2" />
-                              Customer Details
-                            </h4>
-                            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                              <p className="font-medium">
-                                {order.userId?.name}
-                              </p>
-                              <p className="text-gray-600">
-                                {order.userId?.email}
-                              </p>
-                              <p className="text-gray-600">
-                                {order.userId?.phone}
-                              </p>
-                            </div>
-
+                            {/* Shipping Address */}
                             <h4 className="font-semibold text-gray-900 mt-6 mb-3 flex items-center">
                               <FiMapPin className="mr-2" />
                               Shipping Address
                             </h4>
                             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
-                              <p>{order.shippingAddress?.address}</p>
-                              <p>
-                                {order.shippingAddress?.city},{" "}
-                                {order.shippingAddress?.state}{" "}
-                                {order.shippingAddress?.postalCode}
-                              </p>
-                              <p>{order.shippingAddress?.country}</p>
+                              {order?.shippingAddress ? (
+                                <>
+                                  <p className="font-medium">
+                                    {order.shippingAddress.name || "N/A"}
+                                  </p>
+                                  <p>
+                                    {getAddressField(order.shippingAddress, "street")}
+                                  </p>
+                                  <p>
+                                    {getAddressField(order.shippingAddress, "city")}
+                                    {getAddressField(order.shippingAddress, "state") && getAddressField(order.shippingAddress, "state") !== "N/A" &&
+                                      `, ${getAddressField(order.shippingAddress, "state")}`}
+                                    {getAddressField(order.shippingAddress, "zipCode") && getAddressField(order.shippingAddress, "zipCode") !== "N/A" &&
+                                      ` - ${getAddressField(order.shippingAddress, "zipCode")}`}
+                                  </p>
+                                  <p>
+                                    Phone: {order.shippingAddress.phoneNumber || "N/A"}
+                                  </p>
+                                  {order.shippingAddress.alternatePhone && (
+                                    <p>
+                                      Alternate Phone: {order.shippingAddress.alternatePhone}
+                                    </p>
+                                  )}
+                                </>
+                              ) : (
+                                <p className="text-red-500">
+                                  No shipping address available
+                                </p>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -783,13 +1024,16 @@ export const Orders = () => {
                             </select>
                           </div>
                           <div className="flex space-x-3">
-                            <button className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors">
+                            {/* <button className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors">
                               <FiBox className="inline mr-2" />
                               View Packaging Slip
-                            </button>
-                            <button className="px-4 py-2 bg-yellow-500 text-gray-900 rounded-lg hover:bg-yellow-600 transition-colors">
+                            </button> */}
+                            <button
+                              onClick={() => generateInvoice(order)}
+                              className="px-4 py-2 bg-yellow-500 text-gray-900 rounded-lg hover:bg-yellow-600 transition-colors"
+                            >
                               <FiCreditCard className="inline mr-2" />
-                              View Invoice
+                              Download Invoice
                             </button>
                           </div>
                         </div>

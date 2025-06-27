@@ -50,10 +50,20 @@ const orderSchema = new mongoose.Schema({
   items: [orderItemSchema],
   totalAmount: { type: Number, required: true },
   shippingAddress: {
-    name: String,
-    address: String,
-    city: String,
-    zipCode: String,
+    name: { type: String, required: true },
+    address: {
+      street: { type: String, required: true },
+      city: { type: String, required: true },
+      zipCode: { type: String, required: true },
+      state: { type: String, default: "" },
+      alternatePhone: { type: String, default: "" },
+      addressType: {
+        type: String,
+        enum: ["home", "work", "other"],
+        default: "home",
+      },
+    },
+    phoneNumber: { type: String, required: true },
   },
   paymentMethod: { type: String, required: true },
   paymentDetails: {
@@ -99,7 +109,7 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      equired: function () {
+      required: function () {
         return !this.isGoogleAuth;
       },
     },
@@ -117,16 +127,19 @@ const userSchema = new mongoose.Schema(
       },
     ],
     isGoogleAuth: { type: Boolean, default: false },
-    // address: String,
-    // city: String,
-    // zipCode: String,
     // // address: { type: String, default: "" },
     address: {
-    street: String,
-    city: String,
-    zipCode: String,
-    state: String,
-  },
+      street: { type: String, default: "" },
+      city: { type: String, default: "" },
+      zipCode: { type: String, default: "" },
+      state: { type: String, default: "" },
+      alternatePhone: { type: String, default: "" },
+      addressType: {
+        type: String,
+        enum: ["home", "work", "other"],
+        default: "home",
+      },
+    },
     phoneNumber: {
       type: String,
       validate: {
@@ -158,7 +171,7 @@ const userSchema = new mongoose.Schema(
     },
     otp: {
       code: { type: String },
-      expiresAt: { type: Date }
+      expiresAt: { type: Date },
     },
     orders: [orderSchema],
     createdAt: { type: Date, default: Date.now },

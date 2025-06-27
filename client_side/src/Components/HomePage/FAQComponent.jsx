@@ -43,7 +43,7 @@ const FAQComponent = () => {
     {
       question: "How do I contact customer support?",
       answer:
-        "Our customer support team is available 24/7 via email at support@ranter.com or through our live chat feature on the website. You can also call us at +1 (800) 555-RANT during business hours (9am-5pm EST).",
+        "Our customer support team is available 24/7 via email at support@ranter.com or through our live chat feature on the website. You can also call us at +91 9029297732 during business hours (9am-5pm EST).",
     },
     {
       question: "Are my personal details secure?",

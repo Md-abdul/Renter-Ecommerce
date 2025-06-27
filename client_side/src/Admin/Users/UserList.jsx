@@ -24,9 +24,7 @@ const UserList = () => {
     const fetchUsers = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(
-          "https://renter-ecommerce.onrender.com/api/user/allUser"
-        );
+        const response = await fetch("http://localhost:5000/api/user/allUser");
         if (!response.ok) throw new Error("Failed to fetch users");
         const data = await response.json();
         setUsers(data);
@@ -68,8 +66,8 @@ const UserList = () => {
     try {
       const method = currentUser ? "PUT" : "POST";
       const url = currentUser
-        ? `https://renter-ecommerce.onrender.com/api/user/${currentUser._id}`
-        : "https://renter-ecommerce.onrender.com/api/user";
+        ? `http://localhost:5000/api/user/${currentUser._id}`
+        : "http://localhost:5000/api/user";
 
       const response = await fetch(url, {
         method,
@@ -97,7 +95,7 @@ const UserList = () => {
   const handleDelete = async () => {
     try {
       const response = await fetch(
-        `https://renter-ecommerce.onrender.com/api/user/${userToDelete._id}`,
+        `http://localhost:5000/api/user/${userToDelete._id}`,
         { method: "DELETE" }
       );
       if (!response.ok) throw new Error("Failed to delete user");
@@ -238,11 +236,19 @@ const UserList = () => {
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         {user.address ? (
-                          <span className="text-sm text-gray-600 line-clamp-1">
-                            {user.address}
-                          </span>
+                          <div className="text-sm text-gray-600">
+                            <div>{user.address.street || "N/A"}</div>
+                            <div>
+                              {user.address.city || ""}
+                              {user.address.city && user.address.state
+                                ? ", "
+                                : ""}
+                              {user.address.state || ""}{" "}
+                              {user.address.zipCode || ""}
+                            </div>
+                          </div>
                         ) : (
                           <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
                             N/A

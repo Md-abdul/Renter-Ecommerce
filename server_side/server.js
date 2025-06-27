@@ -12,6 +12,7 @@ const { couponRoutes } = require("./Routes/couponRoutes");
 const { PaymentRoutes } = require("./Routes/paymentRoutes");
 const router = require("./Routes/googleSignup");
 const phonepeRoutes = require("./Routes/phonepeRoutes"); // Add this line
+const contactRoutes = require("./Routes/ContactRoutes");
 
 const app = express();
 dotenv.config();
@@ -55,6 +56,7 @@ app.use("/auth/google", router);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", PaymentRoutes);
 app.use("/api/phonepe", phonepeRoutes); // Add this line for PhonePe routes
+app.use("/api/contact", contactRoutes); // Add this line for PhonePe routes
 
 // Start server
 const PORT = process.env.PORT || 5000;
