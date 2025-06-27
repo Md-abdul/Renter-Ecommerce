@@ -138,6 +138,7 @@ const userSchema = new mongoose.Schema(
         type: String,
         enum: ["home", "work", "other"],
         default: "home",
+        required: true
       },
     },
     phoneNumber: {

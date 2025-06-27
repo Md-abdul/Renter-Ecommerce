@@ -79,6 +79,14 @@ UserRoutes.put("/:id", verifyToken, async (req, res) => {
 
     // Validate address if provided
     if (address) {
+      // Ensure addressType is set and valid
+      if (
+        !address.addressType ||
+        !["home", "work", "other"].includes(address.addressType)
+      ) {
+        address.addressType = "home"; // Set default if invalid
+      }
+
       if (
         !address.street ||
         !address.city ||
@@ -150,7 +158,6 @@ UserRoutes.get("/allUser", async (req, res) => {
   }
 });
 
-// Signup Route
 UserRoutes.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -168,12 +175,19 @@ UserRoutes.post("/signup", async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user with empty cart
+    // Create new user with empty cart and default address
     const newUser = new UserModel({
       name,
       email,
       password: hashedPassword,
-      address: "",
+      address: {
+        street: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        alternatePhone: "",
+        addressType: "home", // Set default addressType
+      },
       phoneNumber: null,
       cart: {},
     });
