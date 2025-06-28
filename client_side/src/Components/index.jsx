@@ -194,7 +194,7 @@ const HomePage = () => {
               className="inline-block"
             >
               <Link
-                to="/shop"
+                to="/mens"
                 className="px-8 py-3 bg-black text-white rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
               >
                 Shop Now
@@ -369,14 +369,13 @@ const HomePage = () => {
                   ))}
                 </div>
               </div>
-
-              <motion.button
+              {/* <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="px-8 py-3 bg-black text-white rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
               >
                 Shop the Deal
-              </motion.button>
+              </motion.button> */}
             </motion.div>
 
             <motion.div
@@ -515,6 +514,7 @@ const HomePage = () => {
               variants={slideInLeft}
             >
               <div
+              
                 className="absolute inset-0 bg-cover bg-center transition-all duration-700 group-hover:scale-105"
                 style={{
                   backgroundImage:
@@ -547,13 +547,15 @@ const HomePage = () => {
                     viewport={{ once: true }}
                     transition={{ delay: 0.5 }}
                   >
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-6 py-2 bg-white text-black rounded-full text-sm font-semibold"
-                    >
-                      Explore Collection
-                    </motion.button>
+                    
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-6 py-2 bg-white text-black rounded-full text-sm font-semibold"
+                      >
+                        Explore Collection
+                      </motion.button>
+                    
                   </motion.div>
                 </div>
               </div>
@@ -599,13 +601,15 @@ const HomePage = () => {
                     viewport={{ once: true }}
                     transition={{ delay: 0.5 }}
                   >
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-6 py-2 bg-white text-black rounded-full text-sm font-semibold"
-                    >
-                      Explore Collection
-                    </motion.button>
+                   
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-6 py-2 bg-white text-black rounded-full text-sm font-semibold"
+                      >
+                        Explore Collection
+                      </motion.button>
+                  
                   </motion.div>
                 </div>
               </div>

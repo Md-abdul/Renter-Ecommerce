@@ -19,7 +19,7 @@ const DashboardCharts = () => {
         const usersResponse = await axios.get("https://renter-ecommerce.onrender.com/api/user/allUser");
         
         const token = localStorage.getItem("adminToken");
-        const ordersResponse = await axios.get("https://renter-ecommerce.onrender.com/api/orders/admin", {
+        const ordersResponse = await axios.get("http://localhost:5000/api/orders/admin", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

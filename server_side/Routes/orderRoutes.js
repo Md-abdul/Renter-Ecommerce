@@ -698,21 +698,47 @@ orderRoutes.get(
         .sort({ updatedAt: -1 });
 
       // Extract sold products data
-      const soldProducts = orders.flatMap((order) =>
-        order.items.map((item) => ({
-          orderId: order._id,
-          deliveredDate: order.updatedAt,
-          title: item.productId?.title || item.name,
-          price: item.price,
-          category: item.productId?.category,
-          wearCategory: item.productId?.wearCategory,
-          color: item.color || "N/A",
-          size: item.size,
-          sku: item.productId?.sku || "N/A",
-          quantity: item.quantity,
-          total: item.price * item.quantity,
-        }))
-      );
+      const soldProducts = orders.flatMap((order) => {
+        // Calculate discount per item if coupon was applied
+        const discountPerItem = order.appliedCoupon
+          ? order.appliedCoupon.discountAmount /
+            order.items.reduce(
+              (sum, item) => sum + item.price * item.quantity,
+              0
+            )
+          : 0;
+
+        return order.items.map((item) => {
+          // Calculate discounted price
+          const discountedPrice = order.appliedCoupon
+            ? item.price * (1 - discountPerItem)
+            : item.price;
+
+          return {
+            orderId: order._id,
+            deliveredDate: order.updatedAt,
+            title: item.productId?.title || item.name,
+            originalPrice: item.price, // Keep original price for reference
+            price: discountedPrice, // Show discounted price
+            category: item.productId?.category,
+            wearCategory: item.productId?.wearCategory,
+            color: item.color || "N/A",
+            size: item.size,
+            sku: item.productId?.sku || "N/A",
+            quantity: item.quantity,
+            total: discountedPrice * item.quantity,
+            couponApplied: order.appliedCoupon
+              ? order.appliedCoupon.couponCode
+              : null,
+            discountPercentage: order.appliedCoupon
+              ? order.appliedCoupon.discountPercentage
+              : null,
+            discountAmount: order.appliedCoupon
+              ? item.price * item.quantity * discountPerItem
+              : null,
+          };
+        });
+      });
 
       res.status(200).json(soldProducts);
     } catch (error) {

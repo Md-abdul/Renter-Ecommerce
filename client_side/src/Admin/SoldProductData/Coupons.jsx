@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { FiPlus, FiTrash2, FiEdit2 } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiEdit2, FiX } from "react-icons/fi";
 import Modal from "react-modal";
 import { useNavigate } from "react-router-dom";
 
 const Coupons = () => {
   const [coupons, setCoupons] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [couponToDelete, setCouponToDelete] = useState(null);
   const [editingCoupon, setEditingCoupon] = useState(null);
   const [formData, setFormData] = useState({
     couponCode: "",
@@ -119,35 +121,41 @@ const Coupons = () => {
     }
   };
 
-  const handleDelete = async (couponId) => {
-    if (window.confirm("Are you sure you want to delete this coupon?")) {
-      try {
-        const token = localStorage.getItem("adminToken");
-        if (!token) {
-          handleTokenError();
-          return;
-        }
+  const handleDeleteClick = (couponId) => {
+    setCouponToDelete(couponId);
+    setIsDeleteModalOpen(true);
+  };
 
-        await axios.delete(
-          `https://renter-ecommerce.onrender.com/api/coupons/${couponId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        toast.success("Coupon deleted successfully");
-        fetchCoupons();
-      } catch (error) {
-        if (error.response?.status === 401) {
-          handleTokenError();
-        } else {
-          toast.error(
-            error.response?.data?.message || "Failed to delete coupon"
-          );
-        }
+  const handleDeleteConfirm = async () => {
+    if (!couponToDelete) return;
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      if (!token) {
+        handleTokenError();
+        return;
       }
+
+      await axios.delete(
+        `https://renter-ecommerce.onrender.com/api/coupons/${couponToDelete}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      toast.success("Coupon deleted successfully");
+      fetchCoupons();
+    } catch (error) {
+      if (error.response?.status === 401) {
+        handleTokenError();
+      } else {
+        toast.error(error.response?.data?.message || "Failed to delete coupon");
+      }
+    } finally {
+      setIsDeleteModalOpen(false);
+      setCouponToDelete(null);
     }
   };
 
@@ -181,7 +189,7 @@ const Coupons = () => {
             });
             setIsModalOpen(true);
           }}
-          className="bg-yellow-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-yellow-600 transition-colors"
+          className="bg-yellow-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-yellow-600 transition-colors cursor-pointer"
         >
           <FiPlus className="mr-2" /> Create Coupon
         </button>
@@ -253,15 +261,15 @@ const Coupons = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
                     onClick={() => handleEdit(coupon)}
-                    className="text-yellow-600 hover:text-yellow-900 mr-3"
+                    className="text-yellow-600 hover:text-yellow-900 mr-3 cursor-pointer"
                   >
-                    <FiEdit2 />
+                    <FiEdit2 size={20} />
                   </button>
                   <button
-                    onClick={() => handleDelete(coupon._id)}
-                    className="text-red-600 hover:text-red-900"
+                    onClick={() => handleDeleteClick(coupon._id)}
+                    className="text-red-600 hover:text-red-900 cursor-pointer"
                   >
-                    <FiTrash2 />
+                    <FiTrash2 size={20} />
                   </button>
                 </td>
               </tr>
@@ -277,110 +285,171 @@ const Coupons = () => {
         className="modal"
         overlayClassName="modal-overlay"
       >
-        <div className="p-6">
-          <h2 className="text-2xl font-bold mb-6">
-            {editingCoupon ? "Edit Coupon" : "Create New Coupon"}
-          </h2>
+        <div className="p-6 max-w-md mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">
+              {editingCoupon ? "Edit Coupon" : "Create New Coupon"}
+            </h2>
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <FiX size={24} />
+            </button>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Coupon Code
-              </label>
-              <input
-                type="text"
-                name="couponCode"
-                value={formData.couponCode}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
-                required
-              />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Coupon Code
+                </label>
+                <input
+                  type="text"
+                  name="couponCode"
+                  value={formData.couponCode}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
+                  required
+                  placeholder="e.g. SUMMER20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Discount (%)
+                </label>
+                <input
+                  type="number"
+                  name="discountPercentage"
+                  value={formData.discountPercentage}
+                  onChange={handleInputChange}
+                  min="0"
+                  max="100"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
+                  required
+                  placeholder="0-100"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Min. Purchase (₹)
+                </label>
+                <input
+                  type="number"
+                  name="minimumPurchaseAmount"
+                  value={formData.minimumPurchaseAmount}
+                  onChange={handleInputChange}
+                  min="0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
+                  required
+                  placeholder="Minimum amount"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Max Discount (₹)
+                </label>
+                <input
+                  type="number"
+                  name="maxDiscountAmount"
+                  value={formData.maxDiscountAmount}
+                  onChange={handleInputChange}
+                  min="0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
+                  required
+                  placeholder="Maximum discount"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Expiry Date
+                </label>
+                <input
+                  type="date"
+                  name="expiryDate"
+                  value={formData.expiryDate}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Usage Limit
+                </label>
+                <input
+                  type="number"
+                  name="usageLimit"
+                  value={formData.usageLimit}
+                  onChange={handleInputChange}
+                  min="1"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
+                  required
+                  placeholder="Number of uses"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Discount Percentage
-              </label>
-              <input
-                type="number"
-                name="discountPercentage"
-                value={formData.discountPercentage}
-                onChange={handleInputChange}
-                min="0"
-                max="100"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Minimum Purchase Amount
-              </label>
-              <input
-                type="number"
-                name="minimumPurchaseAmount"
-                value={formData.minimumPurchaseAmount}
-                onChange={handleInputChange}
-                min="0"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Maximum Discount Amount
-              </label>
-              <input
-                type="number"
-                name="maxDiscountAmount"
-                value={formData.maxDiscountAmount}
-                onChange={handleInputChange}
-                min="0"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Expiry Date
-              </label>
-              <input
-                type="date"
-                name="expiryDate"
-                value={formData.expiryDate}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Usage Limit
-              </label>
-              <input
-                type="number"
-                name="usageLimit"
-                value={formData.usageLimit}
-                onChange={handleInputChange}
-                min="1"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
-                required
-              />
-            </div>
-            <div className="flex justify-end space-x-3 mt-6">
+
+            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600"
+                className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors cursor-pointer"
               >
-                {editingCoupon ? "Update" : "Create"}
+                {editingCoupon ? "Update Coupon" : "Create Coupon"}
               </button>
             </div>
           </form>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onRequestClose={() => setIsDeleteModalOpen(false)}
+        className="modal"
+        overlayClassName="modal-overlay"
+      >
+        <div className="p-6 max-w-md mx-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-800">
+              Confirm Deletion
+            </h2>
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <FiX size={24} />
+            </button>
+          </div>
+          <p className="text-gray-600 mb-6">
+            Are you sure you want to delete this coupon? This action cannot be
+            undone.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDeleteConfirm}
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors cursor-pointer"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </Modal>
 
@@ -396,9 +465,9 @@ const Coupons = () => {
           transform: translate(-50%, -50%);
           background: white;
           padding: 0;
-          border-radius: 16px;
-          max-width: 500px;
-          width: 90%;
+          border-radius: 0.5rem;
+          width: 100%;
+          max-width: 32rem;
           outline: none;
           box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
             0 10px 10px -5px rgba(0, 0, 0, 0.04);

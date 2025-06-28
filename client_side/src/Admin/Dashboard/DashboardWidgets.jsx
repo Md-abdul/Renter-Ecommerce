@@ -5,6 +5,7 @@ const DashboardWidgets = () => {
   const [productsCount, setProductsCount] = useState(0);
   const [usersCount, setUsersCount] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
+  const [revenue, setRevenue] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,14 +25,22 @@ const DashboardWidgets = () => {
         // Fetch orders (with token)
         const token = localStorage.getItem("adminToken");
         const ordersResponse = await axios.get(
-          "https://renter-ecommerce.onrender.com/api/orders/admin",
+          "http://localhost:5000/api/orders/admin",
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
+
         setOrdersCount(ordersResponse.data.length);
+
+        // Calculate total revenue
+        const totalRevenue = ordersResponse.data.reduce((sum, order) => {
+          return sum + order.totalAmount;
+        }, 0);
+
+        setRevenue(totalRevenue.toFixed(2)); // Round to 2 decimal places
       } catch (error) {
         console.error("Error fetching dashboard data", error);
       }
@@ -56,8 +65,7 @@ const DashboardWidgets = () => {
       </div>
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-gray-500 text-sm font-medium">Revenue</h3>
-        <p className="text-2xl font-bold mt-2">₹ 12,345</p>{" "}
-        {/* You can later make this dynamic if needed */}
+        <p className="text-2xl font-bold mt-2">₹ {Math.floor(revenue)}</p>
       </div>
     </div>
   );

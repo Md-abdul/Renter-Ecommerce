@@ -337,7 +337,7 @@ const ProductList = () => {
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
                           <span className="text-gray-900 font-semibold text-sm">
-                           ₹{product.basePrice}
+                            ₹{product.basePrice}
                           </span>
                           {product.discount > 0 && (
                             <span className="mt-1 text-green-600 text-xs font-medium">
@@ -659,17 +659,77 @@ const ProductList = () => {
                   </div>
                 </label>
               </div>
-
+              
               <div className="text-center text-sm text-gray-600">
                 <p>
                   Need the template file?{" "}
-                  <a
-                    href="/product_template.xlsx"
-                    download="product_template.xlsx"
-                    className="text-yellow-600 hover:text-yellow-500 font-medium transition-colors duration-200"
+                  <button
+                    onClick={() => {
+                      // Create a sample Excel data structure
+                      const templateData = [
+                        [
+                          "title",
+                          "summary",
+                          "price",
+                          "offerPrice",
+                          "discount",
+                          "rating",
+                          "reviews",
+                          "Color Name",
+                          "Hex Code",
+                          "Main Image",
+                          "Sub Image 1",
+                          "Sub Image 2",
+                          "Sub Image 3",
+                          "Sub Image 4",
+                          "Switch Image",
+                          "Size",
+                          "SKU",
+                          "Quantity",
+                        ],
+                        [
+                          "Men's T-Shirt",
+                          "A cool cotton T-shirt for men",
+                          499,
+                          399,
+                          20,
+                          4.2,
+                          34,
+                          "Red",
+                          "#FF0000",
+                          "https://example.com/red1.jpg",
+                          "https://example.com/red2.jpg",
+                          "https://example.com/red3.jpg",
+                          "https://example.com/red4.jpg",
+                          "https://example.com/red5.jpg",
+                          "https://example.com/red-alt.jpg",
+                          "M",
+                          "D-01-Red-M",
+                          5,
+                        ],
+                      ];
+
+                      // Convert to CSV format
+                      const csvContent = templateData
+                        .map((row) => row.join(","))
+                        .join("\n");
+
+                      // Create download link
+                      const blob = new Blob([csvContent], {
+                        type: "text/csv;charset=utf-8;",
+                      });
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement("a");
+                      link.setAttribute("href", url);
+                      link.setAttribute("download", "product_template.csv");
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="text-yellow-600 hover:text-yellow-500 font-medium transition-colors duration-200 cursor-pointer"
                   >
                     Download template
-                  </a>
+                  </button>
                 </p>
               </div>
             </div>

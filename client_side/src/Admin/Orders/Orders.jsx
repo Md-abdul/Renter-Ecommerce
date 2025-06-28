@@ -287,33 +287,43 @@ export const Orders = () => {
           </table>
           
           <div style="float: right; width: 300px;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;"><strong>Subtotal:</strong></td>
-                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">₹${order.items
-                  .reduce((sum, item) => sum + item.price * item.quantity, 0)
-                  .toFixed(2)}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;"><strong>Shipping:</strong></td>
-                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">₹${
-                  order.shippingCharges?.toFixed(2) || "0.00"
-                }</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;"><strong>Tax:</strong></td>
-                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">₹${
-                  order.tax?.toFixed(2) || "0.00"
-                }</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px; text-align: right;"><strong>Total:</strong></td>
-                <td style="padding: 8px; text-align: right;"><strong>₹${
-                  order.totalAmount?.toFixed(2) || "0.00"
-                }</strong></td>
-              </tr>
-            </table>
-          </div>
+  <table style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;"><strong>Subtotal:</strong></td>
+      <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">₹${order.items
+        .reduce((sum, item) => sum + item.price * item.quantity, 0)
+        .toFixed(2)}</td>
+    </tr>
+    ${
+      order.appliedCoupon
+        ? `
+      <tr>
+        <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;"><strong>Coupon (${
+          order.appliedCoupon.couponCode
+        }):</strong></td>
+        <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">-₹${order.appliedCoupon.discountAmount.toFixed(
+          2
+        )}</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;"><strong>Discount (${
+          order.appliedCoupon.discountPercentage
+        }%):</strong></td>
+        <td style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">-₹${order.appliedCoupon.discountAmount.toFixed(
+          2
+        )}</td>
+      </tr>
+    `
+        : ""
+    }
+    <tr>
+      <td style="padding: 8px; text-align: right;"><strong>Total:</strong></td>
+      <td style="padding: 8px; text-align: right;"><strong>₹${
+        order.totalAmount?.toFixed(2) || "0.00"
+      }</strong></td>
+    </tr>
+  </table>
+</div>
           
           <div style="clear: both; margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 0.9em; color: #777;">
             <p>Thank you for your business!</p>
@@ -438,7 +448,7 @@ export const Orders = () => {
   };
 
   console.log(orders);
-  
+
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -822,14 +832,14 @@ export const Orders = () => {
                         </div>
                         <div>
                           <h3 className="font-bold text-gray-900">
-                            Order #{order._id.substring(0, 8)}...
+                            Order Number :- {order.orderNumber}
                           </h3>
                           <p className="text-sm text-gray-500">
                             {order.items.reduce(
                               (sum, item) => sum + item.quantity,
                               0
                             )}{" "}
-                            items • ₹{order.totalAmount.toFixed(2)}
+                            items • ₹{Math.floor(order.totalAmount.toFixed(2))}
                           </p>
                         </div>
                       </div>
@@ -938,18 +948,36 @@ export const Orders = () => {
                                   )}
                                 </span>
                               </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Shipping:</span>
-                                <span className="font-medium">
-                                  ₹{order.shippingCharges?.toFixed(2) || "0.00"}
-                                </span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Tax:</span>
-                                <span className="font-medium">
-                                  ₹{order.tax?.toFixed(2) || "0.00"}
-                                </span>
-                              </div>
+
+                              {/* Add Coupon Information here */}
+                              {order.appliedCoupon && (
+                                <>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">
+                                      Coupon Applied:
+                                    </span>
+                                    <span className="font-medium text-green-600">
+                                      {order.appliedCoupon.couponCode}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">
+                                      Discount (
+                                      {order.appliedCoupon.discountPercentage}
+                                      %):
+                                    </span>
+                                    <span className="font-medium text-green-600">
+                                      -₹
+                                      {Math.floor(
+                                        order.appliedCoupon.discountAmount.toFixed(
+                                          2
+                                        )
+                                      )}
+                                    </span>
+                                  </div>
+                                </>
+                              )}
+
                               <div className="flex justify-between border-t border-gray-200 pt-2">
                                 <span className="text-gray-900 font-semibold">
                                   Total:
@@ -975,21 +1003,49 @@ export const Orders = () => {
                                     {order.shippingAddress.name || "N/A"}
                                   </p>
                                   <p>
-                                    {getAddressField(order.shippingAddress, "street")}
+                                    {getAddressField(
+                                      order.shippingAddress,
+                                      "street"
+                                    )}
                                   </p>
                                   <p>
-                                    {getAddressField(order.shippingAddress, "city")}
-                                    {getAddressField(order.shippingAddress, "state") && getAddressField(order.shippingAddress, "state") !== "N/A" &&
-                                      `, ${getAddressField(order.shippingAddress, "state")}`}
-                                    {getAddressField(order.shippingAddress, "zipCode") && getAddressField(order.shippingAddress, "zipCode") !== "N/A" &&
-                                      ` - ${getAddressField(order.shippingAddress, "zipCode")}`}
+                                    {getAddressField(
+                                      order.shippingAddress,
+                                      "city"
+                                    )}
+                                    {getAddressField(
+                                      order.shippingAddress,
+                                      "state"
+                                    ) &&
+                                      getAddressField(
+                                        order.shippingAddress,
+                                        "state"
+                                      ) !== "N/A" &&
+                                      `, ${getAddressField(
+                                        order.shippingAddress,
+                                        "state"
+                                      )}`}
+                                    {getAddressField(
+                                      order.shippingAddress,
+                                      "zipCode"
+                                    ) &&
+                                      getAddressField(
+                                        order.shippingAddress,
+                                        "zipCode"
+                                      ) !== "N/A" &&
+                                      ` - ${getAddressField(
+                                        order.shippingAddress,
+                                        "zipCode"
+                                      )}`}
                                   </p>
                                   <p>
-                                    Phone: {order.shippingAddress.phoneNumber || "N/A"}
+                                    Phone:{" "}
+                                    {order.shippingAddress.phoneNumber || "N/A"}
                                   </p>
                                   {order.shippingAddress.alternatePhone && (
                                     <p>
-                                      Alternate Phone: {order.shippingAddress.alternatePhone}
+                                      Alternate Phone:{" "}
+                                      {order.shippingAddress.alternatePhone}
                                     </p>
                                   )}
                                 </>

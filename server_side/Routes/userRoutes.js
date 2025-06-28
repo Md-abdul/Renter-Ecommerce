@@ -175,12 +175,13 @@ UserRoutes.post("/signup", async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user with empty cart and default address
+    // Create new user with properly initialized address object
     const newUser = new UserModel({
       name,
       email,
       password: hashedPassword,
       address: {
+        // Initialize as object with default values
         street: "",
         city: "",
         state: "",
@@ -190,6 +191,9 @@ UserRoutes.post("/signup", async (req, res) => {
       },
       phoneNumber: null,
       cart: {},
+      isGoogleAuth: false,
+      tokens: [],
+      orders: [],
     });
 
     await newUser.save();
@@ -282,22 +286,89 @@ UserRoutes.post("/logout", (req, res) => {
 });
 
 // POST /forgot-password
+// UserRoutes.post("/forgot-password", async (req, res) => {
+//   const { email } = req.body;
+//   const user = await UserModel.findOne({ email });
+//   if (!user) return res.status(404).json({ message: "User not found" });
+
+//   if (
+//     !user.address ||
+//     typeof user.address !== "object" ||
+//     Array.isArray(user.address)
+//   ) {
+//     user.address = {
+//       street: "",
+//       city: "",
+//       zipCode: "",
+//       state: "",
+//       alternatePhone: "",
+//       addressType: "home",
+//     };
+//   }
+
+//   const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+//   const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+//   user.otp = { code: otpCode, expiresAt };
+//   await user.save();
+
+//   try {
+//     await sendOTPEmail(email, otpCode);
+//     res.json({ message: "OTP sent to email" });
+//   } catch (error) {
+//     res.status(500).json({ message: "Email failed", error: error.message });
+//   }
+// });
 UserRoutes.post("/forgot-password", async (req, res) => {
-  const { email } = req.body;
-  const user = await UserModel.findOne({ email });
-  if (!user) return res.status(404).json({ message: "User not found" });
-
-  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-  user.otp = { code: otpCode, expiresAt };
-  await user.save();
-
   try {
+    const { email } = req.body;
+    const user = await UserModel.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Ensure address is properly set
+    user.address = user.address || {};
+
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      user._id,
+      {
+        $set: {
+          otp: { code: otpCode, expiresAt },
+          address: user.address // Use the setter
+        }
+      },
+      { new: true }
+    );
+
     await sendOTPEmail(email, otpCode);
     res.json({ message: "OTP sent to email" });
   } catch (error) {
     res.status(500).json({ message: "Email failed", error: error.message });
+  }
+});
+
+UserRoutes.post("/verify-otp", async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await UserModel.findOne({ email });
+
+    if (
+      !user ||
+      !user.otp ||
+      user.otp.code !== otp ||
+      new Date(user.otp.expiresAt) < new Date()
+    ) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // Ensure address is properly set
+    user.address = user.address || {};
+
+    res.json({ message: "OTP verified" });
+  } catch (error) {
+    res.status(500).json({ message: "Error verifying OTP", error: error.message });
   }
 });
 
@@ -319,25 +390,83 @@ UserRoutes.post("/verify-otp", async (req, res) => {
 });
 
 // POST /reset-password
+// UserRoutes.post("/reset-password", async (req, res) => {
+//   const { email, otp, newPassword } = req.body;
+//   const user = await UserModel.findOne({ email });
+
+//   if (
+//     !user ||
+//     !user.otp ||
+//     user.otp.code !== otp ||
+//     new Date(user.otp.expiresAt) < new Date()
+//   ) {
+//     return res.status(400).json({ message: "Invalid or expired OTP" });
+//   }
+
+//   const hashedPassword = await bcrypt.hash(newPassword, 10);
+//   if (
+//     !user.address ||
+//     typeof user.address !== "object" ||
+//     Array.isArray(user.address)
+//   ) {
+//     user.address = {
+//       street: "",
+//       city: "",
+//       zipCode: "",
+//       state: "",
+//       alternatePhone: "",
+//       addressType: "home",
+//     };
+//   }
+
+//   user.password = hashedPassword;
+//   user.otp = undefined;
+//   await user.save();
+
+//   res.json({ message: "Password reset successful" });
+// });
 UserRoutes.post("/reset-password", async (req, res) => {
-  const { email, otp, newPassword } = req.body;
-  const user = await UserModel.findOne({ email });
+  try {
+    const { email, otp, newPassword } = req.body;
+    const user = await UserModel.findOne({ email });
 
-  if (
-    !user ||
-    !user.otp ||
-    user.otp.code !== otp ||
-    new Date(user.otp.expiresAt) < new Date()
-  ) {
-    return res.status(400).json({ message: "Invalid or expired OTP" });
+    if (
+      !user ||
+      !user.otp ||
+      user.otp.code !== otp ||
+      new Date(user.otp.expiresAt) < new Date()
+    ) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Use setter to ensure address is properly formatted
+    user.address = user.address || {};
+    user.password = hashedPassword;
+    user.otp = undefined;
+
+    // Use findByIdAndUpdate instead of save to bypass some validation issues
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      user._id,
+      {
+        $set: {
+          password: hashedPassword,
+          otp: undefined,
+          address: user.address // This will use the setter function
+        }
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "Password reset successful" });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ message: "Error resetting password", error: error.message });
   }
-
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  user.password = hashedPassword;
-  user.otp = undefined;
-  await user.save();
-
-  res.json({ message: "Password reset successful" });
 });
-
 module.exports = { UserRoutes };

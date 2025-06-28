@@ -43,7 +43,8 @@ const SoldProduct = () => {
       setLoading(true);
       const token = localStorage.getItem("adminToken");
       const response = await axios.get(
-        "https://renter-ecommerce.onrender.com/api/orders/sold-products",
+        // "https://renter-ecommerce.onrender.com/api/orders/sold-products",
+        "http://localhost:5000/api/orders/sold-products",
         {
           headers: { Authorization: `Bearer ${token}` },
           params: {
@@ -207,7 +208,7 @@ const SoldProduct = () => {
             </div>
             {soldProducts.length > 0 && (
               <div className="text-lg font-semibold">
-                Total: ₹{totalAmounts.toFixed(2)}
+                Total: ₹{Math.floor(totalAmounts.toFixed(2))}
               </div>
             )}
           </div>
@@ -339,7 +340,7 @@ const SoldProduct = () => {
                         {product.wearCategory})
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-b border-gray-200">
-                        ₹{product.price.toFixed(2)}
+                        ₹{Math.floor(product.price.toFixed(2))}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-b border-gray-200">
                         {product.size}
