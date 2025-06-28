@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell
 } from "recharts";
-//https://renter-ecommerce.onrender.com/
+//https://renter-ecommerce-1.onrender.com
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
 const DashboardCharts = () => {
@@ -15,11 +15,11 @@ const DashboardCharts = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const productsResponse = await axios.get("https://renter-ecommerce.onrender.com/api/products");
-        const usersResponse = await axios.get("https://renter-ecommerce.onrender.com/api/user/allUser");
+        const productsResponse = await axios.get("https://renter-ecommerce-1.onrender.com/api/products");
+        const usersResponse = await axios.get("https://renter-ecommerce-1.onrender.com/api/user/allUser");
         
         const token = localStorage.getItem("adminToken");
-        const ordersResponse = await axios.get("http://localhost:5000/api/orders/admin", {
+        const ordersResponse = await axios.get("https://renter-ecommerce-1.onrender.com/api/orders/admin", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

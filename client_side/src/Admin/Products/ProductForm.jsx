@@ -223,8 +223,8 @@ const ProductForm = ({
     try {
       const method = product ? "PUT" : "POST";
       const url = product
-        ? `https://renter-ecommerce.onrender.com/api/products/${product._id}`
-        : "https://renter-ecommerce.onrender.com/api/products";
+        ? `https://renter-ecommerce-1.onrender.com/api/products/${product._id}`
+        : "https://renter-ecommerce-1.onrender.com/api/products";
 
       const response = await fetch(url, {
         method,

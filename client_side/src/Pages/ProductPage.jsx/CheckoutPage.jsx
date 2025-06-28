@@ -75,7 +75,7 @@ const CheckoutPage = () => {
         }
 
         const response = await axios.get(
-          "http://localhost:5000/api/user/userDetails",
+          "https://renter-ecommerce-1.onrender.com/api/user/userDetails",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -122,7 +122,7 @@ const CheckoutPage = () => {
     0
   );
 
-  const API_BASE_URL = "http://localhost:5000";
+  const API_BASE_URL = "https://renter-ecommerce-1.onrender.com";
   // Calculate discount amount
   const discountAmount = appliedCoupon
     ? Math.min(

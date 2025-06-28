@@ -25,12 +25,12 @@ const SingleProductPage = () => {
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const MAX_CART_TOTAL = 40000;
-  //https://renter-ecommerce.onrender.com/
+  //https://renter-ecommerce-1.onrender.com/
   useEffect(() => {
     const fetchRelatedProducts = async () => {
       try {
         const response = await fetch(
-          "https://renter-ecommerce.onrender.com/api/products",
+          "https://renter-ecommerce-1.onrender.com/api/products",
           {
             method: "GET",
             headers: {
@@ -51,7 +51,7 @@ const SingleProductPage = () => {
     const fetchProduct = async () => {
       try {
         const response = await fetch(
-          `https://renter-ecommerce.onrender.com/api/products/${_id}`
+          `https://renter-ecommerce-1.onrender.com/api/products/${_id}`
         );
         const data = await response.json();
         if (data) {

@@ -44,7 +44,7 @@ const ProfileDetails = () => {
 
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:5000/api/user/userDetails`,
+        `https://renter-ecommerce-1.onrender.com/api/user/userDetails`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -128,7 +128,7 @@ const ProfileDetails = () => {
       setLoading(true);
 
       await axios.put(
-        `http://localhost:5000/api/user/${userId}`,
+        `https://renter-ecommerce-1.onrender.com/api/user/${userId}`,
         {
           name: editData.name,
           email: editData.email,
@@ -388,9 +388,13 @@ const ProfileDetails = () => {
                   </button>
                   <button
                     onClick={handleSave}
-                    disabled={loading || errors.phoneNumber || errors.alternatePhone}
+                    disabled={
+                      loading || errors.phoneNumber || errors.alternatePhone
+                    }
                     className={`px-6 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition-colors shadow-md cursor-pointer ${
-                      (loading || errors.phoneNumber || errors.alternatePhone) &&
+                      (loading ||
+                        errors.phoneNumber ||
+                        errors.alternatePhone) &&
                       "opacity-70 cursor-not-allowed"
                     }`}
                   >
