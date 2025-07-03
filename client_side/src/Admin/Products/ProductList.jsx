@@ -344,11 +344,11 @@ const ProductList = () => {
                               {product.discount}% off
                             </span>
                           )}
-                          {product.basePrice !== product.price && (
+                          {/* {product.basePrice !== product.price && (
                             <span className="text-xs text-gray-400 line-through">
                               ₹{product.price}
                             </span>
-                          )}
+                          )} */}
                           <span className="text-xs text-gray-400 mt-1">
                             {product.colors.length} variants
                           </span>

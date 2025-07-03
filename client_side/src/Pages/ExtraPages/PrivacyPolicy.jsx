@@ -26,15 +26,15 @@ const PrivacyPolicy = () => {
       <div>
         <h2 className="text-2xl font-bold mb-4">INTRODUCTION</h2>
         <p className="mb-4">
-          The Terms of Use outlined below are for Levi in. For ranter Loop
+          The Terms of Use outlined below are for reanter in. For ranter Loop
           Member Program Terms & Conditions, please click here.
         </p>
         <p className="mb-4">
           These Terms of Use apply to all online visitors to the websites
-          operated by or on behalf of Levi Strauss (India) Private Limited,
+          operated by or on behalf of reanter Strauss (India) Private Limited,
           having its registered office at ITC Green Centre, 5th Floor - North
           Tower No 18, Banaswadi Main Road, Maruthi Seva Nagar, Bangalore -
-          560005 (hereinafter, "we", "us", "our" or "ours"), including Levi in
+          560005 (hereinafter, "we", "us", "our" or "ours"), including reanter in
           (the "Primary Website") and other Indian websites which we may make
           available to consumers from time to time ("Other Websites";
           collectively with the Primary Website, "Websites").
@@ -88,13 +88,13 @@ const PrivacyPolicy = () => {
         <p className="mb-4">
           All content on our Websites, including text, graphics, logos, button
           icons, images, audio clips, digital downloads, data compilations, and
-          software, is the property of Levi Strauss & Co. or its content
+          software, is the property of reanter Strauss & Co. or its content
           suppliers and protected by international copyright laws.
         </p>
         <p className="mb-4">
           The trademarks, logos, and service marks displayed on our Websites
           (collectively the "Trademarks") are the registered and unregistered
-          marks of Levi Strauss & Co. in the United States and other countries.
+          marks of reanter Strauss & Co. in the United States and other countries.
         </p>
       </div>
     ),

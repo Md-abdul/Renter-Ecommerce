@@ -19,6 +19,8 @@ import TermOfUses from "../Pages/ExtraPages/TermOfUses.jsx";
 import PrivacyPolicy from "../Pages/ExtraPages/PrivacyPolicy.jsx";
 import Return from "../Pages/ExtraPages/Return.jsx";
 import ForgotPasswordPage from "../Pages/ForgotPasswordPage.jsx";
+import StoreLocator_Admin from "../Admin/SoldProductData/StoreLocator_Admin.jsx";
+// import PagesAccess from "../Admin/SoldProductData/PagesAccess.jsx";
 
 const AllRoutes = () => {
   return (
@@ -64,6 +66,8 @@ const AllRoutes = () => {
         {/* Default route */}
         <Route path="profile" element={<ProfileDetails />} />
         <Route path="orders" element={<UserOrders />} />
+        <Route path="storelocator_admin" element={<StoreLocator_Admin />} />
+        {/* <Route path="pageaccess" element={<PagesAccess />} /> */}
       </Route>
 
       {/* Admin routes */}

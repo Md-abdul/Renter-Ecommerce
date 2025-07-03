@@ -29,7 +29,7 @@ const TermOfUses = () => {
           The Terms of Use outlined below are for reanter® Loop Member Program Terms & Conditions, please click here
         </p>
         <p className="mb-4">
-          These Terms of Use apply to all online visitors to the websites operated by or on behalf of Levi Strauss (India) Private Limited, having its registered office at ITC Green Centre, 5th Floor - North Tower No 18, Banaswadi Main Road, Maruthi Seva Nagar, Bangalore - 560005 (hereinafter, "we", "us", "our" or "ours"), including Levi.in (the "Primary Website") and other Indian websites which we may make available to consumers from time to time ("Other Websites"; collectively with the Primary Website, "Websites").
+          These Terms of Use apply to all online visitors to the websites operated by or on behalf of reanter  Strauss (India) Private Limited, having its registered office at ITC Green Centre, 5th Floor - North Tower No 18, Banaswadi Main Road, Maruthi Seva Nagar, Bangalore - 560005 (hereinafter, "we", "us", "our" or "ours"), including reanter. in (the "Primary Website") and other Indian websites which we may make available to consumers from time to time ("Other Websites"; collectively with the Primary Website, "Websites").
         </p>
         <p className="mb-4">
           Our Websites have different purposes and functionalities. We describe these differences on this page, so please read it carefully. If you have any questions regarding the Terms of Use, please contact us through the information provided towards the end of this document.
@@ -62,10 +62,10 @@ const TermOfUses = () => {
       <div>
         <h2 className="text-2xl font-bold mb-4">OWNERSHIP OF WEBSITES, CONTENT AND TRADEMARKS</h2>
         <p className="mb-4">
-          All content on our Websites, including text, graphics, logos, button icons, images, audio clips, digital downloads, data compilations, and software, is the property of Levi Strauss & Co. or its content suppliers and protected by international copyright laws.
+          All content on our Websites, including text, graphics, logos, button icons, images, audio clips, digital downloads, data compilations, and software, is the property of reanter  Strauss & Co. or its content suppliers and protected by international copyright laws.
         </p>
         <p className="mb-4">
-          The trademarks, logos, and service marks displayed on our Websites (collectively the "Trademarks") are the registered and unregistered marks of Levi Strauss & Co. in the United States and other countries.
+          The trademarks, logos, and service marks displayed on our Websites (collectively the "Trademarks") are the registered and unregistered marks of reanter  Strauss & Co. in the United States and other countries.
         </p>
       </div>
     ),
@@ -103,10 +103,10 @@ const TermOfUses = () => {
       <div>
         <h2 className="text-2xl font-bold mb-4">COPYRIGHT AND TRADEMARK RULES</h2>
         <p className="mb-4">
-          All content included on our Websites, such as text, graphics, logos, button icons, images, audio clips, digital downloads, data compilations, and software, is the property of Levi Strauss & Co. or its content suppliers and protected by international copyright laws. The compilation of all content on our Websites is the exclusive property of Levi Strauss & Co. and protected by international copyright laws.
+          All content included on our Websites, such as text, graphics, logos, button icons, images, audio clips, digital downloads, data compilations, and software, is the property of reanter  Strauss & Co. or its content suppliers and protected by international copyright laws. The compilation of all content on our Websites is the exclusive property of reanter  Strauss & Co. and protected by international copyright laws.
         </p>
         <p className="mb-4">
-          The trademarks, logos, and service marks displayed on our Websites (collectively the "Trademarks") are the registered and unregistered marks of Levi Strauss & Co. in the United States and other countries. All other trademarks not owned by Levi Strauss & Co. that appear on our Websites are the property of their respective owners, who may or may not be affiliated with, connected to, or sponsored by Levi Strauss & Co.
+          The trademarks, logos, and service marks displayed on our Websites (collectively the "Trademarks") are the registered and unregistered marks of reanter  Strauss & Co. in the United States and other countries. All other trademarks not owned by reanter  Strauss & Co. that appear on our Websites are the property of their respective owners, who may or may not be affiliated with, connected to, or sponsored by reanter  Strauss & Co.
         </p>
       </div>
     ),

@@ -1,12 +1,5 @@
 const mongoose = require("mongoose");
 
-const counterSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
-  seq: { type: Number, default: 0 },
-});
-
-const CounterModel = mongoose.model("Counter", counterSchema);
-
 const orderItemSchema = new mongoose.Schema({
   productId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -57,21 +50,21 @@ const orderSchema = new mongoose.Schema({
   items: [orderItemSchema],
   totalAmount: { type: Number, required: true },
   shippingAddress: {
-    name: { type: String, required: true },
-    address: {
-      street: { type: String, required: true },
-      city: { type: String, required: true },
-      zipCode: { type: String, required: true },
-      state: { type: String, default: "" },
-      alternatePhone: { type: String, default: "" },
-      addressType: {
-        type: String,
-        enum: ["home", "work", "other"],
-        default: "home",
-      },
-    },
-    phoneNumber: { type: String, required: true },
+  name: { type: String, required: true },
+  address: {
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    zipCode: { type: String, required: true },
+    state: { type: String, default: "" },
+    alternatePhone: { type: String, default: "" },
+    addressType: {
+      type: String,
+      enum: ["home", "work", "other"],
+      default: "home"
+    }
   },
+  phoneNumber: { type: String, required: true }
+},
   paymentMethod: { type: String, required: true },
   paymentDetails: {
     merchantTransactionId: String,
@@ -108,32 +101,15 @@ const orderSchema = new mongoose.Schema({
       return this.status === "delivered";
     },
   },
-  orderNumber: {
-    type: String,
-    unique: true,
-  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-});
-
-// Then add this to your orderSchema
-orderSchema.pre("save", async function (next) {
-  if (!this.orderNumber) {
-    const counter = await CounterModel.findByIdAndUpdate(
-      { _id: "orderNumber" },
-      { $inc: { seq: 1 } },
-      { new: true, upsert: true }
-    );
-    this.orderNumber = `RANTER-#A-${counter.seq.toString().padStart(4, "0")}`;
-  }
-  next();
 });
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: function () {
+      equired: function () {
         return !this.isGoogleAuth;
       },
     },
@@ -151,50 +127,17 @@ const userSchema = new mongoose.Schema(
       },
     ],
     isGoogleAuth: { type: Boolean, default: false },
+    // // address: { type: String, default: "" },
     address: {
-      type: {
-        street: { type: String, default: "" },
-        city: { type: String, default: "" },
-        zipCode: { type: String, default: "" },
-        state: { type: String, default: "" },
-        alternatePhone: { type: String, default: "" },
-        addressType: {
-          type: String,
-          enum: ["home", "work", "other"],
-          default: "home",
-        },
-      },
-      default: () => ({
-        street: "",
-        city: "",
-        zipCode: "",
-        state: "",
-        alternatePhone: "",
-        addressType: "home",
-      }),
-      set: function (value) {
-        // If value is falsy or not an object, return default address
-        if (!value || typeof value !== "object" || Array.isArray(value)) {
-          return {
-            street: "",
-            city: "",
-            zipCode: "",
-            state: "",
-            alternatePhone: "",
-            addressType: "home",
-          };
-        }
-        // Ensure all fields exist in the address object
-        return {
-          street: value.street || "",
-          city: value.city || "",
-          zipCode: value.zipCode || "",
-          state: value.state || "",
-          alternatePhone: value.alternatePhone || "",
-          addressType: ["home", "work", "other"].includes(value.addressType)
-            ? value.addressType
-            : "home",
-        };
+      street: { type: String, default: "" },
+      city: { type: String, default: "" },
+      zipCode: { type: String, default: "" },
+      state: { type: String, default: "" },
+      alternatePhone: { type: String, default: "" },
+      addressType: {
+        type: String,
+        enum: ["home", "work", "other"],
+        default: "home",
       },
     },
     phoneNumber: {
@@ -237,25 +180,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 🟢 Add the hook here:
-userSchema.pre("validate", function (next) {
-  if (
-    !this.address ||
-    typeof this.address !== "object" ||
-    Array.isArray(this.address)
-  ) {
-    this.address = {
-      street: "",
-      city: "",
-      zipCode: "",
-      state: "",
-      alternatePhone: "",
-      addressType: "home",
-    };
-  }
-  next();
-});
-
 const UserModel = mongoose.model("user", userSchema);
 const OrderModel = mongoose.model("order", orderSchema);
-module.exports = { UserModel, OrderModel, CounterModel };
+
+module.exports = { UserModel, OrderModel };

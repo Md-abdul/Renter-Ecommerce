@@ -8,6 +8,8 @@ import UsersContent from "./Users";
 import { Orders } from "./Orders/Orders";
 import SoldProduct from "./SoldProductData/SoldProduct";
 import Coupons from "./SoldProductData/Coupons";
+import StoreLocator_Admin from "./SoldProductData/StoreLocator_Admin";
+// import PagesAccess from "./SoldProductData/PagesAccess";
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
@@ -46,6 +48,8 @@ const AdminDashboard = () => {
           {activeTab === "orders" && <Orders />}
           {activeTab === "billingrecords" && <SoldProduct />}
           {activeTab === "coupon" && <Coupons />}
+          {activeTab === "storelocator_admin" && <StoreLocator_Admin />}
+          {/* {activeTab === "pageaccess" && <PagesAccess />} */}
         </main>
       </div>
     </div>

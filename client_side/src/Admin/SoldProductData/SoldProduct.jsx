@@ -339,7 +339,7 @@ const SoldProduct = () => {
                         {product.wearCategory})
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-b border-gray-200">
-                        ₹{Math.floor(product.price.toFixed(2))}
+                        ₹{Math.floor(product.price)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-b border-gray-200">
                         {product.size}
@@ -348,7 +348,7 @@ const SoldProduct = () => {
                         {product.quantity}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">
-                        ₹{product.total.toFixed(2)}
+                        ₹{(product.total ?? 0).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-b border-gray-200">
                         {safeFormat(product.deliveredDate, "dd MMM yyyy")}

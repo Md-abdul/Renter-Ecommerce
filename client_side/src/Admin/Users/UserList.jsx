@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
+import * as XLSX from "xlsx";
 
 const UserList = () => {
   // State for user data and UI
@@ -10,6 +11,9 @@ const UserList = () => {
   const [userToDelete, setUserToDelete] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  // New state for export modal
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState("excel");
 
   // Form state
   const [formData, setFormData] = useState({
@@ -24,7 +28,9 @@ const UserList = () => {
     const fetchUsers = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("https://renter-ecommerce-1.onrender.com/api/user/allUser");
+        const response = await fetch(
+          "https://renter-ecommerce-1.onrender.com/api/user/allUser"
+        );
         if (!response.ok) throw new Error("Failed to fetch users");
         const data = await response.json();
         setUsers(data);
@@ -92,6 +98,54 @@ const UserList = () => {
     }
   };
 
+  const handleExport = () => {
+    // Prepare data for export
+    const dataToExport = filteredUsers.map((user) => ({
+      Name: user.name,
+      Email: user.email,
+      "Phone Number": user.phoneNumber || "N/A",
+      Address: user.address
+        ? `${user.address.street || ""} ${user.address.city || ""} ${
+            user.address.state || ""
+          } ${user.address.zipCode || ""}`.trim()
+        : "N/A",
+    }));
+
+    if (exportFormat === "excel") {
+      // Create Excel workbook
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+      XLSX.utils.book_append_sheet(wb, ws, "Users");
+
+      // Generate Excel file and download
+      XLSX.writeFile(wb, "users_data.xlsx");
+      toast.success("Excel file downloaded successfully");
+    } else {
+      // Create CSV
+      const csvContent = [
+        Object.keys(dataToExport[0]).join(","),
+        ...dataToExport.map((item) =>
+          Object.values(item)
+            .map((val) => `"${val.toString().replace(/"/g, '""')}"`)
+            .join(",")
+        ),
+      ].join("\n");
+
+      // Create download link
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "users_data.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("CSV file downloaded successfully");
+    }
+
+    setExportModalOpen(false);
+  };
+
   const handleDelete = async () => {
     try {
       const response = await fetch(
@@ -144,13 +198,10 @@ const UserList = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
-          {/* <button
-            className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 flex items-center gap-2 cursor-pointer"
-            onClick={() => {
-              setCurrentUser(null);
-              setIsModalOpen(true);
-            }}
+          {/* Add this export button */}
+          <button
+            className="px-6 py-3 bg-yellow-400 hover:bg-yellow-600 text-black font-medium rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 flex items-center gap-2 cursor-pointer"
+            onClick={() => setExportModalOpen(true)}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -160,12 +211,12 @@ const UserList = () => {
             >
               <path
                 fillRule="evenodd"
-                d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
                 clipRule="evenodd"
               />
             </svg>
-            Add User
-          </button> */}
+            Export
+          </button>
         </div>
       </div>
 
@@ -505,6 +556,74 @@ const UserList = () => {
                   onClick={handleDelete}
                 >
                   Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {exportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl overflow-hidden w-full max-w-md mx-4">
+            <div className="p-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Export Users Data
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Choose the format to export user data:
+              </p>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center">
+                  <input
+                    id="excel-format"
+                    name="export-format"
+                    type="radio"
+                    className="h-4 w-4 text-green-600 focus:ring-green-500"
+                    checked={exportFormat === "excel"}
+                    onChange={() => setExportFormat("excel")}
+                  />
+                  <label
+                    htmlFor="excel-format"
+                    className="ml-3 block text-sm font-medium text-gray-700"
+                  >
+                    Excel (.xlsx)
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    id="csv-format"
+                    name="export-format"
+                    type="radio"
+                    className="h-4 w-4 text-green-600 focus:ring-green-500"
+                    checked={exportFormat === "csv"}
+                    onChange={() => setExportFormat("csv")}
+                  />
+                  <label
+                    htmlFor="csv-format"
+                    className="ml-3 block text-sm font-medium text-gray-700"
+                  >
+                    CSV (.csv)
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  className="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none transition-colors duration-200 cursor-pointer"
+                  onClick={() => setExportModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none transition-colors duration-200 cursor-pointer"
+                  onClick={handleExport}
+                >
+                  Export
                 </button>
               </div>
             </div>

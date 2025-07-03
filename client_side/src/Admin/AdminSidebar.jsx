@@ -15,6 +15,8 @@ import { BsBox } from "react-icons/bs";
 import { GoDatabase } from "react-icons/go";
 import { motion, AnimatePresence } from "framer-motion";
 import { VscGift } from "react-icons/vsc";
+import { IoStorefrontOutline } from "react-icons/io5";
+
 const AdminSidebar = ({
   activeTab,
   setActiveTab,
@@ -40,6 +42,11 @@ const AdminSidebar = ({
     { id: "orders", icon: <BsBox />, label: "Orders" },
     { id: "billingrecords", icon: <GoDatabase />, label: "Billing Records" },
     { id: "coupon", icon: <VscGift />, label: "Coupons" },
+    {
+      id: "storelocator_admin",
+      icon: <IoStorefrontOutline />,
+      label: "Store Management",
+    },
   ];
 
   return (

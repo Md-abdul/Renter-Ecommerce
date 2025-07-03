@@ -10,76 +10,46 @@ const StoreLocator = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [map, setMap] = useState(null);
   const [selectedStore, setSelectedStore] = useState(null);
-  const [mapInitialized, setMapInitialized] = useState(false);
   const [activeCity, setActiveCity] = useState(null);
+  const [stores, setStores] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Sample store data
-  const stores = [
-    {
-      id: 1,
-      name: "96 K FASHION HOUSE MULUND",
-      address:
-        "Shop no 4 Rishi dayaram c h s, Lrd shahani colony navghar road Mulund East Mumbai",
-      city: "MUMBAI",
-      state: "MAHARASHTRA",
-      pincode: "400081",
-      country: "INDIA",
-      phone: "9820254110",
-      coordinates: [72.9476, 19.1707],
-    },
-    {
-      id: 2,
-      name: "A 1 BAZAR FOOT WEAR",
-      address:
-        "Shop No 3, Dattani Shopping Center, V.L. Road, Near Sarovar Hotel",
-      city: "MUMBAI",
-      state: "Maharashtra",
-      pincode: "400067",
-      country: "India",
-      phone: "8108674386",
-      coordinates: [72.8474, 19.2036],
-    },
-    {
-      id: 3,
-      name: "Fashion Outlet",
-      address: "123 Main Street, Downtown",
-      city: "PALGHAR",
-      state: "Maharashtra",
-      pincode: "401404",
-      country: "India",
-      phone: "9876543210",
-      coordinates: [72.7654, 19.6969],
-    },
-    {
-      id: 4,
-      name: "Trendy Styles",
-      address: "456 Market Road, Near Bus Stand",
-      city: "DAHANU",
-      state: "Maharashtra",
-      pincode: "401601",
-      country: "India",
-      phone: "8765432109",
-      coordinates: [72.7123, 19.9678],
-    },
-  ];
+  // Fetch stores and cities from API
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/stores");
+        if (!response.ok) {
+          throw new Error("Failed to fetch stores");
+        }
+        const data = await response.json();
+        setStores(data);
 
-  // Cities for the city list with coordinates
-  const cities = [
-    { name: "Dahanu", coordinates: [72.7123, 19.9678] },
-    { name: "Trimbal", coordinates: [72.7654, 19.6969] },
-    { name: "Palghār", coordinates: [72.7654, 19.6969] },
-    { name: "Kisiki", coordinates: [72.8765, 19.5432] },
-    { name: "Vasa", coordinates: [72.9876, 19.4321] },
-    { name: "Jtar", coordinates: [72.6543, 19.321] },
-    { name: "Shahapur", coordinates: [73.1234, 19.4567] },
-    { name: "Dombivu", coordinates: [73.0123, 19.5678] },
-    { name: "Navi Mum", coordinates: [73.0012, 19.0456] },
-    { name: "Kasj", coordinates: [72.8901, 19.0789] },
-    { name: "Kajat", coordinates: [72.9012, 19.089] },
-    { name: "Khopoli", coordinates: [73.3456, 18.789] },
-  ];
+        // Extract unique cities
+        const uniqueCities = Array.from(
+          new Set(data.map((store) => store.city))
+        ).map((city) => {
+          const store = data.find((s) => s.city === city);
+          return {
+            name: city,
+            coordinates: store.coordinates,
+          };
+        });
 
-  // Function to generate Google Maps URL
+        setCities(uniqueCities);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchStores();
+  }, []);
+
+  // Generate Google Maps URL
   const getGoogleMapsUrl = (store) => {
     const address = encodeURIComponent(
       `${store.address}, ${store.city}, ${store.state} ${store.pincode}, ${store.country}`
@@ -88,59 +58,70 @@ const StoreLocator = () => {
   };
 
   useEffect(() => {
-    if (!mapInitialized) {
-      const initializeMap = new mapboxgl.Map({
-        container: "map",
-        style: "mapbox://styles/mapbox/streets-v11",
-        center: [72.8777, 19.076], // Mumbai coordinates
-        zoom: 10,
-      });
+    if (loading) return; // Wait until data is loaded and DOM is rendered
 
-      // Add markers for each store
-      stores.forEach((store) => {
-        const marker = new mapboxgl.Marker({
-          color: "#facc15", // yellow-400
-        })
-          .setLngLat(store.coordinates)
-          .setPopup(
-            new mapboxgl.Popup({ offset: 25 }).setHTML(`
-            <div class="p-2 max-w-xs">
-              <h3 class="font-bold text-lg text-gray-800">${store.name}</h3>
-              <p class="text-gray-600">${store.address}</p>
-              <p class="text-gray-600">${store.city}, ${store.state} ${
-              store.pincode
-            }</p>
-              <p class="text-gray-600">${store.country}</p>
-              <p class="mt-2 text-yellow-600 font-medium">Phone: ${
-                store.phone
-              }</p>
-              <button onclick="window.open('${getGoogleMapsUrl(
-                store
-              )}', '_blank')" class="mt-2 px-3 py-1 bg-yellow-400 text-black rounded-md text-sm font-medium hover:bg-yellow-500 transition cursor-pointer">
-                Get Directions
-              </button>
-            </div>
-          `)
-          )
-          .addTo(initializeMap);
-      });
+    const initializeMap = new mapboxgl.Map({
+      container: "map",
+      style: "mapbox://styles/mapbox/streets-v11",
+      center: [72.9476, 19.1707], // India center
+      zoom: 4,
+    });
 
-      initializeMap.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-      setMap(initializeMap);
-      setMapInitialized(true);
-    }
+    initializeMap.addControl(new mapboxgl.NavigationControl(), "top-right");
+    setMap(initializeMap);
 
     return () => {
-      if (map) map.remove();
+      initializeMap.remove();
     };
-  }, [mapInitialized]);
+  }, [loading]); // Depend on loading
+
+  // Add markers when stores data is available
+  useEffect(() => {
+    if (map && stores.length > 0) {
+      // Add markers
+      stores.forEach((store) => {
+        if (
+          Array.isArray(store.coordinates) &&
+          store.coordinates.length === 2
+        ) {
+          new mapboxgl.Marker({ color: "#facc15" })
+            .setLngLat(store.coordinates)
+            .setPopup(
+              new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                <div class="p-2 max-w-xs">
+                  <h3 class="font-bold text-lg text-gray-800">${store.name}</h3>
+                  <p class="text-gray-600">${store.address}</p>
+                  <p class="text-gray-600">${store.city}, ${store.state} ${
+                store.pincode
+              }</p>
+                  <p class="text-gray-600">${store.country}</p>
+                  <p class="mt-2 text-yellow-600 font-medium">Phone: ${
+                    store.phone
+                  }</p>
+                  <button onclick="window.open('${getGoogleMapsUrl(
+                    store
+                  )}', '_blank')" class="mt-2 px-3 py-1 bg-yellow-400 text-black rounded-md text-sm font-medium hover:bg-yellow-500 transition cursor-pointer">
+                    Get Directions
+                  </button>
+                </div>
+              `)
+            )
+            .addTo(map);
+        }
+      });
+
+      // Fly to first store
+      map.flyTo({
+        center: stores[0].coordinates,
+        zoom: 10,
+      });
+    }
+  }, [map, stores]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim() === "") return;
 
-    // Find stores matching the search query
     const foundStores = stores.filter(
       (store) =>
         store.pincode.includes(searchQuery) ||
@@ -164,21 +145,10 @@ const StoreLocator = () => {
     setSearchQuery("");
     setSelectedStore(null);
 
-    // Filter stores for this city
-    const cityStores = stores.filter((store) =>
-      store.city.toLowerCase().includes(city.name.toLowerCase())
-    );
-
-    if (cityStores.length > 0 && map) {
+    if (map) {
       map.flyTo({
         center: city.coordinates,
         zoom: 12,
-        essential: true,
-      });
-    } else if (map) {
-      map.flyTo({
-        center: city.coordinates,
-        zoom: 11,
         essential: true,
       });
     }
@@ -190,10 +160,34 @@ const StoreLocator = () => {
       )
     : stores;
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400 mx-auto"></div>
+          <p className="mt-4 text-gray-700">Loading stores...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-6 rounded-lg shadow-md max-w-md">
+          <h2 className="text-xl font-bold text-red-600 mb-2">Error</h2>
+          <p className="text-gray-700">{error}</p>
+          <p className="mt-4 text-gray-600">
+            Please try again later or contact support.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        {/* Search Bar with City Filters on Top */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
           <form
             onSubmit={handleSearch}
@@ -227,7 +221,6 @@ const StoreLocator = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Store List */}
           <div className="w-full lg:w-1/3 bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
             <div className="p-5 bg-black text-yellow-400">
               <h2 className="font-bold text-xl">Our Stores</h2>
@@ -290,10 +283,8 @@ const StoreLocator = () => {
               ) : (
                 filteredStores.map((store) => (
                   <div
-                    key={store.id}
-                    className={`p-5 border-b border-gray-200 hover:bg-yellow-50 cursor-pointer transition ${
-                      selectedStore?.id === store.id ? "bg-yellow-50" : ""
-                    }`}
+                    key={store._id}
+                    className="p-5 border-b border-gray-200 hover:bg-yellow-50 cursor-pointer transition"
                     onClick={() => {
                       setSelectedStore(store);
                       if (map) {
@@ -326,7 +317,6 @@ const StoreLocator = () => {
             </div>
           </div>
 
-          {/* Map */}
           <div className="w-full lg:w-2/3 h-[500px] rounded-xl overflow-hidden shadow-lg border border-gray-300">
             <div id="map" className="w-full h-full" />
           </div>

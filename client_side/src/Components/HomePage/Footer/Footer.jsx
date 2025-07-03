@@ -117,8 +117,20 @@ const Footer = () => {
         {/* Support Section */}
         <div className="w-full sm:w-auto">
           <h4 className="mb-3 text-lg font-semibold">Support</h4>
-          <p className="text-gray-800">
+          {/* <p className="text-gray-800">
             111 Bijoy Sarani, Mumbai, DH 1515, India
+          </p> */}
+          <p className="text-gray-800">
+            shop 10 Ground Floor Ghansoli   
+          </p>
+          <p className="text-gray-800">
+             Howrah Chowk sector 3 Ambika
+          </p>
+          <p className="text-gray-800">
+            Darshan SocietyThane, Maharashtra,
+          </p>
+          <p className="text-gray-800">
+            400701, India
           </p>
           <p className="text-gray-800">Email: info.ranter@gmail.com</p>
           <p className="text-gray-800">Phone: +91 9029297732</p>
