@@ -29,6 +29,17 @@ export const ProductProvider = ({ children }) => {
     return products.find((product) => product._id === id);
   };
 
+  // Helper to calculate display price (same as in ProductList)
+  const calculateDisplayPrice = (product) => {
+    const basePrice = product.basePrice;
+    const sizeAdjustment = product.sizes && product.sizes.length > 0 ? (typeof product.sizes[0].priceAdjustment === "number" ? product.sizes[0].priceAdjustment : 0) : 0;
+    const priceBeforeDiscount = basePrice + sizeAdjustment;
+    if (product.discount > 0) {
+      return Math.round(priceBeforeDiscount * (1 - product.discount / 100));
+    }
+    return priceBeforeDiscount;
+  };
+
   const filteredProducts = (category) => {
     return products
       .filter(
@@ -37,10 +48,12 @@ export const ProductProvider = ({ children }) => {
           product.title.toLowerCase().includes(searchQuery.toLowerCase())
       )
       .sort((a, b) => {
+        const priceA = calculateDisplayPrice(a);
+        const priceB = calculateDisplayPrice(b);
         if (sortOrder === "asc") {
-          return a.price - b.price;
+          return priceA - priceB;
         }
-        return b.price - a.price;
+        return priceB - priceA;
       });
   };
 

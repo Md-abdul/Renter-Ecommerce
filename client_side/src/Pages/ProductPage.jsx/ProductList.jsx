@@ -38,6 +38,7 @@ const ProductList = ({ category }) => {
   const [wearCategoryFilter, setWearCategoryFilter] = useState([]);
   const [colorFilter, setColorFilter] = useState([]);
   const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [maxPrice, setMaxPrice] = useState(1000);
   const [availableColors, setAvailableColors] = useState([]);
   const [expandedFilters, setExpandedFilters] = useState({
     wearCategory: true,
@@ -65,6 +66,30 @@ const ProductList = ({ category }) => {
     setAvailableColors(uniqueColors);
   }, [filteredProducts, category]);
 
+  // Dynamically set max price for price range
+  useEffect(() => {
+    const allProducts = filteredProducts(category);
+    let foundMaxPrice = 0;
+    allProducts.forEach(product => {
+      if (product.sizes && product.sizes.length > 0) {
+        product.sizes.forEach(size => {
+          const price = product.basePrice + (typeof size.priceAdjustment === 'number' ? size.priceAdjustment : 0);
+          if (price > foundMaxPrice) foundMaxPrice = price;
+        });
+      } else {
+        if (product.basePrice > foundMaxPrice) foundMaxPrice = product.basePrice;
+      }
+    });
+    // Round up to nearest 100 for slider
+    foundMaxPrice = Math.ceil(foundMaxPrice / 100) * 100;
+    if (foundMaxPrice < 1000) foundMaxPrice = 1000;
+    setMaxPrice(foundMaxPrice);
+    // If current priceRange max is less than found max, update it
+    if (priceRange[1] > foundMaxPrice || priceRange[1] === 1000) {
+      setPriceRange([0, foundMaxPrice]);
+    }
+  }, [filteredProducts, category]);
+
   const calculateDisplayPrice = (product) => {
     const basePrice = product.basePrice;
     const sizeAdjustment = product.sizes[0]?.priceAdjustment || 0;
@@ -78,6 +103,9 @@ const ProductList = ({ category }) => {
 
   // Apply filters and sorting
   const applyFiltersAndSorting = (products) => {
+    // Debug: Log all products before filtering
+    console.log("All products from API:", products);
+
     let filtered = products.filter((product) => {
       // Wear category filter
       if (
@@ -95,16 +123,28 @@ const ProductList = ({ category }) => {
         return false;
       }
 
-      // Price range filter
-      const minPrice =
-        product.basePrice +
-        Math.min(...product.sizes.map((size) => size.priceAdjustment));
-      const maxPrice =
-        product.basePrice +
-        Math.max(...product.sizes.map((size) => size.priceAdjustment));
+      // Price range filter (robust to empty/malformed sizes)
+      if (product.sizes && product.sizes.length > 0) {
+        const priceAdjustments = product.sizes
+          .map((size) =>
+            typeof size.priceAdjustment === "number"
+              ? size.priceAdjustment
+              : 0
+          );
+        const minPrice = product.basePrice + Math.min(...priceAdjustments);
+        const maxPrice = product.basePrice + Math.max(...priceAdjustments);
 
-      if (minPrice > priceRange[1] || maxPrice < priceRange[0]) {
-        return false;
+        if (minPrice > priceRange[1] || maxPrice < priceRange[0]) {
+          return false;
+        }
+      } else {
+        // If no sizes, just use basePrice
+        if (
+          product.basePrice > priceRange[1] ||
+          product.basePrice < priceRange[0]
+        ) {
+          return false;
+        }
       }
 
       return true;
@@ -121,6 +161,9 @@ const ProductList = ({ category }) => {
         return priceB - priceA;
       }
     });
+
+    // Debug: Log products after filtering
+    console.log("Products after filtering:", filtered);
 
     return filtered;
   };
@@ -491,7 +534,7 @@ const ProductList = ({ category }) => {
                       <input
                         type="range"
                         min="0"
-                        max="1000"
+                        max={maxPrice}
                         value={priceRange[0]}
                         onChange={(e) => handlePriceChange(0, e.target.value)}
                         className="absolute w-full h-2 opacity-0 cursor-pointer"
@@ -499,7 +542,7 @@ const ProductList = ({ category }) => {
                       <input
                         type="range"
                         min="0"
-                        max="1000"
+                        max={maxPrice}
                         value={priceRange[1]}
                         onChange={(e) => handlePriceChange(1, e.target.value)}
                         className="absolute w-full h-2 opacity-0 cursor-pointer"
@@ -746,7 +789,7 @@ const ProductList = ({ category }) => {
                               <input
                                 type="range"
                                 min="0"
-                                max="1000"
+                                max={maxPrice}
                                 value={priceRange[0]}
                                 onChange={(e) =>
                                   handlePriceChange(0, e.target.value)
@@ -756,7 +799,7 @@ const ProductList = ({ category }) => {
                               <input
                                 type="range"
                                 min="0"
-                                max="1000"
+                                max={maxPrice}
                                 value={priceRange[1]}
                                 onChange={(e) =>
                                   handlePriceChange(1, e.target.value)

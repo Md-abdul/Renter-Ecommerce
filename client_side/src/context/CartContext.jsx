@@ -30,7 +30,7 @@ export const CartProvider = ({ children }) => {
   // };
   const getTotalPrice = () => {
     const subtotal = cart.reduce((total, item) => {
-      return total + item.price * item.quantity;
+      return total + item.basePrice * item.quantity;
     }, 0);
 
     if (!appliedCoupon) return Math.round(subtotal);
@@ -48,7 +48,7 @@ export const CartProvider = ({ children }) => {
     if (!appliedCoupon) return 0;
 
     const subtotal = cart.reduce((total, item) => {
-      return total + item.price * item.quantity;
+      return total + item.basePrice * item.quantity;
     }, 0);
 
     const discountAmount = (subtotal * appliedCoupon.discountPercentage) / 100;
@@ -181,7 +181,7 @@ export const CartProvider = ({ children }) => {
           quantity,
           color: color.toString(), // Ensure string
           size: size.toString(), // Ensure string
-          price: product.price, // Send the calculated price from SingleProductPage
+          basePrice: product.basePrice, // Send the calculated price from SingleProductPage
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
