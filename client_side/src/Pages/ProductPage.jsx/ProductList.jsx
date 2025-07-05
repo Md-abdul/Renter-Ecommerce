@@ -48,36 +48,47 @@ const ProductList = ({ category }) => {
   });
 
   useEffect(() => {
-    const colors = new Set();
+    const colorMap = new Map();
+
     filteredProducts(category).forEach((product) => {
       product.colors.forEach((color) => {
-        // Use both name and hexCode to create a unique key
-        const colorKey = `${color.name.toLowerCase()}-${color.hexCode.toLowerCase()}`;
-        colors.add(colorKey);
+        // Normalize the color name (lowercase and trim)
+        const normalizedName = color.name.toLowerCase().trim();
+
+        // If we already have this color, skip
+        if (colorMap.has(normalizedName)) {
+          return;
+        }
+
+        // Otherwise add it to our map
+        colorMap.set(normalizedName, {
+          name: normalizedName,
+          hexCode: color.hexCode,
+          displayName: color.name, // Keep original for display
+        });
       });
     });
-    
-    // Convert back to array of unique colors
-    const uniqueColors = Array.from(colors).map(colorKey => {
-      const [name, hexCode] = colorKey.split('-');
-      return { name, hexCode };
-    });
-    
-    setAvailableColors(uniqueColors);
+
+    setAvailableColors(Array.from(colorMap.values()));
   }, [filteredProducts, category]);
 
   // Dynamically set max price for price range
   useEffect(() => {
     const allProducts = filteredProducts(category);
     let foundMaxPrice = 0;
-    allProducts.forEach(product => {
+    allProducts.forEach((product) => {
       if (product.sizes && product.sizes.length > 0) {
-        product.sizes.forEach(size => {
-          const price = product.basePrice + (typeof size.priceAdjustment === 'number' ? size.priceAdjustment : 0);
+        product.sizes.forEach((size) => {
+          const price =
+            product.basePrice +
+            (typeof size.priceAdjustment === "number"
+              ? size.priceAdjustment
+              : 0);
           if (price > foundMaxPrice) foundMaxPrice = price;
         });
       } else {
-        if (product.basePrice > foundMaxPrice) foundMaxPrice = product.basePrice;
+        if (product.basePrice > foundMaxPrice)
+          foundMaxPrice = product.basePrice;
       }
     });
     // Round up to nearest 100 for slider
@@ -103,9 +114,6 @@ const ProductList = ({ category }) => {
 
   // Apply filters and sorting
   const applyFiltersAndSorting = (products) => {
-    // Debug: Log all products before filtering
-    console.log("All products from API:", products);
-
     let filtered = products.filter((product) => {
       // Wear category filter
       if (
@@ -115,36 +123,35 @@ const ProductList = ({ category }) => {
         return false;
       }
 
-      // Color filter
-      if (
-        colorFilter.length > 0 &&
-        !product.colors.some((color) => colorFilter.includes(color.name))
-      ) {
-        return false;
-      }
-
-      // Price range filter (robust to empty/malformed sizes)
-      if (product.sizes && product.sizes.length > 0) {
-        const priceAdjustments = product.sizes
-          .map((size) =>
-            typeof size.priceAdjustment === "number"
-              ? size.priceAdjustment
-              : 0
-          );
-        const minPrice = product.basePrice + Math.min(...priceAdjustments);
-        const maxPrice = product.basePrice + Math.max(...priceAdjustments);
-
-        if (minPrice > priceRange[1] || maxPrice < priceRange[0]) {
-          return false;
-        }
-      } else {
-        // If no sizes, just use basePrice
+      // Color filter (case insensitive)
+      if (colorFilter.length > 0) {
+        const productColorNames = product.colors.map((c) =>
+          c.name.toLowerCase()
+        );
         if (
-          product.basePrice > priceRange[1] ||
-          product.basePrice < priceRange[0]
+          !colorFilter.some((filterColor) =>
+            productColorNames.includes(filterColor.toLowerCase())
+          )
         ) {
           return false;
         }
+      }
+
+      // Price range filter
+      let productMinPrice = product.basePrice;
+      let productMaxPrice = product.basePrice;
+
+      if (product.sizes && product.sizes.length > 0) {
+        const adjustments = product.sizes.map((size) =>
+          typeof size.priceAdjustment === "number" ? size.priceAdjustment : 0
+        );
+        productMinPrice += Math.min(...adjustments);
+        productMaxPrice += Math.max(...adjustments);
+      }
+
+      // Check if price range overlaps
+      if (productMaxPrice < priceRange[0] || productMinPrice > priceRange[1]) {
+        return false;
       }
 
       return true;
@@ -155,15 +162,8 @@ const ProductList = ({ category }) => {
       const priceA = calculateDisplayPrice(a);
       const priceB = calculateDisplayPrice(b);
 
-      if (sortOrder === "asc") {
-        return priceA - priceB;
-      } else {
-        return priceB - priceA;
-      }
+      return sortOrder === "asc" ? priceA - priceB : priceB - priceA;
     });
-
-    // Debug: Log products after filtering
-    console.log("Products after filtering:", filtered);
 
     return filtered;
   };
@@ -226,10 +226,11 @@ const ProductList = ({ category }) => {
   };
 
   const handleColorChange = (colorName) => {
+    const normalizedColor = colorName.toLowerCase().trim();
     setColorFilter((prev) =>
-      prev.includes(colorName) 
-        ? prev.filter((c) => c !== colorName) 
-        : [...prev, colorName]
+      prev.includes(normalizedColor)
+        ? prev.filter((c) => c !== normalizedColor)
+        : [...prev, normalizedColor]
     );
     setCurrentPage(1);
   };
@@ -470,24 +471,27 @@ const ProductList = ({ category }) => {
                     className="overflow-hidden"
                   >
                     <div className="grid grid-cols-5 gap-2">
-                    {availableColors.map((color) => (
-  <div key={`${color.name}-${color.hexCode}`} className="flex flex-col items-center">
-    <motion.button
-      onClick={() => handleColorChange(color.name)}
-      className={`w-8 h-8 rounded-full border-2 ${
-        colorFilter.includes(color.name)
-          ? "border-yellow-500 scale-110"
-          : "border-gray-200"
-      } transition-all duration-200`}
-      style={{ backgroundColor: color.hexCode }}
-      title={color.name}
-      whileHover={{ scale: 1.1 }}
-    />
-    <span className="text-xs mt-1 text-gray-600 truncate w-full text-center">
-      {color.name}
-    </span>
-  </div>
-))}
+                      {availableColors.map((color) => (
+                        <div
+                          key={color.name}
+                          className="flex flex-col items-center"
+                        >
+                          <motion.button
+                            onClick={() => handleColorChange(color.name)}
+                            className={`w-8 h-8 rounded-full border-2 ${
+                              colorFilter.includes(color.name.toLowerCase())
+                                ? "border-yellow-500 scale-110"
+                                : "border-gray-200"
+                            } transition-all duration-200`}
+                            style={{ backgroundColor: color.hexCode }}
+                            title={color.displayName}
+                            whileHover={{ scale: 1.1 }}
+                          />
+                          <span className="text-xs mt-1 text-gray-600 truncate w-full text-center">
+                            {color.displayName}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </motion.div>
                 )}
@@ -523,12 +527,12 @@ const ProductList = ({ category }) => {
                         ₹{priceRange[1]}+
                       </span>
                     </div>
-                    <div className="relative h-2 bg-gray-200 rounded-full ">
+                    <div className="relative h-2 bg-gray-200 rounded-full">
                       <div
                         className="absolute h-2 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full"
                         style={{
-                          left: `${(priceRange[0] / 1000) * 100}%`,
-                          right: `${100 - (priceRange[1] / 1000) * 100}%`,
+                          left: `${(priceRange[0] / maxPrice) * 100}%`,
+                          right: `${100 - (priceRange[1] / maxPrice) * 100}%`,
                         }}
                       ></div>
                       <input
@@ -549,11 +553,11 @@ const ProductList = ({ category }) => {
                       />
                       <div
                         className="absolute w-4 h-4 bg-yellow-500 rounded-full -top-1 transform -translate-x-1/2 shadow-md"
-                        style={{ left: `${(priceRange[0] / 1000) * 100}%` }}
+                        style={{ left: `${(priceRange[0] / maxPrice) * 100}%` }}
                       ></div>
                       <div
                         className="absolute w-4 h-4 bg-yellow-500 rounded-full -top-1 transform -translate-x-1/2 shadow-md"
-                        style={{ left: `${(priceRange[1] / 1000) * 100}%` }}
+                        style={{ left: `${(priceRange[1] / maxPrice) * 100}%` }}
                       ></div>
                     </div>
                   </motion.div>
