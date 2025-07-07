@@ -58,6 +58,185 @@ function getSizeOptions(category, wearCategory) {
   return Array.from({ length: 21 }, (_, i) => (28 + i).toString());
 }
 
+// ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
+//   try {
+//     if (!req.file) {
+//       return res.status(400).json({ error: "No file uploaded" });
+//     }
+
+//     const workbook = xlsx.readFile(req.file.path);
+//     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+//     const data = xlsx.utils.sheet_to_json(worksheet);
+
+//     // Group by variantId (handles both spellings)
+//     const productGroups = {};
+//     data.forEach((row) => {
+//       const key = row.variantId || row.varientId || row.sku;
+//       if (!productGroups[key]) {
+//         productGroups[key] = [];
+//       }
+//       productGroups[key].push(row);
+//     });
+
+//     const products = [];
+//     for (const [groupKey, rows] of Object.entries(productGroups)) {
+//       const firstRow = rows[0];
+
+//       if (!firstRow.sku) continue;
+
+//       // Process Colors with their sizes
+//       const colorsMap = new Map();
+//       rows.forEach((row) => {
+//         const colorName = row.colorName;
+//         const hexCode = row.hexCode;
+//         const mainImage = row.mainImage;
+//         const priceAdjustment = row.priceAdjustment || 0; // Get price adjustment from row
+
+//         if (colorName && hexCode && mainImage) {
+//           if (!colorsMap.has(colorName)) {
+//             colorsMap.set(colorName, {
+//               name: colorName,
+//               hexCode: hexCode,
+//               priceAdjustment: priceAdjustment, // Set price adjustment at color level
+//               images: {
+//                 main: mainImage,
+//                 gallery: [
+//                   row.gallery1,
+//                   row.gallery2,
+//                   row.gallery3,
+//                   row.gallery4,
+//                 ].filter(Boolean),
+//               },
+//               sizes: [],
+//             });
+//           }
+
+//           // Add size information to this color (without price adjustment)
+//           if (row.size) {
+//             const colorObj = colorsMap.get(colorName);
+//             colorObj.sizes.push({
+//               size: row.size,
+//               quantity: row.quantity || 0,
+//               sku: row.sku,
+//               available: (row.quantity || 0) > 0,
+//             });
+//           }
+//         }
+//       });
+
+//       // Get all unique sizes across all colors (without price adjustment)
+//       const sizeMap = new Map();
+
+//       Array.from(colorsMap.values()).forEach((color) => {
+//         color.sizes.forEach((size) => {
+//           if (!sizeMap.has(size.size)) {
+//             sizeMap.set(size.size, {
+//               size: size.size,
+//               quantity: size.quantity,
+//               available: size.available,
+//             });
+//           }
+//         });
+//       });
+
+//       const productData = {
+//         variantId: firstRow.variantId || firstRow.varientId || firstRow.sku,
+//         title: firstRow.title,
+//         summary: firstRow.summary || "",
+//         basePrice: firstRow.basePrice,
+//         category: firstRow.category,
+//         wearCategory: firstRow.wearCategory,
+//         colors: Array.from(colorsMap.values()),
+//         sizes: Array.from(sizeMap.values()),
+//         discount: firstRow.discount || 0,
+//         rating: firstRow.rating || 0,
+//         reviews: firstRow.reviews || 0,
+//         sku: firstRow.sku,
+//       };
+
+//       const product = new ProductModal(productData);
+//       await product.save();
+//       products.push(product);
+//     }
+
+//     // Clean up - delete the uploaded file
+//     fs.unlinkSync(req.file.path);
+
+//     res.status(201).json({
+//       success: true,
+//       message: `${products.length} products imported successfully`,
+//       products,
+//     });
+//   } catch (error) {
+//     console.error("Error processing Excel:", error);
+
+//     if (req.file && fs.existsSync(req.file.path)) {
+//       fs.unlinkSync(req.file.path);
+//     }
+
+//     res.status(500).json({
+//       error: "Failed to process Excel file",
+//       details: error.message,
+//     });
+//   }
+// });
+
+// ProductRoutes.post("/", async (req, res) => {
+//   try {
+//     const {
+//       title,
+//       basePrice,
+//       category,
+//       wearCategory,
+//       colors: incomingColors,
+//       sizes: incomingSizes,
+//     } = req.body;
+
+//     if (
+//       !title ||
+//       !basePrice ||
+//       !category ||
+//       !wearCategory ||
+//       !incomingColors?.length
+//     ) {
+//       return res.status(400).json({ error: "Missing required fields" });
+//     }
+
+//     // Process colors - add default priceAdjustment if not provided
+//     const colors = incomingColors.map((color) => ({
+//       ...color,
+//       priceAdjustment: color.priceAdjustment || 0,
+//       images: color.images || { main: "", gallery: [] },
+//     }));
+
+//     // Process sizes - keep only the sizes that were actually added in the form
+//     const sizes = incomingSizes.map((size) => ({
+//       size: size.size,
+//       priceAdjustment: size.priceAdjustment || 0,
+//       quantity: size.quantity || 0,
+//     }));
+
+//     const productData = {
+//       ...req.body,
+//       colors,
+//       sizes,
+//     };
+
+//     const newProduct = new ProductModal(productData);
+//     await newProduct.save();
+
+//     res.status(201).json({
+//       message: "Product created successfully",
+//       product: newProduct,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       error: "Failed to create product",
+//       details: error.message,
+//     });
+//   }
+// });
+
 ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
@@ -90,14 +269,14 @@ ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
         const colorName = row.colorName;
         const hexCode = row.hexCode;
         const mainImage = row.mainImage;
-        const priceAdjustment = row.priceAdjustment || 0; // Get price adjustment from row
+        const colorPriceAdjustment = row.colorPriceAdjustment || 0;
 
         if (colorName && hexCode && mainImage) {
           if (!colorsMap.has(colorName)) {
             colorsMap.set(colorName, {
               name: colorName,
               hexCode: hexCode,
-              priceAdjustment: priceAdjustment, // Set price adjustment at color level
+              priceAdjustment: colorPriceAdjustment,
               images: {
                 main: mainImage,
                 gallery: [
@@ -111,32 +290,16 @@ ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
             });
           }
 
-          // Add size information to this color (without price adjustment)
+          // Add size information to this color
           if (row.size) {
             const colorObj = colorsMap.get(colorName);
             colorObj.sizes.push({
               size: row.size,
+              priceAdjustment: row.sizePriceAdjustment || 0,
               quantity: row.quantity || 0,
-              sku: row.sku,
-              available: (row.quantity || 0) > 0,
             });
           }
         }
-      });
-
-      // Get all unique sizes across all colors (without price adjustment)
-      const sizeMap = new Map();
-
-      Array.from(colorsMap.values()).forEach((color) => {
-        color.sizes.forEach((size) => {
-          if (!sizeMap.has(size.size)) {
-            sizeMap.set(size.size, {
-              size: size.size,
-              quantity: size.quantity,
-              available: size.available,
-            });
-          }
-        });
       });
 
       const productData = {
@@ -147,7 +310,6 @@ ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
         category: firstRow.category,
         wearCategory: firstRow.wearCategory,
         colors: Array.from(colorsMap.values()),
-        sizes: Array.from(sizeMap.values()),
         discount: firstRow.discount || 0,
         rating: firstRow.rating || 0,
         reviews: firstRow.reviews || 0,
@@ -181,117 +343,49 @@ ProductRoutes.post("/upload-excel", upload.single("file"), async (req, res) => {
   }
 });
 
-// ProductRoutes.post("/", async (req, res) => {
-//   try {
-//     const {
-//       title,
-//       basePrice,
-//       category,
-//       wearCategory,
-//       colors: incomingColors,
-//       sizes: incomingSizes,
-//     } = req.body;
-
-//     if (
-//       !title ||
-//       !basePrice ||
-//       !category ||
-//       !wearCategory ||
-//       !incomingColors?.length
-//     ) {
-//       return res.status(400).json({ error: "Missing required fields" });
-//     }
-
-//     // Process colors - add default priceAdjustment if not provided
-//     const colors = incomingColors.map((color) => ({
-//       ...color,
-//       priceAdjustment: color.priceAdjustment || 0,
-//       images: color.images || { main: "", gallery: [] },
-//     }));
-
-//     // Generate expected size options based on category and wear type
-//     const sizeOptions = getSizeOptions(category, wearCategory);
-
-//     // Create a map of incoming sizes for quick lookup
-//     const incomingSizesMap = {};
-//     if (Array.isArray(incomingSizes)) {
-//       incomingSizes.forEach((size) => {
-//         incomingSizesMap[size.size] = {
-//           priceAdjustment: size.priceAdjustment || 0,
-//           quantity: size.quantity || 0,
-//         };
-//       });
-//     }
-
-//     // Map sizes from size options, using incoming sizes data if available
-//     const sizes = sizeOptions.map((size) => ({
-//       size,
-//       priceAdjustment: incomingSizesMap[size]?.priceAdjustment || 0,
-//       quantity: incomingSizesMap[size]?.quantity || 0,
-//     }));
-
-//     const productData = {
-//       ...req.body,
-//       colors,
-//       sizes,
-//     };
-
-//     const newProduct = new ProductModal(productData);
-//     await newProduct.save();
-
-//     res.status(201).json({
-//       message: "Product created successfully",
-//       product: newProduct,
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       error: "Failed to create product",
-//       details: error.message,
-//     });
-//   }
-// });
-
-// Get sizes array for a specific product by ID
-
 ProductRoutes.post("/", async (req, res) => {
   try {
     const {
       title,
+      summary,
       basePrice,
       category,
       wearCategory,
-      colors: incomingColors,
-      sizes: incomingSizes,
+      colors,
+      discount,
+      sku
     } = req.body;
 
     if (
       !title ||
+      !summary ||
       !basePrice ||
       !category ||
       !wearCategory ||
-      !incomingColors?.length
+      !colors?.length
     ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Process colors - add default priceAdjustment if not provided
-    const colors = incomingColors.map((color) => ({
-      ...color,
-      priceAdjustment: color.priceAdjustment || 0,
-      images: color.images || { main: "", gallery: [] },
-    }));
-
-    // Process sizes - keep only the sizes that were actually added in the form
-    const sizes = incomingSizes.map((size) => ({
-      size: size.size,
-      priceAdjustment: size.priceAdjustment || 0,
-      quantity: size.quantity || 0,
-    }));
+    // Validate each color has at least one size
+    for (const color of colors) {
+      if (!color.sizes || color.sizes.length === 0) {
+        return res.status(400).json({ 
+          error: `Color ${color.name} must have at least one size`
+        });
+      }
+    }
 
     const productData = {
-      ...req.body,
+      title,
+      summary,
+      basePrice,
+      category,
+      wearCategory,
       colors,
-      sizes,
+      discount: discount || 0,
+      sku,
+      createdAt: new Date()
     };
 
     const newProduct = new ProductModal(productData);
@@ -448,14 +542,17 @@ ProductRoutes.get("/:id", async (req, res) => {
     const product = await ProductModal.findById(req.params.id);
     if (!product) return res.status(404).json({ error: "Product not found" });
 
-    // Check available quantities for each size
+    // Convert to plain object and add availability info
     const productWithAvailability = product.toObject();
-    productWithAvailability.sizes = productWithAvailability.sizes.map(
-      (size) => ({
+    
+    // Process each color's sizes
+    productWithAvailability.colors = productWithAvailability.colors.map(color => ({
+      ...color,
+      sizes: color.sizes.map(size => ({
         ...size,
-        available: size.quantity > 0,
-      })
-    );
+        available: size.quantity > 0
+      }))
+    }));
 
     res.status(200).json(productWithAvailability);
   } catch (error) {
@@ -466,43 +563,85 @@ ProductRoutes.get("/:id", async (req, res) => {
 });
 
 // Update a product by ID (PUT)
+// ProductRoutes.put("/:id", async (req, res) => {
+//   try {
+//     // Validate colors if provided
+//     if (
+//       req.body.colors &&
+//       (!Array.isArray(req.body.colors) || req.body.colors.length === 0)
+//     ) {
+//       return res
+//         .status(400)
+//         .json({ error: "At least one color must be provided" });
+//     }
+
+//     // Validate sizes if provided
+//     if (
+//       req.body.sizes &&
+//       (!Array.isArray(req.body.sizes) || req.body.sizes.length === 0)
+//     ) {
+//       return res
+//         .status(400)
+//         .json({ error: "At least one size must be provided" });
+//     }
+
+//     const updatedProduct = await ProductModal.findByIdAndUpdate(
+//       req.params.id,
+//       req.body,
+//       { new: true }
+//     );
+//     if (!updatedProduct)
+//       return res.status(404).json({ error: "Product not found" });
+//     res.status(200).json({
+//       message: "Product updated successfully",
+//       product: updatedProduct,
+//     });
+//   } catch (error) {
+//     res
+//       .status(500)
+//       .json({ error: "Failed to update product", details: error.message });
+//   }
+// });
 ProductRoutes.put("/:id", async (req, res) => {
   try {
+    const { colors, ...otherData } = req.body;
+
     // Validate colors if provided
-    if (
-      req.body.colors &&
-      (!Array.isArray(req.body.colors) || req.body.colors.length === 0)
-    ) {
-      return res
-        .status(400)
-        .json({ error: "At least one color must be provided" });
+    if (colors) {
+      if (!Array.isArray(colors)) {
+        return res.status(400).json({ error: "Colors must be an array" });
+      }
+
+      for (const color of colors) {
+        if (!color.sizes || color.sizes.length === 0) {
+          return res.status(400).json({
+            error: `Color ${color.name} must have at least one size`
+          });
+        }
+      }
     }
 
-    // Validate sizes if provided
-    if (
-      req.body.sizes &&
-      (!Array.isArray(req.body.sizes) || req.body.sizes.length === 0)
-    ) {
-      return res
-        .status(400)
-        .json({ error: "At least one size must be provided" });
-    }
+    const updateData = colors ? { colors, ...otherData } : otherData;
 
     const updatedProduct = await ProductModal.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true }
     );
-    if (!updatedProduct)
+
+    if (!updatedProduct) {
       return res.status(404).json({ error: "Product not found" });
+    }
+
     res.status(200).json({
       message: "Product updated successfully",
       product: updatedProduct,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to update product", details: error.message });
+    res.status(500).json({
+      error: "Failed to update product",
+      details: error.message,
+    });
   }
 });
 
@@ -534,6 +673,42 @@ ProductRoutes.get("/category/:category", async (req, res) => {
 });
 
 // Check product availability
+// ProductRoutes.post("/check-availability/:id", async (req, res) => {
+//   try {
+//     const { color, size, quantity } = req.body;
+//     const product = await ProductModal.findById(req.params.id);
+
+//     if (!product) {
+//       return res.status(404).json({ error: "Product not found" });
+//     }
+
+//     // Check color exists
+//     const colorExists = product.colors.some((c) => c.name === color);
+//     if (!colorExists) {
+//       return res.status(400).json({ error: "Selected color not available" });
+//     }
+
+//     // Check size exists and has enough quantity
+//     const sizeObj = product.sizes.find((s) => s.size === size);
+//     if (!sizeObj) {
+//       return res.status(400).json({ error: "Selected size not available" });
+//     }
+
+//     if (sizeObj.quantity < quantity) {
+//       return res.status(400).json({
+//         error: "Insufficient quantity available",
+//         available: sizeObj.quantity,
+//       });
+//     }
+
+//     res.status(200).json({ available: true });
+//   } catch (error) {
+//     res.status(500).json({
+//       error: "Failed to check availability",
+//       details: error.message,
+//     });
+//   }
+// });
 ProductRoutes.post("/check-availability/:id", async (req, res) => {
   try {
     const { color, size, quantity } = req.body;
@@ -543,14 +718,14 @@ ProductRoutes.post("/check-availability/:id", async (req, res) => {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    // Check color exists
-    const colorExists = product.colors.some((c) => c.name === color);
-    if (!colorExists) {
+    // Find the color
+    const colorObj = product.colors.find(c => c.name === color);
+    if (!colorObj) {
       return res.status(400).json({ error: "Selected color not available" });
     }
 
-    // Check size exists and has enough quantity
-    const sizeObj = product.sizes.find((s) => s.size === size);
+    // Find the size within the color
+    const sizeObj = colorObj.sizes.find(s => s.size === size);
     if (!sizeObj) {
       return res.status(400).json({ error: "Selected size not available" });
     }
@@ -562,7 +737,16 @@ ProductRoutes.post("/check-availability/:id", async (req, res) => {
       });
     }
 
-    res.status(200).json({ available: true });
+    // Calculate final price (base + color adjustment + size adjustment)
+    const finalPrice = product.basePrice + 
+                      (colorObj.priceAdjustment || 0) + 
+                      (sizeObj.priceAdjustment || 0);
+
+    res.status(200).json({ 
+      available: true,
+      finalPrice,
+      totalPrice: finalPrice * quantity
+    });
   } catch (error) {
     res.status(500).json({
       error: "Failed to check availability",
@@ -573,6 +757,60 @@ ProductRoutes.post("/check-availability/:id", async (req, res) => {
 
 // Add this route to productRoutes.js
 // In productRoutes.js, update the check-inventory route
+// ProductRoutes.post("/check-inventory", async (req, res) => {
+//   try {
+//     const { items } = req.body;
+
+//     const availabilityCheck = await Promise.all(
+//       items.map(async (item) => {
+//         const product = await ProductModal.findById(item.productId);
+//         if (!product) {
+//           return {
+//             productId: item.productId,
+//             available: false,
+//             message: "Product not found",
+//             name: "Unknown product",
+//             size: item.size,
+//           };
+//         }
+
+//         const sizeObj = product.sizes.find((s) => s.size === item.size);
+//         if (!sizeObj) {
+//           return {
+//             productId: item.productId,
+//             available: false,
+//             message: "Size not available",
+//             name: product.title,
+//             size: item.size,
+//           };
+//         }
+
+//         return {
+//           productId: item.productId,
+//           available: sizeObj.quantity >= item.quantity,
+//           availableQuantity: sizeObj.quantity,
+//           requiredQuantity: item.quantity,
+//           name: product.title,
+//           size: item.size,
+//           message:
+//             sizeObj.quantity >= item.quantity ? "" : "Insufficient quantity",
+//         };
+//       })
+//     );
+
+//     const allAvailable = availabilityCheck.every((item) => item.available);
+
+//     res.status(200).json({
+//       allAvailable,
+//       details: availabilityCheck,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       error: "Failed to check inventory",
+//       details: error.message,
+//     });
+//   }
+// });
 ProductRoutes.post("/check-inventory", async (req, res) => {
   try {
     const { items } = req.body;
@@ -587,10 +825,25 @@ ProductRoutes.post("/check-inventory", async (req, res) => {
             message: "Product not found",
             name: "Unknown product",
             size: item.size,
+            color: item.color
           };
         }
 
-        const sizeObj = product.sizes.find((s) => s.size === item.size);
+        // Find the color
+        const colorObj = product.colors.find(c => c.name === item.color);
+        if (!colorObj) {
+          return {
+            productId: item.productId,
+            available: false,
+            message: "Color not available",
+            name: product.title,
+            size: item.size,
+            color: item.color
+          };
+        }
+
+        // Find the size within the color
+        const sizeObj = colorObj.sizes.find(s => s.size === item.size);
         if (!sizeObj) {
           return {
             productId: item.productId,
@@ -598,6 +851,7 @@ ProductRoutes.post("/check-inventory", async (req, res) => {
             message: "Size not available",
             name: product.title,
             size: item.size,
+            color: item.color
           };
         }
 
@@ -608,13 +862,14 @@ ProductRoutes.post("/check-inventory", async (req, res) => {
           requiredQuantity: item.quantity,
           name: product.title,
           size: item.size,
+          color: item.color,
           message:
             sizeObj.quantity >= item.quantity ? "" : "Insufficient quantity",
         };
       })
     );
 
-    const allAvailable = availabilityCheck.every((item) => item.available);
+    const allAvailable = availabilityCheck.every(item => item.available);
 
     res.status(200).json({
       allAvailable,
@@ -627,7 +882,6 @@ ProductRoutes.post("/check-inventory", async (req, res) => {
     });
   }
 });
-
 // ProductModal
 
 module.exports = { ProductRoutes };

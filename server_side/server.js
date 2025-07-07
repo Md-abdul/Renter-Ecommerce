@@ -14,12 +14,14 @@ const router = require("./Routes/googleSignup");
 const phonepeRoutes = require("./Routes/phonepeRoutes"); // Add this line
 const contactRoutes = require("./Routes/ContactRoutes");
 const storeRoutes = require("./Routes/storeRoutes");
+const couponExpiryCheck = require('./utils/couponCron');
 
 const app = express();
 dotenv.config();
 
 // Connect to the database
 connectDB();
+couponExpiryCheck.start();
 
 // CORS configuration
 const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL];

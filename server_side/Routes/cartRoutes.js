@@ -123,13 +123,14 @@ CartRoutes.post("/add", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "User or product not found" });
     }
 
-    // ✅ FIX: Ensure addressType is valid before saving
-    if (!["home", "work", "other"].includes(user.address?.addressType)) {
-      user.address.addressType = "home";
+    // Find the selected color
+    const selectedColor = product.colors.find(c => c.name === color);
+    if (!selectedColor) {
+      return res.status(400).json({ message: "Selected color not available" });
     }
 
-    // Find matching size (case-insensitive)
-    const sizeObj = product.sizes?.find(
+    // Find matching size within the selected color (case-insensitive)
+    const sizeObj = selectedColor.sizes.find(
       (s) => s.size?.toString().toLowerCase() === size.toLowerCase()
     );
 
@@ -146,9 +147,7 @@ CartRoutes.post("/add", verifyToken, async (req, res) => {
       _id: itemId,
       productId,
       name: product.title,
-      image:
-        product.colors.find((c) => c.name === color)?.images.main ||
-        "https://via.placeholder.com/150",
+      image: selectedColor.images.main || "https://via.placeholder.com/150",
       originalPrice: product.basePrice + (sizeObj.priceAdjustment || 0),
       price: price,
       quantity,
@@ -246,7 +245,13 @@ CartRoutes.post("/update-quantity/:itemId", verifyToken, async (req, res) => {
 
     // Verify the new quantity doesn't exceed available stock
     const product = await Product.findById(cartItem.productId);
-    const sizeObj = product.sizes.find((s) => s.size === cartItem.size);
+    const selectedColor = product.colors.find(c => c.name === cartItem.color);
+    
+    if (!selectedColor) {
+      return res.status(400).json({ message: "Color no longer available" });
+    }
+
+    const sizeObj = selectedColor.sizes.find((s) => s.size === cartItem.size);
 
     if (newQuantity > (sizeObj?.quantity || 0)) {
       return res.status(400).json({

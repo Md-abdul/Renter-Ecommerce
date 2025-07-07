@@ -46,6 +46,18 @@ const couponSchema = new mongoose.Schema({
   }
 });
 
+// Add a pre-save hook to automatically deactivate if expired
+couponSchema.pre('save', function(next) {
+  const now = new Date();
+  const istOffset = 330 * 60 * 1000; // IST is UTC+5:30
+  const istNow = new Date(now.getTime() + istOffset);
+  
+  if (this.expiryDate < istNow) {
+    this.isActive = false;
+  }
+  next();
+});
+
 const CouponModel = mongoose.model("coupon", couponSchema);
 
 module.exports = CouponModel;

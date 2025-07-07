@@ -100,20 +100,36 @@ couponRoutes.delete('/:id', verifyToken, verifyAdmin, async (req, res) => {
 });
 
 // Apply coupon
+// Apply coupon
 couponRoutes.post('/apply', verifyToken, async (req, res) => {
   try {
     const { couponCode } = req.body;
     const userId = req.user.userId;
 
-    // Find the coupon
+    // Get current time in IST (Asia/Kolkata)
+    const now = new Date();
+    const istOffset = 330 * 60 * 1000; // IST is UTC+5:30
+    const istNow = new Date(now.getTime() + istOffset);
+
+    // Find the coupon with all necessary checks
     const coupon = await CouponModel.findOne({
-      couponCode: couponCode.toUpperCase(),
-      isActive: true,
-      expiryDate: { $gt: new Date() }
+      couponCode: couponCode.toUpperCase()
     });
 
     if (!coupon) {
-      return res.status(400).json({ message: 'Invalid or expired coupon code' });
+      return res.status(404).json({ message: 'Coupon not found' });
+    }
+
+    // Check if coupon is active
+    if (!coupon.isActive) {
+      return res.status(400).json({ message: 'Coupon is not active' });
+    }
+
+    // Check if coupon has expired (with IST timezone)
+    if (coupon.expiryDate < istNow) {
+      // Update status if expired (just in case cron job missed it)
+      await CouponModel.findByIdAndUpdate(coupon._id, { isActive: false });
+      return res.status(400).json({ message: 'Coupon has expired' });
     }
 
     // Check usage limit
@@ -142,14 +158,22 @@ couponRoutes.post('/apply', verifyToken, async (req, res) => {
       });
     }
 
-    // Return the coupon details
+    // Calculate discount amount
+    const discountAmount = Math.min(
+      (cartTotal * coupon.discountPercentage) / 100,
+      coupon.maxDiscountAmount
+    );
+
+    // Return the coupon details with calculated discount
     res.status(200).json({
       message: 'Coupon applied successfully',
       coupon: {
         couponCode: coupon.couponCode,
         discountPercentage: coupon.discountPercentage,
         maxDiscountAmount: coupon.maxDiscountAmount,
-        minimumPurchaseAmount: coupon.minimumPurchaseAmount
+        minimumPurchaseAmount: coupon.minimumPurchaseAmount,
+        discountAmount: discountAmount,
+        finalAmount: cartTotal - discountAmount
       }
     });
   } catch (error) {

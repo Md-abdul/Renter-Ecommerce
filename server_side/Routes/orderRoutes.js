@@ -1,5 +1,5 @@
 const express = require("express");
-const { UserModel, OrderModel } = require("../Modals/UserModal");
+const { UserModel, OrderModel, CounterModel } = require("../Modals/UserModal");
 const { verifyToken, verifyAdmin } = require("../Middlewares/VerifyToken");
 const ProductModal = require("../Modals/productModal");
 const CouponModel = require("../Modals/coupanModal");
@@ -7,163 +7,21 @@ const { sendOrderConfirmationEmail } = require("../utils/orderProdctService");
 
 const orderRoutes = express.Router();
 
-// Create order
-// orderRoutes.post("/", verifyToken, async (req, res) => {
-//   try {
-//     const userId = req.user.userId;
-//     const { shippingAddress, paymentMethod, couponCode } = req.body;
-
-//     // Validate required fields
-//     if (
-//       !shippingAddress ||
-//       !shippingAddress.name ||
-//       !shippingAddress.address ||
-//       !shippingAddress.address.street ||
-//       !shippingAddress.address.city ||
-//       !shippingAddress.address.zipCode ||
-//       !shippingAddress.phoneNumber
-//     ) {
-//       return res.status(400).json({
-//         message: "Missing required shipping information",
-//       });
-//     }
-
-//     const user = await UserModel.findById(userId);
-//     if (!user) return res.status(404).json({ message: "User not found" });
-
-//     if (user.cart.size === 0) {
-//       return res.status(400).json({ message: "Cart is empty" });
-//     }
-
-//     // Convert cart items to array
-//     const items = Array.from(user.cart.values()).map((item) => ({
-//       productId: item.productId,
-//       quantity: item.quantity,
-//       price: item.price,
-//       name: item.name,
-//       image: item.image,
-//       size: item.size,
-//     }));
-
-//     // Calculate total amount
-//     let totalAmount = items.reduce(
-//       (sum, item) => sum + item.price * item.quantity,
-//       0
-//     );
-
-//     // Apply coupon if provided
-//     let appliedCoupon = null;
-//     let discountAmount = 0;
-
-//     if (couponCode) {
-//       const coupon = await CouponModel.findOne({
-//         couponCode: couponCode.toUpperCase(),
-//         isActive: true,
-//         expiryDate: { $gt: new Date() },
-//       });
-
-//       if (coupon) {
-//         // Check minimum purchase amount
-//         if (totalAmount >= coupon.minimumPurchaseAmount) {
-//           // Calculate discount
-//           discountAmount = (totalAmount * coupon.discountPercentage) / 100;
-//           const finalDiscount = Math.min(
-//             discountAmount,
-//             coupon.maxDiscountAmount
-//           );
-
-//           // Apply discount
-//           totalAmount -= finalDiscount;
-//           appliedCoupon = coupon;
-
-//           // Increment coupon usage
-//           coupon.usedCount += 1;
-//           await coupon.save();
-//         }
-//       }
-//     }
-
-//     const shippingDetails = {
-//       name: shippingAddress.name,
-//       address: {
-//         street: shippingAddress.address.street || "",
-//         city: shippingAddress.address.city || "",
-//         zipCode: shippingAddress.address.zipCode || "",
-//         state: shippingAddress.address.state || "",
-//         alternatePhone: shippingAddress.address.alternatePhone || "",
-//         addressType: shippingAddress.address.addressType || "home",
-//       },
-//       phoneNumber: shippingAddress.phoneNumber || "",
-//     };
-
-//     // Create new order
-//     const order = new OrderModel({
-//       userId,
-//       items,
-//       totalAmount,
-//       shippingAddress: shippingDetails,
-//       paymentMethod,
-//       status: "pending",
-//       appliedCoupon: appliedCoupon
-//         ? {
-//             couponCode: appliedCoupon.couponCode,
-//             discountPercentage: appliedCoupon.discountPercentage,
-//             discountAmount: discountAmount,
-//           }
-//         : null,
-//     });
-
-//     // Update product quantities
-//     for (const item of items) {
-//       try {
-//         await ProductModal.findByIdAndUpdate(
-//           item.productId,
-//           {
-//             $inc: { "sizes.$[elem].quantity": -item.quantity },
-//           },
-//           {
-//             arrayFilters: [{ "elem.size": item.size }],
-//             runValidators: false,
-//           }
-//         );
-//       } catch (updateError) {
-//         console.error(`Error updating product ${item.productId}:`, updateError);
-//         throw new Error(`Failed to update product ${item.productId}`);
-//       }
-//     }
-
-//     await order.save();
-
-//     // Clear user's cart
-//     user.cart = new Map();
-//     await user.save();
-
-//     res.status(201).json({
-//       message: "Order created successfully",
-//       order: {
-//         _id: order._id,
-//         totalAmount: order.totalAmount,
-//         status: order.status,
-//         createdAt: order.createdAt,
-//         items: order.items.map((item) => ({
-//           name: item.name,
-//           quantity: item.quantity,
-//           price: item.price,
-//           image: item.image,
-//         })),
-//         shippingAddress: order.shippingAddress,
-//         paymentMethod: order.paymentMethod,
-//         appliedCoupon: order.appliedCoupon,
-//       },
-//     });
-//   } catch (error) {
-//     console.error("Error creating order:", error);
-//     res.status(500).json({
-//       message: "Server error",
-//       error: error.message,
-//     });
-//   }
-// });
+// Get user orders
+// Helper function to generate order number
+const getNextOrderNumber = async () => {
+  try {
+    const counter = await CounterModel.findByIdAndUpdate(
+      "orderNumber",
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    return `RANTER_A${String(counter.seq).padStart(4, "0")}`;
+  } catch (error) {
+    console.error("Error generating order number:", error);
+    throw new Error("Failed to generate order number");
+  }
+};
 
 // Create order
 orderRoutes.post("/", verifyToken, async (req, res) => {
@@ -201,6 +59,7 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
       name: item.name,
       image: item.image,
       size: item.size,
+      color: item.color,
     }));
 
     // Calculate total amount
@@ -262,6 +121,7 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
       shippingAddress: shippingDetails,
       paymentMethod,
       status: "pending",
+      orderNumber: await getNextOrderNumber(), // Use the helper function
       appliedCoupon: appliedCoupon
         ? {
             couponCode: appliedCoupon.couponCode,
@@ -274,16 +134,34 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
     // Update product quantities
     for (const item of items) {
       try {
-        await ProductModal.findByIdAndUpdate(
-          item.productId,
-          {
-            $inc: { "sizes.$[elem].quantity": -item.quantity },
-          },
-          {
-            arrayFilters: [{ "elem.size": item.size }],
-            runValidators: false,
-          }
+        const product = await ProductModal.findById(item.productId);
+        if (!product) {
+          console.error(`Product ${item.productId} not found`);
+          continue;
+        }
+
+        const colorIndex = product.colors.findIndex(
+          (c) => c.name === item.color
         );
+
+        if (colorIndex === -1) {
+          console.error(`Color not found for product ${item.productId}`);
+          continue;
+        }
+
+        const sizeIndex = product.colors[colorIndex].sizes.findIndex(
+          (s) => s.size === item.size
+        );
+
+        if (sizeIndex === -1) {
+          console.error(
+            `Size ${item.size} not found for product ${item.productId}`
+          );
+          continue;
+        }
+
+        product.colors[colorIndex].sizes[sizeIndex].quantity -= item.quantity;
+        await product.save();
       } catch (updateError) {
         console.error(`Error updating product ${item.productId}:`, updateError);
         throw new Error(`Failed to update product ${item.productId}`);
@@ -296,7 +174,7 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
     user.cart = new Map();
     await user.save();
 
-    // Send order confirmation email (don't await to avoid delaying response)
+    // Send order confirmation email
     sendOrderConfirmationEmail(order._id)
       .then((success) => {
         if (!success) {
@@ -334,7 +212,7 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
   }
 });
 
-// Get user orders
+
 orderRoutes.get("/user", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -760,6 +638,21 @@ orderRoutes.post("/pending", verifyToken, async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
+    // Get the next order number
+    const getNextOrderNumber = async () => {
+      try {
+        const counter = await CounterModel.findByIdAndUpdate(
+          "orderId",
+          { $inc: { seq: 1 } },
+          { new: true, upsert: true }
+        );
+        return `RANTER_A${String(counter.seq).padStart(4, "0")}`;
+      } catch (error) {
+        console.error("Error generating order number:", error);
+        throw new Error("Failed to generate order number");
+      }
+    };
+
     // Create a new order with pending status
     const order = new OrderModel({
       userId,
@@ -768,6 +661,7 @@ orderRoutes.post("/pending", verifyToken, async (req, res) => {
       shippingAddress,
       paymentMethod,
       status: "pending", // Mark as pending until payment is complete
+      orderNumber: await getNextOrderNumber(),
       paymentDetails: {
         paymentStatus: "INITIATED",
         paymentMethod: "PHONEPE",
