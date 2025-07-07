@@ -75,7 +75,7 @@ const CheckoutPage = () => {
         }
 
         const response = await axios.get(
-          "https://renter-ecommerce-1.onrender.com/api/user/userDetails",
+          "http://localhost:5000/api/user/userDetails",
           {
             headers: { Authorization: `Bearer ${token}` },
           }

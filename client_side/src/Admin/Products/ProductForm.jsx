@@ -16,7 +16,7 @@ const ProductForm = ({
     wearCategory: "top",
     sku: "",
     discount: 0,
-    colors: product?.colors || [
+    colors: [
       {
         name: "",
         hexCode: "#000000",
@@ -25,13 +25,13 @@ const ProductForm = ({
           main: "",
           gallery: [""],
         },
-      },
-    ],
-    sizes: [
-      {
-        size: "",
-        priceAdjustment: 0,
-        quantity: 0,
+        sizes: [
+          {
+            size: "",
+            priceAdjustment: 0,
+            quantity: 0,
+          },
+        ],
       },
     ],
   });
@@ -86,6 +86,19 @@ const ProductForm = ({
                 main: color.images?.main || "",
                 gallery: color.images?.gallery || [""],
               },
+              sizes: color.sizes
+                ? color.sizes.map((size) => ({
+                    size: size.size || getSizeOptions()[0] || "",
+                    priceAdjustment: size.priceAdjustment || 0,
+                    quantity: size.quantity || 0,
+                  }))
+                : [
+                    {
+                      size: getSizeOptions()[0] || "",
+                      priceAdjustment: 0,
+                      quantity: 0,
+                    },
+                  ],
             }))
           : [
               {
@@ -96,41 +109,18 @@ const ProductForm = ({
                   main: "",
                   gallery: [""],
                 },
-              },
-            ],
-        sizes: product.sizes
-          ? product.sizes.map((size) => ({
-              size: size.size || "",
-              priceAdjustment: size.priceAdjustment || 0,
-              quantity: size.quantity || 0,
-            }))
-          : [
-              {
-                size: "",
-                priceAdjustment: 0,
-                quantity: 0,
+                sizes: [
+                  {
+                    size: getSizeOptions()[0] || "",
+                    priceAdjustment: 0,
+                    quantity: 0,
+                  },
+                ],
               },
             ],
       });
     }
   }, [product]);
-
-  // Update size options when category or wearCategory changes
-  useEffect(() => {
-    if (!product) {
-      // Only for new products
-      setFormData((prev) => ({
-        ...prev,
-        sizes: [
-          {
-            size: getSizeOptions()[0] || "",
-            priceAdjustment: 0,
-            quantity: 0,
-          },
-        ],
-      }));
-    }
-  }, [formData.category, formData.wearCategory]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -158,12 +148,12 @@ const ProductForm = ({
     });
   };
 
-  const handleSizeChange = (index, field, value) => {
-    const newSizes = [...formData.sizes];
-    newSizes[index][field] = value;
+  const handleSizeChange = (colorIndex, sizeIndex, field, value) => {
+    const newColors = [...formData.colors];
+    newColors[colorIndex].sizes[sizeIndex][field] = value;
     setFormData({
       ...formData,
-      sizes: newSizes,
+      colors: newColors,
     });
   };
 
@@ -180,6 +170,13 @@ const ProductForm = ({
             main: "",
             gallery: [""],
           },
+          sizes: [
+            {
+              size: getSizeOptions()[0] || "",
+              priceAdjustment: 0,
+              quantity: 0,
+            },
+          ],
         },
       ],
     });
@@ -194,27 +191,25 @@ const ProductForm = ({
     });
   };
 
-  const addSize = () => {
-    const sizeOptions = getSizeOptions();
+  const addSize = (colorIndex) => {
+    const newColors = [...formData.colors];
+    newColors[colorIndex].sizes.push({
+      size: getSizeOptions()[0] || "",
+      priceAdjustment: 0,
+      quantity: 0,
+    });
     setFormData({
       ...formData,
-      sizes: [
-        ...formData.sizes,
-        {
-          size: sizeOptions[0] || "",
-          priceAdjustment: 0,
-          quantity: 0,
-        },
-      ],
+      colors: newColors,
     });
   };
 
-  const removeSize = (index) => {
-    const newSizes = [...formData.sizes];
-    newSizes.splice(index, 1);
+  const removeSize = (colorIndex, sizeIndex) => {
+    const newColors = [...formData.colors];
+    newColors[colorIndex].sizes.splice(sizeIndex, 1);
     setFormData({
       ...formData,
-      sizes: newSizes,
+      colors: newColors,
     });
   };
 
@@ -223,8 +218,8 @@ const ProductForm = ({
     try {
       const method = product ? "PUT" : "POST";
       const url = product
-        ? `https://renter-ecommerce-1.onrender.com/api/products/${product._id}`
-        : "https://renter-ecommerce-1.onrender.com/api/products";
+        ? `http://localhost:5000/api/products/${product._id}`
+        : "http://localhost:5000/api/products";
 
       const response = await fetch(url, {
         method,
@@ -382,7 +377,7 @@ const ProductForm = ({
                 </label>
                 <textarea
                   name="summary"
-                  value={formData.summary}
+                  value={formData.summary || ""}
                   onChange={handleInputChange}
                   rows={3}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
@@ -552,6 +547,106 @@ const ProductForm = ({
                         </button>
                       </div>
                     </div>
+
+                    {/* Sizes Section for this color */}
+                    <div className="mt-6">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="text-md font-medium text-gray-900">
+                          Sizes for {color.name || "this color"}
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => addSize(colorIndex)}
+                          className="text-sm text-yellow-600 hover:text-yellow-800"
+                        >
+                          + Add Size
+                        </button>
+                      </div>
+                      {color.sizes.map((size, sizeIndex) => (
+                        <div
+                          key={sizeIndex}
+                          className="border border-gray-200 rounded-lg p-4 mb-4"
+                        >
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">
+                                Size*
+                              </label>
+                              <select
+                                value={size.size}
+                                onChange={(e) =>
+                                  handleSizeChange(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "size",
+                                    e.target.value
+                                  )
+                                }
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                                required
+                              >
+                                {getSizeOptions().map((option) => (
+                                  <option key={option} value={option}>
+                                    {option}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">
+                                Price Adjustment
+                              </label>
+                              <input
+                                type="number"
+                                value={size.priceAdjustment}
+                                onChange={(e) =>
+                                  handleSizeChange(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "priceAdjustment",
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                                step="0.01"
+                                onWheel={handleNumberInput}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">
+                                Quantity*
+                              </label>
+                              <input
+                                type="number"
+                                value={size.quantity}
+                                onChange={(e) =>
+                                  handleSizeChange(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "quantity",
+                                    parseInt(e.target.value) || 0
+                                  )
+                                }
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                                required
+                                min="0"
+                                onWheel={handleNumberInput}
+                              />
+                            </div>
+                          </div>
+                          <div className="mt-3 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => removeSize(colorIndex, sizeIndex)}
+                              className="text-sm text-red-600 hover:text-red-800"
+                            >
+                              Remove Size
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
                     <div className="mt-3 flex justify-end">
                       <button
                         type="button"
@@ -559,96 +654,6 @@ const ProductForm = ({
                         className="text-sm text-red-600 hover:text-red-800"
                       >
                         Remove Color
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Size Section */}
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="text-md font-medium text-gray-900">Sizes</h4>
-                  <button
-                    type="button"
-                    onClick={addSize}
-                    className="text-sm text-yellow-600 hover:text-yellow-800"
-                  >
-                    + Add Size
-                  </button>
-                </div>
-                {formData.sizes.map((size, sizeIndex) => (
-                  <div
-                    key={sizeIndex}
-                    className="border border-gray-200 rounded-lg p-4 mb-4"
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Size*
-                        </label>
-                        <select
-                          value={size.size}
-                          onChange={(e) =>
-                            handleSizeChange(sizeIndex, "size", e.target.value)
-                          }
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                          required
-                        >
-                          {getSizeOptions().map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Price Adjustment
-                        </label>
-                        <input
-                          type="number"
-                          value={size.priceAdjustment}
-                          onChange={(e) =>
-                            handleSizeChange(
-                              sizeIndex,
-                              "priceAdjustment",
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                          step="0.01"
-                          onWheel={handleNumberInput}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Quantity*
-                        </label>
-                        <input
-                          type="number"
-                          value={size.quantity}
-                          onChange={(e) =>
-                            handleSizeChange(
-                              sizeIndex,
-                              "quantity",
-                              parseInt(e.target.value) || 0
-                            )
-                          }
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                          required
-                          min="0"
-                          onWheel={handleNumberInput}
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-3 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => removeSize(sizeIndex)}
-                        className="text-sm text-red-600 hover:text-red-800"
-                      >
-                        Remove Size
                       </button>
                     </div>
                   </div>

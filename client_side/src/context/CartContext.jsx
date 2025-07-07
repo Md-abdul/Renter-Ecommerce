@@ -20,7 +20,7 @@ export const CartProvider = ({ children }) => {
 
   // Use local backend for development
   // const API_BASE_URL = "https://renter-ecommerce-1.onrender.com/api";
-  const API_BASE_URL = "https://renter-ecommerce-1.onrender.com/api";
+  const API_BASE_URL = "http://localhost:5000/api";
 
   // Calculate total price of items in cart
   // const getTotalPrice = () => {
@@ -30,7 +30,7 @@ export const CartProvider = ({ children }) => {
   // };
   const getTotalPrice = () => {
     const subtotal = cart.reduce((total, item) => {
-      return total + item.basePrice * item.quantity;
+      return total + item.price * item.quantity;
     }, 0);
 
     if (!appliedCoupon) return Math.round(subtotal);
@@ -48,7 +48,7 @@ export const CartProvider = ({ children }) => {
     if (!appliedCoupon) return 0;
 
     const subtotal = cart.reduce((total, item) => {
-      return total + item.basePrice * item.quantity;
+      return total + item.price * item.quantity;
     }, 0);
 
     const discountAmount = (subtotal * appliedCoupon.discountPercentage) / 100;
@@ -181,7 +181,7 @@ export const CartProvider = ({ children }) => {
           quantity,
           color: color.toString(), // Ensure string
           size: size.toString(), // Ensure string
-          basePrice: product.basePrice, // Send the calculated price from SingleProductPage
+          price: product.basePrice, // Send the calculated price from SingleProductPage
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -317,7 +317,7 @@ export const CartProvider = ({ children }) => {
 
       setLoading(true);
       const response = await axios.post(
-        `https://renter-ecommerce-1.onrender.com/api/coupons/apply`,
+        `http://localhost:5000/api/coupons/apply`,
         { couponCode },
         {
           headers: {

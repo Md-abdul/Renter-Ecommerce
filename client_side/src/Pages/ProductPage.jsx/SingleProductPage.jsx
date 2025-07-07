@@ -29,15 +29,12 @@ const SingleProductPage = () => {
   useEffect(() => {
     const fetchRelatedProducts = async () => {
       try {
-        const response = await fetch(
-          "https://renter-ecommerce-1.onrender.com/api/products",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await fetch("http://localhost:5000/api/products", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         const data = await response.json();
         setRelatedProducts(data);
       } catch (error) {
@@ -51,7 +48,7 @@ const SingleProductPage = () => {
     const fetchProduct = async () => {
       try {
         const response = await fetch(
-          `https://renter-ecommerce-1.onrender.com/api/products/${_id}`
+          `http://localhost:5000/api/products/${_id}`
         );
         const data = await response.json();
         if (data) {
@@ -71,10 +68,8 @@ const SingleProductPage = () => {
 
   useEffect(() => {
     if (product) {
-      console.log("Product loaded:", product);
-      console.log("Selected size:", selectedSize);
       if (selectedSize) {
-        const sizeObj = product.sizes.find((s) => s.size === selectedSize);
+        const sizeObj = product.colors[0]?.sizes.find((s) => s.size === selectedSize);
       }
     }
   }, [product, selectedSize]);
@@ -101,8 +96,8 @@ const SingleProductPage = () => {
       price += selectedColor.priceAdjustment || 0;
     }
 
-    if (selectedSize) {
-      const sizeObj = product.sizes.find((s) => s.size === selectedSize);
+    if (selectedSize && selectedColor) {
+      const sizeObj = selectedColor.sizes.find((s) => s.size === selectedSize);
       if (sizeObj) {
         price += sizeObj.priceAdjustment || 0;
       }
@@ -191,7 +186,7 @@ const SingleProductPage = () => {
 
   const incrementQuantity = () => {
     const maxAvailable =
-      product.sizes.find((s) => s.size === selectedSize)?.quantity || 0;
+      selectedColor?.sizes?.find((s) => s.size === selectedSize)?.quantity || 0;
     if (selectedQuantity < Math.min(10, maxAvailable)) {
       setSelectedQuantity((prev) => prev + 1);
     } else {
@@ -209,7 +204,8 @@ const SingleProductPage = () => {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value >= 1) {
       const maxAvailable =
-        product.sizes.find((s) => s.size === selectedSize)?.quantity || 0;
+        selectedColor?.sizes?.find((s) => s.size === selectedSize)?.quantity ||
+        0;
       if (value <= Math.min(10, maxAvailable)) {
         setSelectedQuantity(value);
       } else {
@@ -232,7 +228,9 @@ const SingleProductPage = () => {
 
   const finalPrice = calculateFinalPrice();
   const discountedPrice = finalPrice - finalPrice * (product.discount / 100);
-  const selectedSizeObj = product.sizes.find((s) => s.size === selectedSize);
+  const selectedSizeObj = selectedColor?.sizes?.find(
+    (s) => s.size === selectedSize
+  );
   const isOutOfStock = selectedSizeObj ? selectedSizeObj.quantity === 0 : false;
 
   return (
@@ -395,26 +393,27 @@ const SingleProductPage = () => {
             </div>
 
             {/* Size Selection */}
+            {/* Size Selection */}
             {selectedColor && (
               <div>
                 <h3 className="text-base font-semibold mb-2">Select Size</h3>
                 <div className="grid grid-cols-5 gap-2">
-                  {product.sizes.map((sizeObj) => (
+                  {selectedColor.sizes.map((sizeObj) => (
                     <button
                       key={sizeObj._id}
                       onClick={() =>
-                        !sizeObj.available
+                        sizeObj.quantity <= 0
                           ? null
                           : handleSizeSelect(sizeObj.size)
                       }
                       className={`px-2 py-1.5 border rounded text-xs font-medium transition-all flex flex-col items-center ${
                         selectedSize === sizeObj.size
                           ? "bg-gray-900 text-white border-gray-900"
-                          : sizeObj.available
+                          : sizeObj.quantity > 0
                           ? "border-gray-200 hover:border-gray-900 text-gray-700"
                           : "border-gray-200 text-gray-400 cursor-not-allowed line-through"
                       }`}
-                      disabled={!sizeObj.available}
+                      disabled={sizeObj.quantity <= 0}
                     >
                       <span>{sizeObj.size}</span>
                       {sizeObj.priceAdjustment > 0 && (
@@ -662,7 +661,7 @@ const SingleProductPage = () => {
                         ₹
                         {(
                           product.basePrice +
-                          (product.sizes[0]?.priceAdjustment || 0)
+                          (product.colors[0]?.sizes[0]?.priceAdjustment || 0)
                         ).toFixed(2)}
                       </span>
                     )}

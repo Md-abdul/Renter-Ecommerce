@@ -17,12 +17,13 @@ const ProductList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10); // 10 items per page
 
+  const [stockModalOpen, setStockModalOpen] = useState(false);
+  const [currentStockDetails, setCurrentStockDetails] = useState(null);
+
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(
-        "https://renter-ecommerce-1.onrender.com/api/products"
-      );
+      const response = await fetch("http://localhost:5000/api/products");
       const data = await response.json();
       setProducts(data);
     } catch (error) {
@@ -44,7 +45,7 @@ const ProductList = () => {
   const handleDelete = async () => {
     try {
       const response = await fetch(
-        `https://renter-ecommerce-1.onrender.com/api/products/${productToDelete._id}`,
+        `http://localhost:5000/api/products/${productToDelete._id}`,
         { method: "DELETE" }
       );
       if (response.ok) {
@@ -73,7 +74,7 @@ const ProductList = () => {
 
     try {
       const response = await fetch(
-        "https://renter-ecommerce-1.onrender.com/api/products/upload-excel",
+        "http://localhost:5000/api/products/upload-excel",
         {
           method: "POST",
           body: formData,
@@ -83,7 +84,7 @@ const ProductList = () => {
       const data = await response.json();
       if (response.ok) {
         const productsResponse = await fetch(
-          "https://renter-ecommerce-1.onrender.com/api/products"
+          "http://localhost:5000/api/products"
         );
         const productsData = await productsResponse.json();
         setProducts(productsData);
@@ -104,6 +105,11 @@ const ProductList = () => {
   // const calculateTotalQuantity = (product) => {
   //   return product.sizes.reduce((total, size) => total + size.quantity, 0);
   // };
+
+  const showStockDetails = (product) => {
+    setCurrentStockDetails(product);
+    setStockModalOpen(true);
+  };
 
   const calculateTotalQuantity = (product) => {
     return (product.sizes || []).reduce(
@@ -170,6 +176,18 @@ const ProductList = () => {
     }
 
     return pageNumbers;
+  };
+
+  const calculateTotalStock = (product) => {
+    return (
+      product.colors?.reduce((total, color) => {
+        return (
+          total +
+          (color.sizes?.reduce((sum, size) => sum + (size.quantity || 0), 0) ||
+            0)
+        );
+      }, 0) || 0
+    );
   };
 
   return (
@@ -358,27 +376,30 @@ const ProductList = () => {
                       {/* Inventory */}
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <div className="flex items-center text-sm font-semibold text-gray-800">
-                            {calculateTotalQuantity(product)} in stock
-                            {calculateTotalQuantity(product) <= 10 &&
-                              calculateTotalQuantity(product) > 0 && (
+                          <div
+                            className="flex items-center text-sm font-semibold text-gray-800 cursor-pointer hover:underline"
+                            onClick={() => showStockDetails(product)}
+                          >
+                            {calculateTotalStock(product)} in stock
+                            {calculateTotalStock(product) <= 10 &&
+                              calculateTotalStock(product) > 0 && (
                                 <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800">
                                   Low
                                 </span>
                               )}
-                            {calculateTotalQuantity(product) === 0 && (
+                            {calculateTotalStock(product) === 0 && (
                               <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-800">
                                 Out
                               </span>
                             )}
                           </div>
-                          {/* <div className="text-xs text-gray-500 mt-1">
-                            {
-                              product.sizes?.filter((size) => size.available)
-                                .length
-                            }{" "}
-                            active sizes
-                          </div> */}
+                          <div className="text-xs text-gray-500 mt-1">
+                            {product.colors?.reduce(
+                              (acc, color) => acc + (color.sizes?.length || 0),
+                              0
+                            )}{" "}
+                            sizes
+                          </div>
                         </div>
                       </td>
 
@@ -659,7 +680,7 @@ const ProductList = () => {
                   </div>
                 </label>
               </div>
-              
+
               <div className="text-center text-sm text-gray-600">
                 <p>
                   Need the template file?{" "}
@@ -789,6 +810,48 @@ const ProductList = () => {
                   Delete
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {stockModalOpen && currentStockDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl overflow-hidden w-full max-w-2xl mx-4">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-2xl font-bold text-gray-900">
+                Stock Details for {currentStockDetails.title}
+              </h3>
+            </div>
+            <div className="px-6 py-5 max-h-96 overflow-y-auto">
+              {currentStockDetails.colors.map((color, colorIndex) => (
+                <div key={colorIndex} className="mb-6">
+                  <div className="flex items-center mb-3">
+                    <div
+                      className="w-4 h-4 rounded-full mr-2"
+                      style={{ backgroundColor: color.hexCode }}
+                    ></div>
+                    <h4 className="font-medium">{color.name}</h4>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {color.sizes.map((size, sizeIndex) => (
+                      <div key={sizeIndex} className="border rounded p-2">
+                        <div className="font-medium">Size: {size.size}</div>
+                        <div>Qty: {size.quantity}</div>
+                        <div>Price Adj: ₹{size.priceAdjustment}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+              <button
+                onClick={() => setStockModalOpen(false)}
+                className="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

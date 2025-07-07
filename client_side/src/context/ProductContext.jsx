@@ -12,7 +12,7 @@ export const ProductProvider = ({ children }) => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get("https://renter-ecommerce-1.onrender.com/api/products");
+        const response = await axios.get("http://localhost:5000/api/products");
         setProducts(response.data);
         // console.log(response.data)
         setLoading(false);
@@ -32,7 +32,12 @@ export const ProductProvider = ({ children }) => {
   // Helper to calculate display price (same as in ProductList)
   const calculateDisplayPrice = (product) => {
     const basePrice = product.basePrice;
-    const sizeAdjustment = product.sizes && product.sizes.length > 0 ? (typeof product.sizes[0].priceAdjustment === "number" ? product.sizes[0].priceAdjustment : 0) : 0;
+    const sizeAdjustment =
+      product.sizes && product.sizes.length > 0
+        ? typeof product.sizes[0].priceAdjustment === "number"
+          ? product.sizes[0].priceAdjustment
+          : 0
+        : 0;
     const priceBeforeDiscount = basePrice + sizeAdjustment;
     if (product.discount > 0) {
       return Math.round(priceBeforeDiscount * (1 - product.discount / 100));

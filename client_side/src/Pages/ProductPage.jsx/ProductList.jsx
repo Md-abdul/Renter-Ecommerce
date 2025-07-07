@@ -103,7 +103,7 @@ const ProductList = ({ category }) => {
 
   const calculateDisplayPrice = (product) => {
     const basePrice = product.basePrice;
-    const sizeAdjustment = product.sizes[0]?.priceAdjustment || 0;
+    const sizeAdjustment = product.colors[0]?.sizes[0]?.priceAdjustment || 0;
     const priceBeforeDiscount = basePrice + sizeAdjustment;
 
     if (product.discount > 0) {
@@ -264,7 +264,7 @@ const ProductList = ({ category }) => {
 
     const displayPrice = calculateDisplayPrice(product);
     const originalPrice =
-      product.basePrice + (product.sizes[0]?.priceAdjustment || 0);
+      product.basePrice + (product.colors[0].sizes[0]?.priceAdjustment || 0);
 
     return (
       <motion.div

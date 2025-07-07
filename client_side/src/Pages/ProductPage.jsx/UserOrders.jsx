@@ -104,7 +104,7 @@ const UserOrders = () => {
       setReturnReason("");
 
       const productResponse = await axios.get(
-        `https://renter-ecommerce-1.onrender.com/api/products/${item.productId}`
+        `http://localhost:5000/api/products/${item.productId}`
       );
 
       const product = productResponse.data;
@@ -644,8 +644,8 @@ const UserOrders = () => {
                           Buy it again
                           <FiArrowRight className="ml-1.5" />
                         </button>
-                        <div className="text-sm text-gray-500">
-                          Order ID: {order._id}
+                        <div className="text-sm text-gray-500 font-bold">
+                          Order ID: {order.orderNumber}
                         </div>
                       </div>
                     </div>

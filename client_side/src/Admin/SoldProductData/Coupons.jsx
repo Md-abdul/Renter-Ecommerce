@@ -242,8 +242,13 @@ const Coupons = () => {
                   ₹{coupon.maxDiscountAmount}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {new Date(coupon.expiryDate).toLocaleDateString()}
+                  {new Date(coupon.expiryDate).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </td>
+
                 <td className="px-6 py-4 whitespace-nowrap">
                   {coupon.usedCount}/{coupon.usageLimit}
                 </td>
