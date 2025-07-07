@@ -12,7 +12,7 @@ export const ProductProvider = ({ children }) => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get("https://renter-ecommerce.vercel.app/api/products");
+        const response = await axios.get("https://renter-ecommerce.onrender.com/api/products");
         setProducts(response.data);
         // console.log(response.data)
         setLoading(false);

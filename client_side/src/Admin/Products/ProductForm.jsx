@@ -218,8 +218,8 @@ const ProductForm = ({
     try {
       const method = product ? "PUT" : "POST";
       const url = product
-        ? `https://renter-ecommerce.vercel.app/api/products/${product._id}`
-        : "https://renter-ecommerce.vercel.app/api/products";
+        ? `https://renter-ecommerce.onrender.com/api/products/${product._id}`
+        : "https://renter-ecommerce.onrender.com/api/products";
 
       const response = await fetch(url, {
         method,

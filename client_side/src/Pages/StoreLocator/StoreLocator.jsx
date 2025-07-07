@@ -21,7 +21,7 @@ const StoreLocator = () => {
     const fetchStores = async () => {
       try {
         const response = await fetch(
-          "https://renter-ecommerce.vercel.app/api/stores"
+          "https://renter-ecommerce.onrender.com/api/stores"
         );
         if (!response.ok) {
           throw new Error("Failed to fetch stores");

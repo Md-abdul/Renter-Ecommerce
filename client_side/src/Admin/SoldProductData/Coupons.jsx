@@ -44,7 +44,7 @@ const Coupons = () => {
       }
 
       const response = await axios.get(
-        `https://renter-ecommerce.vercel.app/api/coupons`,
+        `https://renter-ecommerce.onrender.com/api/coupons`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -84,8 +84,8 @@ const Coupons = () => {
       }
 
       const url = editingCoupon
-        ? `https://renter-ecommerce.vercel.app/api/coupons/${editingCoupon._id}`
-        : `https://renter-ecommerce.vercel.app/api/coupons`;
+        ? `https://renter-ecommerce.onrender.com/api/coupons/${editingCoupon._id}`
+        : `https://renter-ecommerce.onrender.com/api/coupons`;
 
       const method = editingCoupon ? "put" : "post";
 
@@ -137,7 +137,7 @@ const Coupons = () => {
       }
 
       await axios.delete(
-        `https://renter-ecommerce.vercel.app/api/coupons/${couponToDelete}`,
+        `https://renter-ecommerce.onrender.com/api/coupons/${couponToDelete}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

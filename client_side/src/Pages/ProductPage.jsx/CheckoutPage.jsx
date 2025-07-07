@@ -75,7 +75,7 @@ const CheckoutPage = () => {
         }
 
         const response = await axios.get(
-          "https://renter-ecommerce.vercel.app/api/user/userDetails",
+          "https://renter-ecommerce.onrender.com/api/user/userDetails",
           {
             headers: { Authorization: `Bearer ${token}` },
           }

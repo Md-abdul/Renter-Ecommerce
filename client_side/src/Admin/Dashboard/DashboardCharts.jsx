@@ -15,11 +15,11 @@ const DashboardCharts = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const productsResponse = await axios.get("https://renter-ecommerce.vercel.app/api/products");
-        const usersResponse = await axios.get("https://renter-ecommerce.vercel.app/api/user/allUser");
+        const productsResponse = await axios.get("https://renter-ecommerce.onrender.com/api/products");
+        const usersResponse = await axios.get("https://renter-ecommerce.onrender.com/api/user/allUser");
         
         const token = localStorage.getItem("adminToken");
-        const ordersResponse = await axios.get("https://renter-ecommerce.vercel.app/api/orders/admin", {
+        const ordersResponse = await axios.get("https://renter-ecommerce.onrender.com/api/orders/admin", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

@@ -20,7 +20,7 @@ export const CartProvider = ({ children }) => {
 
   // Use local backend for development
   // const API_BASE_URL = "https://renter-ecommerce-1.onrender.com/api";
-  const API_BASE_URL = "https://renter-ecommerce.vercel.app/api";
+  const API_BASE_URL = "https://renter-ecommerce.onrender.com/api";
 
   // Calculate total price of items in cart
   // const getTotalPrice = () => {
@@ -317,7 +317,7 @@ export const CartProvider = ({ children }) => {
 
       setLoading(true);
       const response = await axios.post(
-        `https://renter-ecommerce.vercel.app/api/coupons/apply`,
+        `https://renter-ecommerce.onrender.com/api/coupons/apply`,
         { couponCode },
         {
           headers: {
