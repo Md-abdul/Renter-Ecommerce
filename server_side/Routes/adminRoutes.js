@@ -9,7 +9,7 @@ const adminRoutes = express.Router();
 adminRoutes.use(cookieParser());
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
-const TOKEN_EXPIRY = "24h"; // Token expires in 24 hours
+const TOKEN_EXPIRY = "24h"; 
 
 // Hardcoded admin credentials
 const ADMIN_EMAIL = "admin@ranter.com";
