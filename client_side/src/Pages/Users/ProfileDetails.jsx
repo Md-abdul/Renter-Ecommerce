@@ -44,7 +44,7 @@ const ProfileDetails = () => {
 
       setLoading(true);
       const response = await axios.get(
-        `https://renter-ecommerce-1.onrender.com/api/user/userDetails`,
+        `https://renter-ecommerce.vercel.app/api/user/userDetails`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -128,7 +128,7 @@ const ProfileDetails = () => {
       setLoading(true);
 
       await axios.put(
-        `https://renter-ecommerce-1.onrender.com/api/user/${userId}`,
+        `https://renter-ecommerce.vercel.app/api/user/${userId}`,
         {
           name: editData.name,
           email: editData.email,

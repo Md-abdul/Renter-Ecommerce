@@ -53,7 +53,7 @@ export const Orders = () => {
       }
 
       const response = await axios.get(
-        "https://renter-ecommerce-1.onrender.com/api/orders/admin",
+        "https://renter-ecommerce.vercel.app/api/orders/admin",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -80,7 +80,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.get(
-        "https://renter-ecommerce-1.onrender.com/api/orders/returns",
+        "https://renter-ecommerce.vercel.app/api/orders/returns",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -100,7 +100,7 @@ export const Orders = () => {
       }
 
       await axios.put(
-        `https://renter-ecommerce-1.onrender.com/api/orders/${orderId}/status`,
+        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/status`,
         { status: newStatus },
         {
           headers: {
@@ -123,7 +123,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.put(
-        `https://renter-ecommerce-1.onrender.com/api/orders/${orderId}/return/${itemId}`,
+        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -143,7 +143,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       await axios.put(
-        `https://renter-ecommerce-1.onrender.com/api/orders/${orderId}/return/${itemId}/tracking`,
+        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}/tracking`,
         { trackingNumber: trackingInput },
         { headers: { Authorization: `Bearer ${token}` } }
       );

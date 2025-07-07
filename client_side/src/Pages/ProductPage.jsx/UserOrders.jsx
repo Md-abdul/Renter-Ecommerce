@@ -104,7 +104,7 @@ const UserOrders = () => {
       setReturnReason("");
 
       const productResponse = await axios.get(
-        `http://localhost:5000/api/products/${item.productId}`
+        `https://renter-ecommerce.vercel.app/api/products/${item.productId}`
       );
 
       const product = productResponse.data;
@@ -139,7 +139,7 @@ const UserOrders = () => {
       }
 
       const response = await axios.post(
-        `https://renter-ecommerce-1.onrender.com/api/orders/${selectedItem.orderId}/return`,
+        `https://renter-ecommerce.vercel.app/api/orders/${selectedItem.orderId}/return`,
         {
           itemId: selectedItem._id,
           type,
@@ -193,7 +193,7 @@ const UserOrders = () => {
   const cancelReturnRequest = async (orderId, itemId) => {
     try {
       const response = await axios.put(
-        `https://renter-ecommerce-1.onrender.com/api/orders/${orderId}/return/${itemId}`,
+        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}`,
         { status: "cancelled" },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },

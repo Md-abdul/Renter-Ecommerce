@@ -19,6 +19,7 @@ const Coupons = () => {
     expiryDate: "",
     usageLimit: 1,
   });
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,6 +34,7 @@ const Coupons = () => {
 
   const fetchCoupons = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem("adminToken");
       console.log("adminToken:", token); // Debug log
 
@@ -40,13 +42,9 @@ const Coupons = () => {
         handleTokenError();
         return;
       }
-      //https://renter-ecommerce-1.onrender.com/
-      console.log(
-        "Making request to:",
-        `https://renter-ecommerce-1.onrender.com/api/coupons`
-      ); // Debug log
+
       const response = await axios.get(
-        `https://renter-ecommerce-1.onrender.com/api/coupons`,
+        `https://renter-ecommerce.vercel.app/api/coupons`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -54,7 +52,7 @@ const Coupons = () => {
           },
         }
       );
-      console.log("Response:", response.data); // Debug log
+
       setCoupons(response.data);
     } catch (error) {
       console.error("Error details:", error.response || error); // Debug log
@@ -63,6 +61,8 @@ const Coupons = () => {
       } else {
         toast.error(error.response?.data?.message || "Failed to fetch coupons");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -84,8 +84,8 @@ const Coupons = () => {
       }
 
       const url = editingCoupon
-        ? `https://renter-ecommerce-1.onrender.com/api/coupons/${editingCoupon._id}`
-        : `https://renter-ecommerce-1.onrender.com/api/coupons`;
+        ? `https://renter-ecommerce.vercel.app/api/coupons/${editingCoupon._id}`
+        : `https://renter-ecommerce.vercel.app/api/coupons`;
 
       const method = editingCoupon ? "put" : "post";
 
@@ -137,7 +137,7 @@ const Coupons = () => {
       }
 
       await axios.delete(
-        `https://renter-ecommerce-1.onrender.com/api/coupons/${couponToDelete}`,
+        `https://renter-ecommerce.vercel.app/api/coupons/${couponToDelete}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -171,6 +171,15 @@ const Coupons = () => {
     });
     setIsModalOpen(true);
   };
+
+  if (loading) {
+    return (
+      <div className="text-center py-8 flex flex-col items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400 mb-4"></div>
+        <p className="text-gray-600">Coupon Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
