@@ -212,7 +212,6 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
   }
 });
 
-
 orderRoutes.get("/user", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -364,6 +363,7 @@ orderRoutes.put("/:id/status", verifyToken, async (req, res) => {
 // });
 
 // Request return/exchange
+
 orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -470,7 +470,16 @@ orderRoutes.put(
           .json({ message: "Item or return request not found" });
       }
 
-      const validStatuses = ["approved", "rejected", "completed"];
+      const validStatuses = [
+        "approved",
+        "rejected",
+        "processing",
+        "pickuped",
+        "shipped",
+        "delivered",
+        "refund_completed",
+        "completed",
+      ];
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ message: "Invalid status" });
       }
@@ -480,10 +489,10 @@ orderRoutes.put(
         const product = await ProductModal.findById(item.productId);
         if (product) {
           // Find the color that matches the item's color
-          const colorObj = product.colors.find(c => c.name === item.color);
+          const colorObj = product.colors.find((c) => c.name === item.color);
           if (colorObj) {
             // Find the size within the color
-            const sizeObj = colorObj.sizes.find(s => s.size === item.size);
+            const sizeObj = colorObj.sizes.find((s) => s.size === item.size);
             if (sizeObj) {
               sizeObj.quantity += item.quantity;
               await product.save();
@@ -509,6 +518,45 @@ orderRoutes.put(
 );
 
 // Get return requests (admin only)
+// Get return requests (admin only)
+// orderRoutes.get("/returns", verifyToken, verifyAdmin, async (req, res) => {
+//   try {
+//     const orders = await OrderModel.find({
+//       "items.returnRequest": { $exists: true, $ne: null },
+//     }).populate("userId", "name email");
+
+//     const returnRequests = orders.flatMap((order) =>
+//       order.items
+//         .filter((item) => item.returnRequest)
+//         .map((item) => ({
+//           orderId: order._id,
+//           orderNumber: `${
+//             item.returnRequest.type === "exchange" ? "Ex" : "Re"
+//           }_${order.orderNumber}`,
+//           customer: order.userId.name,
+//           email: order.userId.email,
+//           itemId: item._id,
+//           productName: item.name,
+//           quantity: item.quantity,
+//           price: item.price,
+//           image: item.image,
+//           type: item.returnRequest.type,
+//           reason: item.returnRequest.reason,
+//           status: item.returnRequest.status,
+//           requestedAt: item.returnRequest.requestedAt,
+//           updatedAt: item.returnRequest.updatedAt,
+//           exchangeSize: item.returnRequest.exchangeSize,
+//           originalOrderNumber: order.orderNumber, // Keep original for reference if needed
+//         }))
+//     );
+
+//     res.status(200).json(returnRequests);
+//   } catch (error) {
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// });
+
+// Get return requests (admin only)
 orderRoutes.get("/returns", verifyToken, verifyAdmin, async (req, res) => {
   try {
     const orders = await OrderModel.find({
@@ -517,23 +565,27 @@ orderRoutes.get("/returns", verifyToken, verifyAdmin, async (req, res) => {
 
     const returnRequests = orders.flatMap((order) =>
       order.items
-        .filter((item) => item.returnRequest)
+        .filter((item) => item.returnRequest && item.returnRequest.type)
         .map((item) => ({
           orderId: order._id,
-          orderNumber: order._id.toString().slice(-6).toUpperCase(),
-          customer: order.userId.name,
-          email: order.userId.email,
+          orderNumber:
+            `${item.returnRequest.type === "exchange" ? "Ex" : "Re"}_${
+              order.orderNumber
+            }` || "N/A",
+          customer: order.userId?.name || "N/A",
+          email: order.userId?.email || "N/A",
           itemId: item._id,
-          productName: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          image: item.image,
+          productName: item.name || "N/A",
+          quantity: item.quantity || 0,
+          price: item.price || 0,
+          image: item.image || "/default-product.png",
           type: item.returnRequest.type,
-          reason: item.returnRequest.reason,
-          status: item.returnRequest.status,
-          requestedAt: item.returnRequest.requestedAt,
-          updatedAt: item.returnRequest.updatedAt,
-          exchangeSize: item.returnRequest.exchangeSize,
+          reason: item.returnRequest.reason || "No reason provided",
+          status: item.returnRequest.status || "requested",
+          requestedAt: item.returnRequest.requestedAt || new Date(),
+          updatedAt: item.returnRequest.updatedAt || new Date(),
+          exchangeSize: item.returnRequest.exchangeSize || "N/A",
+          exchangeColor: item.returnRequest.exchangeColor || "N/A",
         }))
     );
 
@@ -542,7 +594,6 @@ orderRoutes.get("/returns", verifyToken, verifyAdmin, async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
-
 // Add this route to orderRoutes.js
 orderRoutes.get(
   "/sold-products",

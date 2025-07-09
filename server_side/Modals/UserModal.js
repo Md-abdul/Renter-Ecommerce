@@ -25,8 +25,10 @@ const orderItemSchema = new mongoose.Schema({
         "requested",
         "approved",
         "processing",
-        "shipped",
-        "delivered",
+        "pickuped", // New status for returns
+        "shipped", // For exchanges
+        "delivered", // For exchanges
+        "refund_completed", // New status for returns
         "rejected",
         "completed",
         null,
@@ -137,7 +139,7 @@ orderSchema.pre("save", async function (next) {
       { new: true, upsert: true }
     );
 
-    this.orderNumber = `RANTER_A${String(counter.seq).padStart(4, "0")}`;
+    this.orderNumber = `${String(counter.seq).padStart(4, "0")}`;
     next();
   } catch (err) {
     next(err);
