@@ -16,7 +16,7 @@ const getNextOrderNumber = async () => {
       { $inc: { seq: 1 } },
       { new: true, upsert: true }
     );
-    return `RANTER_A${String(counter.seq).padStart(4, "0")}`;
+    return `${String(counter.seq).padStart(4, "0")}`;
   } catch (error) {
     console.error("Error generating order number:", error);
     throw new Error("Failed to generate order number");
@@ -479,10 +479,15 @@ orderRoutes.put(
       if (status === "approved" || status === "completed") {
         const product = await ProductModal.findById(item.productId);
         if (product) {
-          const sizeObj = product.sizes.find((s) => s.size === item.size);
-          if (sizeObj) {
-            sizeObj.quantity += item.quantity;
-            await product.save();
+          // Find the color that matches the item's color
+          const colorObj = product.colors.find(c => c.name === item.color);
+          if (colorObj) {
+            // Find the size within the color
+            const sizeObj = colorObj.sizes.find(s => s.size === item.size);
+            if (sizeObj) {
+              sizeObj.quantity += item.quantity;
+              await product.save();
+            }
           }
         }
       }
