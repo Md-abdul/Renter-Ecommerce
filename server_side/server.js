@@ -20,8 +20,8 @@ const app = express();
 dotenv.config();
 
 // Connect to the database
-connectDB();
-couponExpiryCheck.start();
+// connectDB();
+// couponExpiryCheck.start();
 
 // CORS configuration
 const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL];
@@ -63,7 +63,24 @@ app.use("/api/contact", contactRoutes); // Add this line for PhonePe routes
 app.use("/api/stores", storeRoutes);
 
 // Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// const PORT = process.env.PORT || 5000;
+// app.listen(PORT, () => {
+//   console.log(`Server is running on port ${PORT}`);
+// });
+
+
+const startServer = async () => {
+  try {
+    await connectDB();
+    couponExpiryCheck.start();
+
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("Failed to start server:", err.message);
+  }
+};
+
+startServer();
