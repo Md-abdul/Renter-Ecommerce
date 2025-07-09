@@ -20,9 +20,7 @@ const StoreLocator = () => {
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        const response = await fetch(
-          "https://renter-ecommerce.onrender.com/api/stores"
-        );
+        const response = await fetch("http://localhost:5000/api/stores");
         if (!response.ok) {
           throw new Error("Failed to fetch stores");
         }

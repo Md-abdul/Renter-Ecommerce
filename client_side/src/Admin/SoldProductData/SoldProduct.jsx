@@ -43,7 +43,7 @@ const SoldProduct = () => {
       setLoading(true);
       const token = localStorage.getItem("adminToken");
       const response = await axios.get(
-        "https://renter-ecommerce.onrender.com/api/orders/sold-products",
+        "http://localhost:5000/api/orders/sold-products",
         {
           headers: { Authorization: `Bearer ${token}` },
           params: {

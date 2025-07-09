@@ -75,7 +75,7 @@ const CheckoutPage = () => {
         }
 
         const response = await axios.get(
-          "https://renter-ecommerce.onrender.com/api/user/userDetails",
+          "http://localhost:5000/api/user/userDetails",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -203,58 +203,58 @@ const CheckoutPage = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (
-    !formData.name ||
-    !formData.address ||
-    !formData.city ||
-    !formData.zipCode ||
-    !formData.phoneNumber
-  ) {
-    toast.error("Please fill all required shipping details");
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const shippingDetails = {
-      name: formData.name,
-      address: {
-        street: formData.address,
-        city: formData.city,
-        zipCode: formData.zipCode,
-        state: "", // Add state if you have it
-        alternatePhone: formData.alternatePhone || "",
-        addressType: "home" // Default or from form
-      },
-      phoneNumber: formData.phoneNumber
-    };
-
-    if (formData.paymentMethod === "phonepe") {
-      await initiatePhonePePayment({
-        shippingDetails,
-        amount: total,
-      });
-      setLoading(false);
+    if (
+      !formData.name ||
+      !formData.address ||
+      !formData.city ||
+      !formData.zipCode ||
+      !formData.phoneNumber
+    ) {
+      toast.error("Please fill all required shipping details");
       return;
     }
 
-    if (formData.paymentMethod === "cod") {
-      const order = await checkout(shippingDetails, "cod");
-      if (order) {
-        navigate("/orders");
+    setLoading(true);
+
+    try {
+      const shippingDetails = {
+        name: formData.name,
+        address: {
+          street: formData.address,
+          city: formData.city,
+          zipCode: formData.zipCode,
+          state: "", // Add state if you have it
+          alternatePhone: formData.alternatePhone || "",
+          addressType: "home", // Default or from form
+        },
+        phoneNumber: formData.phoneNumber,
+      };
+
+      if (formData.paymentMethod === "phonepe") {
+        await initiatePhonePePayment({
+          shippingDetails,
+          amount: total,
+        });
+        setLoading(false);
+        return;
       }
+
+      if (formData.paymentMethod === "cod") {
+        const order = await checkout(shippingDetails, "cod");
+        if (order) {
+          navigate("/orders");
+        }
+        setLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error("Checkout failed:", error);
+    } finally {
       setLoading(false);
-      return;
     }
-  } catch (error) {
-    console.error("Checkout failed:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -388,17 +388,19 @@ const CheckoutPage = () => {
                   )}
                 </div>
                 {useProfileAddress && (
-  <div className="mt-2 text-sm text-gray-600">
-    <p>Name: {userProfile.name}</p>
-    <p>Address: {userProfile.address?.street}</p>
-    <p>City: {userProfile.address?.city}</p>
-    <p>Zip Code: {userProfile.address?.zipCode}</p>
-    <p>Phone: {userProfile.phoneNumber}</p>
-    {userProfile.address?.alternatePhone && (
-      <p>Alternate Phone: {userProfile.address.alternatePhone}</p>
-    )}
-  </div>
-)}
+                  <div className="mt-2 text-sm text-gray-600">
+                    <p>Name: {userProfile.name}</p>
+                    <p>Address: {userProfile.address?.street}</p>
+                    <p>City: {userProfile.address?.city}</p>
+                    <p>Zip Code: {userProfile.address?.zipCode}</p>
+                    <p>Phone: {userProfile.phoneNumber}</p>
+                    {userProfile.address?.alternatePhone && (
+                      <p>
+                        Alternate Phone: {userProfile.address.alternatePhone}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -458,35 +460,35 @@ const CheckoutPage = () => {
                     placeholder="10001"
                   />
                 </div>
-                  <div className="mb-4">
-    <label className="block text-gray-700 mb-2 font-medium">
-      Phone Number <span className="text-red-500">*</span>
-    </label>
-    <input
-      type="tel"
-      name="phoneNumber"
-      value={formData.phoneNumber}
-      onChange={handleInputChange}
-      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all shadow-sm"
-      required
-      placeholder="10-digit phone number"
-      maxLength={10}
-    />
-  </div>
-  <div className="mb-4">
-    <label className="block text-gray-700 mb-2 font-medium">
-      Alternate Phone (Optional)
-    </label>
-    <input
-      type="tel"
-      name="alternatePhone"
-      value={formData.alternatePhone}
-      onChange={handleInputChange}
-      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all shadow-sm"
-      placeholder="10-digit alternate number"
-      maxLength={10}
-    />
-  </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700 mb-2 font-medium">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all shadow-sm"
+                    required
+                    placeholder="10-digit phone number"
+                    maxLength={10}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700 mb-2 font-medium">
+                    Alternate Phone (Optional)
+                  </label>
+                  <input
+                    type="tel"
+                    name="alternatePhone"
+                    value={formData.alternatePhone}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all shadow-sm"
+                    placeholder="10-digit alternate number"
+                    maxLength={10}
+                  />
+                </div>
               </div>
             </div>
 

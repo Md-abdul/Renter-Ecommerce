@@ -53,7 +53,7 @@ export const Orders = () => {
       }
 
       const response = await axios.get(
-        "https://renter-ecommerce.onrender.com/api/orders/admin",
+        "http://localhost:5000/api/orders/admin",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -80,12 +80,24 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.get(
-        "https://renter-ecommerce.onrender.com/api/orders/returns",
+        "http://localhost:5000/api/orders/returns",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setReturnRequests(response.data);
+
+      // Filter out any invalid requests and ensure all required fields exist
+      const validRequests = response.data.filter(
+        (request) =>
+          request.orderNumber &&
+          request.itemId &&
+          request.type &&
+          request.status &&
+          !isNaN(request.price) &&
+          !isNaN(request.quantity)
+      );
+
+      setReturnRequests(validRequests);
     } catch (error) {
       console.error("Error fetching return requests:", error);
       toast.error("Failed to fetch return requests");
@@ -100,7 +112,7 @@ export const Orders = () => {
       }
 
       await axios.put(
-        `https://renter-ecommerce.onrender.com/api/orders/${orderId}/status`,
+        `http://localhost:5000/api/orders/${orderId}/status`,
         { status: newStatus },
         {
           headers: {
@@ -143,7 +155,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       await axios.put(
-        `https://renter-ecommerce.onrender.com/api/orders/${orderId}/return/${itemId}/tracking`,
+        `http://localhost:5000/api/orders/${orderId}/return/${itemId}/tracking`,
         { trackingNumber: trackingInput },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -413,26 +425,35 @@ export const Orders = () => {
     }
   };
 
+  // Update the getReturnStatusOptions function:
   const getReturnStatusOptions = (currentStatus, requestType) => {
-    // Common status flow for returns and exchanges
-    const statusFlow = {
+    // Status flow for returns
+    const returnStatusFlow = {
       requested: ["approved", "rejected"],
-      approved: ["processing", "rejected"],
-      processing: ["shipped", "cancelled"],
-      shipped: ["delivered"],
+      approved: ["processing", "pickuped", "refund_completed", "rejected"],
+      processing: ["pickuped", "rejected"],
+      pickuped: ["refund_completed", "rejected"],
+      refund_completed: ["completed"],
+      rejected: [],
+      cancelled: [],
+      completed: [],
+    };
+
+    // Status flow for exchanges
+    const exchangeStatusFlow = {
+      requested: ["approved", "rejected"],
+      approved: ["processing", "shipped", "delivered", "rejected"],
+      processing: ["shipped", "rejected"],
+      shipped: ["delivered", "rejected"],
       delivered: ["completed"],
       rejected: [],
       cancelled: [],
       completed: [],
     };
 
-    // Additional options for exchanges
-    if (requestType === "exchange") {
-      statusFlow.delivered = ["completed", "exchange_processed"];
-      statusFlow.exchange_processed = ["completed"];
-    }
-
-    return statusFlow[currentStatus] || [];
+    return requestType === "return"
+      ? returnStatusFlow[currentStatus] || []
+      : exchangeStatusFlow[currentStatus] || [];
   };
 
   const formatDate = (dateString) => {

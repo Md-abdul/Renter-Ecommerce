@@ -97,41 +97,41 @@ const UserOrders = () => {
   };
 
   const openExchangeModal = async (item) => {
-  try {
-    setSelectedItem(item);
-    setExchangeSize("");
-    setExchangeColor("");
-    setReturnReason("");
+    try {
+      setSelectedItem(item);
+      setExchangeSize("");
+      setExchangeColor("");
+      setReturnReason("");
 
-    const productResponse = await axios.get(
-      `https://renter-ecommerce.onrender.com/api/products/${item.productId}`
-    );
+      const productResponse = await axios.get(
+        `http://localhost:5000/api/products/${item.productId}`
+      );
 
-    const product = productResponse.data;
+      const product = productResponse.data;
 
-    // Find the color object that matches the current item's color
-    const currentColorObj = product.colors.find(c => c.name === item.color);
-    
-    // Get available colors (excluding current color)
-    const availableColors = product.colors
-      .filter(c => c.name !== item.color)
-      .map(c => c.name);
+      // Find the color object that matches the current item's color
+      const currentColorObj = product.colors.find((c) => c.name === item.color);
 
-    // Get available sizes from the current color (excluding current size)
-    const availableSizes = currentColorObj 
-      ? currentColorObj.sizes
-          .filter(s => s.size !== item.size && s.quantity > 0)
-          .map(s => s.size)
-      : [];
+      // Get available colors (excluding current color)
+      const availableColors = product.colors
+        .filter((c) => c.name !== item.color)
+        .map((c) => c.name);
 
-    setAvailableColors(availableColors);
-    setAvailableSizes(availableSizes);
-    setShowExchangeModal(true);
-  } catch (error) {
-    toast.error("Failed to fetch product details");
-    console.error("Error fetching product:", error);
-  }
-};
+      // Get available sizes from the current color (excluding current size)
+      const availableSizes = currentColorObj
+        ? currentColorObj.sizes
+            .filter((s) => s.size !== item.size && s.quantity > 0)
+            .map((s) => s.size)
+        : [];
+
+      setAvailableColors(availableColors);
+      setAvailableSizes(availableSizes);
+      setShowExchangeModal(true);
+    } catch (error) {
+      toast.error("Failed to fetch product details");
+      console.error("Error fetching product:", error);
+    }
+  };
 
   const handleReturnRequest = async (type) => {
     try {
@@ -146,7 +146,7 @@ const UserOrders = () => {
       }
 
       const response = await axios.post(
-        `https://renter-ecommerce.onrender.com/api/orders/${selectedItem.orderId}/return`,
+        `http://localhost:5000/api/orders/${selectedItem.orderId}/return`,
         {
           itemId: selectedItem._id,
           type,
@@ -200,7 +200,7 @@ const UserOrders = () => {
   const cancelReturnRequest = async (orderId, itemId) => {
     try {
       const response = await axios.put(
-        `https://renter-ecommerce.onrender.com/api/orders/${orderId}/return/${itemId}`,
+        `http://localhost:5000/api/orders/${orderId}/return/${itemId}`,
         { status: "cancelled" },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -220,6 +220,36 @@ const UserOrders = () => {
     const deliveryDate = new Date(order.updatedAt);
     const returnDeadline = addDays(deliveryDate, 7);
     return isAfter(returnDeadline, new Date());
+  };
+
+  // Add these helper functions inside the UserOrders component
+  const isReturnOrExchangeActive = (item, type) => {
+    if (!item.returnRequest) return false;
+    // Only consider requests that are not completed, rejected, or cancelled
+    const activeStatuses = [
+      "requested",
+      "approved",
+      "processing",
+      "pickuped",
+      "shipped",
+      "delivered",
+      "refund_completed",
+    ];
+    return (
+      item.returnRequest.type === type &&
+      activeStatuses.includes(item.returnRequest.status)
+    );
+  };
+
+  const isActionDisabled = (order, item, type) => {
+    // Disable if return window is closed
+    if (!isReturnWindowOpen(order)) return true;
+    // Disable "return" if exchange is active, and vice versa
+    if (type === "return" && isReturnOrExchangeActive(item, "exchange"))
+      return true;
+    if (type === "exchange" && isReturnOrExchangeActive(item, "return"))
+      return true;
+    return false;
   };
 
   if (loading) {
@@ -547,24 +577,39 @@ const UserOrders = () => {
                                   <div className="mt-3">
                                     <div
                                       className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-opacity-20 
-                                      ${
-                                        item.returnRequest.status ===
-                                        "requested"
-                                          ? "bg-yellow-500 text-yellow-800"
-                                          : item.returnRequest.status ===
-                                            "approved"
-                                          ? "bg-blue-500 text-blue-800"
-                                          : item.returnRequest.status ===
-                                            "completed"
-                                          ? "bg-green-500 text-green-800"
-                                          : "bg-red-500 text-red-800"
-                                      }`}
+      ${
+        item.returnRequest.status === "requested"
+          ? "bg-yellow-500 text-yellow-800"
+          : item.returnRequest.status === "approved"
+          ? "bg-blue-500 text-blue-800"
+          : item.returnRequest.status === "processing"
+          ? "bg-indigo-500 text-indigo-800"
+          : item.returnRequest.status === "pickuped"
+          ? "bg-purple-500 text-purple-800"
+          : item.returnRequest.status === "shipped"
+          ? "bg-teal-500 text-teal-800"
+          : item.returnRequest.status === "delivered"
+          ? "bg-green-500 text-green-800"
+          : item.returnRequest.status === "refund_completed"
+          ? "bg-green-600 text-green-900"
+          : item.returnRequest.status === "completed"
+          ? "bg-green-700 text-green-100"
+          : "bg-red-500 text-red-800"
+      }`}
                                     >
                                       {item.returnRequest.type === "return"
                                         ? "Return"
                                         : "Exchange"}{" "}
-                                      {item.returnRequest.status}
+                                      {item.returnRequest.status
+                                        ?.split("_")
+                                        .map(
+                                          (word) =>
+                                            word.charAt(0).toUpperCase() +
+                                            word.slice(1)
+                                        )
+                                        .join(" ")}
                                     </div>
+
                                     {["requested", "approved"].includes(
                                       item.returnRequest.status
                                     ) && (
@@ -580,6 +625,7 @@ const UserOrders = () => {
                                         Cancel Request
                                       </button>
                                     )}
+
                                     {item.returnRequest.type === "exchange" && (
                                       <div className="text-xs text-blue-600 mt-2">
                                         Exchange to:{" "}
@@ -592,6 +638,7 @@ const UserOrders = () => {
                                         </span>
                                       </div>
                                     )}
+
                                     {item.returnRequest.status ===
                                       "rejected" && (
                                       <div className="text-xs text-red-600 mt-2">
@@ -601,6 +648,37 @@ const UserOrders = () => {
                                         Your request was rejected
                                       </div>
                                     )}
+
+                                    {item.returnRequest.trackingNumber && (
+                                      <div className="text-xs text-gray-600 mt-2 flex items-center">
+                                        <FiTruck className="mr-1" />
+                                        Tracking:{" "}
+                                        {item.returnRequest.trackingNumber}
+                                      </div>
+                                    )}
+
+                                    {item.returnRequest.status ===
+                                      "refund_completed" && (
+                                      <div className="text-xs text-green-600 mt-2">
+                                        <span className="font-medium">
+                                          Note:
+                                        </span>{" "}
+                                        Refund has been processed successfully
+                                      </div>
+                                    )}
+
+                                    {item.returnRequest.status ===
+                                      "completed" &&
+                                      item.returnRequest.type ===
+                                        "exchange" && (
+                                        <div className="text-xs text-green-600 mt-2">
+                                          <span className="font-medium">
+                                            Note:
+                                          </span>{" "}
+                                          Exchange has been completed
+                                          successfully
+                                        </div>
+                                      )}
                                   </div>
                                 )}
                               </div>
@@ -617,7 +695,18 @@ const UserOrders = () => {
                                           orderId: order._id,
                                         })
                                       }
-                                      className="text-sm font-medium text-red-600 hover:text-red-800 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                                      className={`text-sm font-medium text-red-600 hover:text-red-800 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors
+        ${
+          isActionDisabled(order, item, "return")
+            ? "opacity-50 cursor-not-allowed"
+            : ""
+        }
+      `}
+                                      disabled={isActionDisabled(
+                                        order,
+                                        item,
+                                        "return"
+                                      )}
                                     >
                                       Return
                                     </button>
@@ -628,7 +717,18 @@ const UserOrders = () => {
                                           orderId: order._id,
                                         })
                                       }
-                                      className="text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                                      className={`text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors
+        ${
+          isActionDisabled(order, item, "exchange")
+            ? "opacity-50 cursor-not-allowed"
+            : ""
+        }
+      `}
+                                      disabled={isActionDisabled(
+                                        order,
+                                        item,
+                                        "exchange"
+                                      )}
                                     >
                                       Exchange
                                     </button>

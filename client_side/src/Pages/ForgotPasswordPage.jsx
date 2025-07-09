@@ -17,10 +17,7 @@ const ForgotPasswordPage = () => {
   const sendOtp = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.post(
-        `https://renter-ecommerce.onrender.com/api/user/forgot-password`,
-        { email }
-      );
+      const res = await axios.post(`http://localhost:5000/password`, { email });
       toast.success(res.data.message);
       setStep(2); // Move to OTP step
     } catch (error) {
@@ -34,7 +31,7 @@ const ForgotPasswordPage = () => {
     setIsLoading(true);
     try {
       const res = await axios.post(
-        `https://renter-ecommerce.onrender.com/api/user/verify-otp`,
+        `http://localhost:5000/api/user/verify-otp`,
         {
           email,
           otp,
@@ -57,7 +54,7 @@ const ForgotPasswordPage = () => {
     setIsLoading(true);
     try {
       const res = await axios.post(
-        `https://renter-ecommerce.onrender.com/api/user/reset-password`,
+        `http://localhost:5000/api/user/reset-password`,
         {
           email,
           otp,

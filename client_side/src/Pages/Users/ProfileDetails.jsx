@@ -44,7 +44,7 @@ const ProfileDetails = () => {
 
       setLoading(true);
       const response = await axios.get(
-        `https://renter-ecommerce.onrender.com/api/user/userDetails`,
+        `http://localhost:5000/api/user/userDetails`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -128,7 +128,7 @@ const ProfileDetails = () => {
       setLoading(true);
 
       await axios.put(
-        `https://renter-ecommerce.onrender.com/api/user/${userId}`,
+        `http://localhost:5000/api/user/${userId}`,
         {
           name: editData.name,
           email: editData.email,

@@ -43,15 +43,12 @@ const Coupons = () => {
         return;
       }
 
-      const response = await axios.get(
-        `https://renter-ecommerce.onrender.com/api/coupons`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await axios.get(`http://localhost:5000/api/coupons`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       setCoupons(response.data);
     } catch (error) {
@@ -84,8 +81,8 @@ const Coupons = () => {
       }
 
       const url = editingCoupon
-        ? `https://renter-ecommerce.onrender.com/api/coupons/${editingCoupon._id}`
-        : `https://renter-ecommerce.onrender.com/api/coupons`;
+        ? `http://localhost:5000/api/coupons/${editingCoupon._id}`
+        : `http://localhost:5000/api/coupons`;
 
       const method = editingCoupon ? "put" : "post";
 
@@ -137,7 +134,7 @@ const Coupons = () => {
       }
 
       await axios.delete(
-        `https://renter-ecommerce.onrender.com/api/coupons/${couponToDelete}`,
+        `http://localhost:5000/api/coupons/${couponToDelete}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
