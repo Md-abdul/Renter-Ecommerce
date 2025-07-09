@@ -123,7 +123,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.put(
-        `https://renter-ecommerce.onrender.com/api/orders/${orderId}/return/${itemId}`,
+        `http://localhost:5000/api/orders/${orderId}/return/${itemId}`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -189,7 +189,7 @@ export const Orders = () => {
           <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
             <div style="flex: 1;">
               <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px;">From</h3>
-              <p><strong>Renter E-commerce</strong></p>
+              <p><strong>Renter</strong></p>
               <p>123 Business Street</p>
               <p>Commerce City, CC 12345</p>
               <p>India</p>
@@ -413,14 +413,24 @@ export const Orders = () => {
     }
   };
 
-  const getReturnStatusOptions = (currentStatus) => {
+  const getReturnStatusOptions = (currentStatus, requestType) => {
+    // Common status flow for returns and exchanges
     const statusFlow = {
       requested: ["approved", "rejected"],
       approved: ["processing", "rejected"],
       processing: ["shipped", "cancelled"],
-      shipped: ["delivered", "returned"],
+      shipped: ["delivered"],
       delivered: ["completed"],
+      rejected: [],
+      cancelled: [],
+      completed: [],
     };
+
+    // Additional options for exchanges
+    if (requestType === "exchange") {
+      statusFlow.delivered = ["completed", "exchange_processed"];
+      statusFlow.exchange_processed = ["completed"];
+    }
 
     return statusFlow[currentStatus] || [];
   };
@@ -524,27 +534,27 @@ export const Orders = () => {
 
       {showReturns ? (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8 border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <FiRefreshCw className="mr-2" />
-              Return/Exchange Requests
+              <FiRefreshCw className="mr-2 text-blue-600" />
+              Return & Exchange Requests
             </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Manage customer return and exchange requests
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Order #
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Customer
+                    Order Details
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Product
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Request Details
+                    Request
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -557,14 +567,15 @@ export const Orders = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {returnRequests.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center">
+                    <td colSpan="5" className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center justify-center">
                         <FiPackage className="h-12 w-12 text-gray-400 mb-4" />
                         <h3 className="text-lg font-medium text-gray-900">
                           No return requests found
                         </h3>
                         <p className="mt-1 text-sm text-gray-500">
-                          When customers request returns, they'll appear here.
+                          When customers request returns or exchanges, they'll
+                          appear here.
                         </p>
                       </div>
                     </td>
@@ -573,141 +584,140 @@ export const Orders = () => {
                   returnRequests.map((request) => {
                     const requestKey = `${request.orderId}-${request.itemId}`;
                     const isEditing = editingTracking === requestKey;
+                    const statusColor = {
+                      requested: "bg-yellow-100 text-yellow-800",
+                      approved: "bg-blue-100 text-blue-800",
+                      processing: "bg-indigo-100 text-indigo-800",
+                      shipped: "bg-purple-100 text-purple-800",
+                      delivered: "bg-green-100 text-green-800",
+                      completed: "bg-green-200 text-green-900",
+                      rejected: "bg-red-100 text-red-800",
+                      cancelled: "bg-red-100 text-red-800",
+                    };
 
                     return (
                       <tr key={requestKey} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            #{request.orderNumber}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {(() => {
-                              const requestedAt = request.requestedAt;
-                              if (requestedAt) {
-                                const parsedDate = parse(
-                                  requestedAt,
-                                  "yyyy-MM-dd",
-                                  new Date()
-                                );
-                                return isValid(parsedDate)
-                                  ? format(parsedDate, "MM, dd, yyyy")
-                                  : "Invalid date";
-                              }
-                              return "N"; // Return something neutral if requestedAt is undefined
-                            })()}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {request.customer}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {request.email}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4">
                           <div className="flex items-center">
-                            <img
-                              src={request.image || "/default-product.png"}
-                              alt={request.productName}
-                              className="w-10 h-10 rounded-md object-cover mr-3"
-                            />
+                            <div className="bg-blue-50 p-2 rounded-lg mr-3">
+                              <FiShoppingBag className="text-blue-600 h-5 w-5" />
+                            </div>
                             <div>
                               <div className="text-sm font-medium text-gray-900">
-                                {request.productName}
+                                Order #{request.orderNumber}
                               </div>
-                              <div className="text-xs text-gray-500">
-                                Qty: {request.quantity}
+                              {/* <div className="text-xs text-gray-500 mt-1">
+                                {formatDate(request.requestedAt)}
+                              </div> */}
+                              <div className="text-xs text-gray-500 mt-1">
+                                Customer: {request.customer}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">
-                            <span className="font-medium">Type:</span>{" "}
-                            {request.type}
-                          </div>
-                          <div className="text-sm text-gray-600 mt-1">
-                            <span className="font-medium">Reason:</span>{" "}
-                            {request.reason}
-                          </div>
-                          {request.type === "exchange" && (
-                            <div className="text-blue-600 mt-1">
-                              <div>
-                                <span className="font-medium">
-                                  Exchange to:
-                                </span>
+                          <div className="flex items-center">
+                            <img
+                              src={request.image || "/default-product.png"}
+                              alt={request.productName}
+                              className="w-12 h-12 rounded-md object-cover mr-3 border border-gray-200"
+                            />
+                            <div>
+                              <div className="text-sm font-medium text-gray-900 line-clamp-2">
+                                {request.productName}
                               </div>
-                              {request.exchangeColor && (
-                                <div>Color: {request.exchangeColor}</div>
-                              )}
-                              {request.exchangeSize && (
-                                <div>Size: {request.exchangeSize}</div>
-                              )}
+                              <div className="text-xs text-gray-500 mt-1">
+                                Qty: {request.quantity} • ₹{request.price}
+                              </div>
                             </div>
-                          )}
-                          {request.trackingNumber && !isEditing && (
-                            <div className="text-sm text-gray-600 mt-1">
-                              <span className="font-medium">Tracking:</span>{" "}
-                              {request.trackingNumber}
-                            </div>
-                          )}
-                          {isEditing && (
-                            <div className="mt-2 flex items-center">
-                              <input
-                                type="text"
-                                value={trackingInput}
-                                onChange={(e) =>
-                                  setTrackingInput(e.target.value)
-                                }
-                                placeholder="Enter tracking number"
-                                className="border rounded px-2 py-1 text-sm flex-1"
-                              />
-                              <button
-                                onClick={() =>
-                                  updateTrackingNumber(
-                                    request.orderId,
-                                    request.itemId
-                                  )
-                                }
-                                className="ml-2 p-1 text-green-600 hover:text-green-800"
-                              >
-                                <FiSave />
-                              </button>
-                              <button
-                                onClick={cancelEditingTracking}
-                                className="ml-1 p-1 text-red-600 hover:text-red-800"
-                              >
-                                <FiX />
-                              </button>
-                            </div>
-                          )}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              request.status === "requested"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : request.status === "approved"
-                                ? "bg-blue-100 text-blue-800"
-                                : request.status === "processing"
-                                ? "bg-indigo-100 text-indigo-800"
-                                : request.status === "shipped"
-                                ? "bg-purple-100 text-purple-800"
-                                : request.status === "delivered"
-                                ? "bg-green-100 text-green-800"
-                                : request.status === "completed"
-                                ? "bg-green-200 text-green-900"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {request.status?.charAt(0).toUpperCase() +
-                              request.status?.slice(1)}
-                          </span>
+                        <td className="px-6 py-4">
+                          <div className="space-y-2">
+                            <div className="flex items-start">
+                              <span className="inline-block bg-blue-50 text-blue-800 text-xs px-2 py-1 rounded mr-2">
+                                {request?.type?.toUpperCase()}
+                              </span>
+                              <span className="text-sm text-gray-700">
+                                {request.reason}
+                              </span>
+                            </div>
+
+                            {request.type === "exchange" && (
+                              <div className="bg-blue-50 p-2 rounded-md">
+                                <div className="text-xs font-medium text-blue-800 mb-1">
+                                  Exchange Preferences:
+                                </div>
+                                <div className="text-xs text-blue-700">
+                                  {request.exchangeColor && (
+                                    <div>• Color: {request.exchangeColor}</div>
+                                  )}
+                                  {request.exchangeSize && (
+                                    <div>• Size: {request.exchangeSize}</div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {request.trackingNumber && !isEditing && (
+                              <div className="flex items-center text-sm text-gray-600 mt-2">
+                                <FiTruck className="mr-1 text-gray-500" />
+                                <span>Tracking: {request.trackingNumber}</span>
+                              </div>
+                            )}
+
+                            {isEditing && (
+                              <div className="mt-2 flex items-center">
+                                <input
+                                  type="text"
+                                  value={trackingInput}
+                                  onChange={(e) =>
+                                    setTrackingInput(e.target.value)
+                                  }
+                                  placeholder="Enter tracking number"
+                                  className="border rounded px-2 py-1 text-sm flex-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <button
+                                  onClick={() =>
+                                    updateTrackingNumber(
+                                      request.orderId,
+                                      request.itemId
+                                    )
+                                  }
+                                  className="ml-2 p-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded"
+                                  title="Save"
+                                >
+                                  <FiSave />
+                                </button>
+                                <button
+                                  onClick={cancelEditingTracking}
+                                  className="ml-1 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                                  title="Cancel"
+                                >
+                                  <FiX />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col items-start">
+                            <span
+                              className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                statusColor[request.status]
+                              }`}
+                            >
+                              {request.status?.charAt(0).toUpperCase() +
+                                request.status?.slice(1)}
+                            </span>
+                            {/* <span className="text-xs text-gray-500 mt-1">
+                              {formatDate(request.updatedAt)}
+                            </span> */}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                           {request.status === "requested" && (
-                            <>
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <button
                                 onClick={() =>
                                   updateReturnStatus(
@@ -716,9 +726,9 @@ export const Orders = () => {
                                     "approved"
                                   )
                                 }
-                                className="px-3 py-1 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100"
+                                className="px-3 py-1 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 text-sm flex items-center"
                               >
-                                Approve
+                                <FiCheckCircle className="mr-1" /> Approve
                               </button>
                               <button
                                 onClick={() =>
@@ -728,46 +738,60 @@ export const Orders = () => {
                                     "rejected"
                                   )
                                 }
-                                className="px-3 py-1 bg-red-50 text-red-700 rounded-md hover:bg-red-100"
+                                className="px-3 py-1 bg-red-50 text-red-700 rounded-md hover:bg-red-100 text-sm flex items-center"
                               >
-                                Reject
+                                <FiXCircle className="mr-1" /> Reject
                               </button>
-                            </>
+                            </div>
                           )}
+
                           {["approved", "processing", "shipped"].includes(
                             request.status
                           ) && (
-                            <select
-                              value={request.status}
-                              onChange={(e) =>
-                                updateReturnStatus(
-                                  request.orderId,
-                                  request.itemId,
-                                  e.target.value
-                                )
-                              }
-                              className="border rounded px-2 py-1 text-sm"
-                            >
-                              {getReturnStatusOptions(request.status).map(
-                                (option) => (
-                                  <option key={option} value={option}>
-                                    {option.charAt(0).toUpperCase() +
-                                      option.slice(1)}
-                                  </option>
-                                )
-                              )}
-                            </select>
-                          )}
-                          {["shipped", "delivered"].includes(request.status) &&
-                            !isEditing && (
-                              <button
-                                onClick={() => startEditingTracking(request)}
-                                className="p-1 text-gray-600 hover:text-gray-900"
-                                title="Edit tracking"
+                            <div className="flex flex-col gap-2">
+                              <select
+                                value={request.status}
+                                onChange={(e) =>
+                                  updateReturnStatus(
+                                    request.orderId,
+                                    request.itemId,
+                                    e.target.value
+                                  )
+                                }
+                                className="border rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               >
-                                <FiEdit />
-                              </button>
-                            )}
+                                {getReturnStatusOptions(
+                                  request.status,
+                                  request.type
+                                ).map((option) => (
+                                  <option key={option} value={option}>
+                                    {option
+                                      .split("_")
+                                      .map(
+                                        (word) =>
+                                          word.charAt(0).toUpperCase() +
+                                          word.slice(1)
+                                      )
+                                      .join(" ")}
+                                  </option>
+                                ))}
+                              </select>
+                              {["shipped", "delivered"].includes(
+                                request.status
+                              ) &&
+                                !isEditing && (
+                                  <button
+                                    onClick={() =>
+                                      startEditingTracking(request)
+                                    }
+                                    className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded flex items-center text-xs"
+                                  >
+                                    <FiEdit className="mr-1" /> Edit Tracking
+                                  </button>
+                                )}
+                            </div>
+                          )}
+
                           {request.status === "delivered" && (
                             <button
                               onClick={() =>
@@ -777,10 +801,16 @@ export const Orders = () => {
                                   "completed"
                                 )
                               }
-                              className="px-3 py-1 bg-green-50 text-green-700 rounded-md hover:bg-green-100"
+                              className="px-3 py-1 bg-green-50 text-green-700 rounded-md hover:bg-green-100 text-sm flex items-center"
                             >
-                              Complete
+                              <FiCheckCircle className="mr-1" /> Complete
                             </button>
+                          )}
+
+                          {request.status === "rejected" && (
+                            <div className="text-xs text-gray-500 italic">
+                              Request rejected
+                            </div>
                           )}
                         </td>
                       </tr>

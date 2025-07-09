@@ -97,34 +97,41 @@ const UserOrders = () => {
   };
 
   const openExchangeModal = async (item) => {
-    try {
-      setSelectedItem(item);
-      setExchangeSize("");
-      setExchangeColor("");
-      setReturnReason("");
+  try {
+    setSelectedItem(item);
+    setExchangeSize("");
+    setExchangeColor("");
+    setReturnReason("");
 
-      const productResponse = await axios.get(
-        `https://renter-ecommerce.onrender.com/api/products/${item.productId}`
-      );
+    const productResponse = await axios.get(
+      `https://renter-ecommerce.onrender.com/api/products/${item.productId}`
+    );
 
-      const product = productResponse.data;
+    const product = productResponse.data;
 
-      const availableColors = product.colors
-        .filter((c) => c.name !== item.color)
-        .map((c) => c.name);
+    // Find the color object that matches the current item's color
+    const currentColorObj = product.colors.find(c => c.name === item.color);
+    
+    // Get available colors (excluding current color)
+    const availableColors = product.colors
+      .filter(c => c.name !== item.color)
+      .map(c => c.name);
 
-      const availableSizes = product.sizes
-        .filter((s) => s.available && s.size !== item.size)
-        .map((s) => s.size);
+    // Get available sizes from the current color (excluding current size)
+    const availableSizes = currentColorObj 
+      ? currentColorObj.sizes
+          .filter(s => s.size !== item.size && s.quantity > 0)
+          .map(s => s.size)
+      : [];
 
-      setAvailableColors(availableColors);
-      setAvailableSizes(availableSizes);
-      setShowExchangeModal(true);
-    } catch (error) {
-      toast.error("Failed to fetch product details");
-      console.error("Error fetching product:", error);
-    }
-  };
+    setAvailableColors(availableColors);
+    setAvailableSizes(availableSizes);
+    setShowExchangeModal(true);
+  } catch (error) {
+    toast.error("Failed to fetch product details");
+    console.error("Error fetching product:", error);
+  }
+};
 
   const handleReturnRequest = async (type) => {
     try {
