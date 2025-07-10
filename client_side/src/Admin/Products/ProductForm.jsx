@@ -218,8 +218,8 @@ const ProductForm = ({
     try {
       const method = product ? "PUT" : "POST";
       const url = product
-        ? `http://localhost:5000/roduct._id}`
-        : "http://localhost:5000/api/products";
+        ? `https://renter-ecommerce.vercel.app/ce.vercel.app/roduct._id}`
+        : "https://renter-ecommerce.vercel.app/api/products";
 
       const response = await fetch(url, {
         method,

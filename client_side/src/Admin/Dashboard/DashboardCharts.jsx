@@ -15,7 +15,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-//https://renter-ecommerce-1.onrender.com
+
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
 const DashboardCharts = () => {
@@ -27,15 +27,15 @@ const DashboardCharts = () => {
     const fetchData = async () => {
       try {
         const productsResponse = await axios.get(
-          "http://localhost:5000/api/products"
+          "https://renter-ecommerce.vercel.app/api/products"
         );
         const usersResponse = await axios.get(
-          "http://localhost:5000/api/user/allUser"
+          "https://renter-ecommerce.vercel.app/api/user/allUser"
         );
 
         const token = localStorage.getItem("adminToken");
         const ordersResponse = await axios.get(
-          "http://localhost:5000/api/orders/admin",
+          "https://renter-ecommerce.vercel.app/api/orders/admin",
           {
             headers: {
               Authorization: `Bearer ${token}`,

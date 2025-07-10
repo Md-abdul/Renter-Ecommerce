@@ -44,7 +44,7 @@ const ProfileDetails = () => {
 
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:5000/api/user/userDetails`,
+        `https://renter-ecommerce.vercel.app/api/user/userDetails`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -128,7 +128,7 @@ const ProfileDetails = () => {
       setLoading(true);
 
       await axios.put(
-        `http://localhost:5000/api/user/${userId}`,
+        `https://renter-ecommerce.vercel.app/api/user/${userId}`,
         {
           name: editData.name,
           email: editData.email,

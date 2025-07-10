@@ -72,7 +72,7 @@ const ContactPage = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/contact/sendEmail",
+        "https://renter-ecommerce.vercel.app/api/contact/sendEmail",
         {
           name: formData.name,
           email: formData.email,
@@ -231,7 +231,7 @@ const ContactPage = () => {
     
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/contact/sendEmail",
+        "https://renter-ecommerce.vercel.app/api/contact/sendEmail",
         {
           name: formData.name,
           email: formData.email,

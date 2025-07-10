@@ -26,11 +26,11 @@ const SingleProductPage = () => {
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const MAX_CART_TOTAL = 40000;
-  //http://localhost:5000/
+  
   useEffect(() => {
     const fetchRelatedProducts = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/products", {
+        const response = await fetch("https://renter-ecommerce.vercel.app/api/products", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -49,7 +49,7 @@ const SingleProductPage = () => {
     const fetchProduct = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/products/${_id}`
+          `https://renter-ecommerce.vercel.app/api/products/${_id}`
         );
         const data = await response.json();
         if (data) {
