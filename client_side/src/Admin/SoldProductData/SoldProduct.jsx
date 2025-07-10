@@ -21,10 +21,10 @@ const SoldProduct = () => {
 
   // Calculate total amount whenever soldProducts changes
   useEffect(() => {
-    const calculatedTotal = soldProducts.reduce(
-      (sum, product) => sum + product.total,
-      0
-    );
+    const calculatedTotal = soldProducts.reduce((sum, product) => {
+      const finalAmount = product.total ?? product.originalPrice ?? 0;
+      return sum + finalAmount;
+    }, 0);
     setTotalAmounts(calculatedTotal);
   }, [soldProducts]);
 
@@ -37,6 +37,20 @@ const SoldProduct = () => {
       ? format(parsedDate, formatStr)
       : "Invalid Date";
   };
+const splitWordsIntoLines = (text, wordsPerLine = 5) => {
+  if (!text) return null;
+  const words = text.split(" ");
+  const lines = [];
+  for (let i = 0; i < words.length; i += wordsPerLine) {
+    lines.push(words.slice(i, i + wordsPerLine).join(" "));
+  }
+  return lines.map((line, idx) => (
+    <span key={idx}>
+      {line}
+      <br />
+    </span>
+  ));
+};
 
   const fetchSoldProducts = async () => {
     try {
@@ -101,11 +115,11 @@ const SoldProduct = () => {
         "S.No.": soldProducts.indexOf(product) + 1,
         "Product Name": product.title,
         Category: `${product.category} (${product.wearCategory})`,
-        "Unit Price (₹)": product.price.toFixed(2),
+        "Unit Price (₹)": (product.price ?? product.originalPrice).toFixed(2),
         Size: product.size,
         Color: product.color,
         Quantity: product.quantity,
-        "Total Amount (₹)": product.total.toFixed(2),
+        "Total Amount (₹)": (product.total ?? product.originalPrice).toFixed(2),
         "Delivered Date": safeFormat(product.deliveredDate, "dd-MMM-yyyy"),
         SKU: product.sku,
       }))
@@ -207,7 +221,7 @@ const SoldProduct = () => {
             </div>
             {soldProducts.length > 0 && (
               <div className="text-lg font-semibold">
-                Total: ₹{Math.floor(totalAmounts.toFixed(2))}
+                Total :-- ₹  {Math.floor(totalAmounts.toFixed(2))}
               </div>
             )}
           </div>
@@ -332,14 +346,14 @@ const SoldProduct = () => {
                         {index + 1}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">
-                        {product.title}
+                        {splitWordsIntoLines(product.title, 5)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-b border-gray-200">
                         <span className="capitalize">{product.category}</span> (
                         {product.wearCategory})
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-b border-gray-200">
-                        ₹{Math.floor(product.price)}
+                        ₹ {Math.floor(product.price ?? product.originalPrice)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-b border-gray-200">
                         {product.size}
@@ -348,7 +362,7 @@ const SoldProduct = () => {
                         {product.quantity}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">
-                        ₹{(product.total ?? 0).toFixed(2)}
+                        ₹ {Math.floor(product.total ?? product.originalPrice)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-b border-gray-200">
                         {safeFormat(product.deliveredDate, "dd MMM yyyy")}
