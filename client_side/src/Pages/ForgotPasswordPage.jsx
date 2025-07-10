@@ -18,7 +18,8 @@ const ForgotPasswordPage = () => {
     setIsLoading(true);
     try {
       const res = await axios.post(
-        `https://renter-ecommerce.vercel.app/password`,
+        `https://renter-ecommerce.vercel.app/api/user/forgot-password`,
+        // `http://localhost:5000/api/user/forgot-password`,
         { email }
       );
       toast.success(res.data.message);

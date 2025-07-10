@@ -319,35 +319,35 @@ UserRoutes.post("/logout", (req, res) => {
 //     res.status(500).json({ message: "Email failed", error: error.message });
 //   }
 // });
-UserRoutes.post("/forgot-password", async (req, res) => {
-  try {
-    const { email } = req.body;
-    const user = await UserModel.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+// UserRoutes.post("/forgot-password", async (req, res) => {
+//   try {
+//     const { email } = req.body;
+//     const user = await UserModel.findOne({ email });
+//     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Ensure address is properly set
-    user.address = user.address || {};
+//     // Ensure address is properly set
+//     user.address = user.address || {};
 
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+//     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+//     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      user._id,
-      {
-        $set: {
-          otp: { code: otpCode, expiresAt },
-          address: user.address // Use the setter
-        }
-      },
-      { new: true }
-    );
+//     const updatedUser = await UserModel.findByIdAndUpdate(
+//       user._id,
+//       {
+//         $set: {
+//           otp: { code: otpCode, expiresAt },
+//           address: user.address // Use the setter
+//         }
+//       },
+//       { new: true }
+//     );
 
-    await sendOTPEmail(email, otpCode);
-    res.json({ message: "OTP sent to email" });
-  } catch (error) {
-    res.status(500).json({ message: "Email failed", error: error.message });
-  }
-});
+//     await sendOTPEmail(email, otpCode);
+//     res.json({ message: "OTP sent to email" });
+//   } catch (error) {
+//     res.status(500).json({ message: "Email failed", error: error.message });
+//   }
+// });
 
 UserRoutes.post("/verify-otp", async (req, res) => {
   try {
