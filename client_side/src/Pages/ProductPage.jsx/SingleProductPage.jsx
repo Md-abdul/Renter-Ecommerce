@@ -16,7 +16,7 @@ import FeatureIcons from "./FeatureIcons";
 const SingleProductPage = () => {
   const { _id } = useParams();
   const navigate = useNavigate();
-  const { addToCart, getTotalPrice } = useCart();
+  const { addToCart, getTotalPrice, replaceCartWithItem } = useCart();
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState("");
   const [selectedColor, setSelectedColor] = useState(null);
@@ -26,16 +26,19 @@ const SingleProductPage = () => {
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const MAX_CART_TOTAL = 40000;
-  
+
   useEffect(() => {
     const fetchRelatedProducts = async () => {
       try {
-        const response = await fetch("https://renter-ecommerce.vercel.app/api/products", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        const response = await fetch(
+          "https://renter-ecommerce.vercel.app/api/products",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
         const data = await response.json();
         setRelatedProducts(data);
       } catch (error) {
@@ -143,27 +146,64 @@ const SingleProductPage = () => {
     // toast.success("Added to cart!");
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!selectedColor || !selectedSize) {
       toast.error("Please select color and size");
       return;
     }
 
+    // 1. Check login
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please log in to buy this product.");
+      navigate("/login");
+      return;
+    }
+
+    // 2. Fetch user profile to check completeness
+    try {
+      const response = await fetch(
+        "https://renter-ecommerce.vercel.app/api/user/userDetails",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await response.json();
+      const user = data.user;
+      const isProfileComplete =
+        user?.name &&
+        user?.phoneNumber &&
+        user?.address?.street &&
+        user?.address?.city &&
+        user?.address?.zipCode &&
+        user?.address?.state;
+
+      if (!isProfileComplete) {
+        toast.error("Please complete your profile before checkout.");
+        navigate("/user/profile");
+        return;
+      }
+    } catch (error) {
+      toast.error("Failed to verify profile. Please try again.");
+      return;
+    }
+
+    // 3. Prepare product data
     const finalPrice = calculateFinalPrice();
-    addToCart(
-      {
-        ...product,
-        selectedColor: selectedColor.name,
-        selectedSize,
-        price: finalPrice,
-        image: selectedColor.images.main,
-        colorPriceAdjustment: selectedColor.priceAdjustment || 0,
-        sizePriceAdjustment:
-          product.sizes.find((s) => s.size === selectedSize)?.priceAdjustment ||
-          0,
-      },
-      selectedQuantity
-    );
+    const buyNowProduct = {
+      ...product,
+      selectedColor: selectedColor.name,
+      selectedSize,
+      price: finalPrice,
+      image: selectedColor.images.main,
+      colorPriceAdjustment: selectedColor.priceAdjustment || 0,
+      sizePriceAdjustment:
+        selectedColor.sizes.find((s) => s.size === selectedSize)
+          ?.priceAdjustment || 0,
+    };
+
+    // 4. Replace cart and redirect
+    await replaceCartWithItem(buyNowProduct, selectedQuantity);
     navigate("/checkout");
   };
 
@@ -516,8 +556,8 @@ const SingleProductPage = () => {
             </div>
 
             <div className="mt-2 border-t border-gray-200 pt-8">
-                <FeatureIcons />
-              </div>
+              <FeatureIcons />
+            </div>
           </div>
         </div>
       </div>
@@ -607,7 +647,6 @@ const SingleProductPage = () => {
                 <li>1 x {product.title}</li>
               </ul>
               <h4 className="font-semibold mt-6 mb-2">Our Services</h4>
-              
             </div>
           </div>
         </div>

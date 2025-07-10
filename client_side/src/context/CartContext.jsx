@@ -432,6 +432,21 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  const replaceCartWithItem = async (product, quantity = 1) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please log in to buy this product.");
+        navigate("/login");
+        return;
+      }
+      await clearCart();
+      await addToCart(product, quantity);
+    } catch (error) {
+      // Error handling is already in addToCart/clearCart
+    }
+  };
+
   // Initialize cart and orders when component mounts
   useEffect(() => {
     if (localStorage.getItem("token")) {
@@ -459,6 +474,7 @@ export const CartProvider = ({ children }) => {
         applyCoupon,
         removeCoupon,
         initiatePhonePePayment,
+        replaceCartWithItem, // <-- add here
       }}
     >
       {children}
