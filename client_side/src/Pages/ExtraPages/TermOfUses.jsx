@@ -28,9 +28,7 @@ const TermOfUses = () => {
         <p className="mb-4">
           The Terms of Use outlined below are for reanter® Loop Member Program Terms & Conditions, please click here
         </p>
-        <p className="mb-4">
-          These Terms of Use apply to all online visitors to the websites operated by or on behalf of reanter  Strauss (India) Private Limited, having its registered office at ITC Green Centre, 5th Floor - North Tower No 18, Banaswadi Main Road, Maruthi Seva Nagar, Bangalore - 560005 (hereinafter, "we", "us", "our" or "ours"), including reanter. in (the "Primary Website") and other Indian websites which we may make available to consumers from time to time ("Other Websites"; collectively with the Primary Website, "Websites").
-        </p>
+        
         <p className="mb-4">
           Our Websites have different purposes and functionalities. We describe these differences on this page, so please read it carefully. If you have any questions regarding the Terms of Use, please contact us through the information provided towards the end of this document.
         </p>

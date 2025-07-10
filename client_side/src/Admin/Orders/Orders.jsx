@@ -65,7 +65,7 @@ export const Orders = () => {
       setOrders(ordersData);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching orders:", error);
+      // console.error("Error fetching orders:", error);
       setError(
         error.response?.data?.message ||
           error.message ||
@@ -99,7 +99,7 @@ export const Orders = () => {
 
       setReturnRequests(validRequests);
     } catch (error) {
-      console.error("Error fetching return requests:", error);
+      // console.error("Error fetching return requests:", error);
       toast.error("Failed to fetch return requests");
     }
   };
@@ -124,7 +124,7 @@ export const Orders = () => {
       toast.success("Order status updated successfully");
       fetchOrders();
     } catch (error) {
-      console.error("Error updating order status:", error);
+      // console.error("Error updating order status:", error);
       toast.error(
         error.response?.data?.message || "Failed to update order status"
       );
@@ -373,7 +373,7 @@ export const Orders = () => {
       pdf.save(`invoice_${order._id.substring(0, 8)}.pdf`);
       toast.success("Invoice downloaded successfully");
     } catch (error) {
-      console.error("Error generating invoice:", error);
+      // console.error("Error generating invoice:", error);
       toast.error("Failed to generate invoice");
     }
   };
@@ -478,7 +478,6 @@ export const Orders = () => {
     return "N/A";
   };
 
-  console.log(orders);
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 min-h-screen">

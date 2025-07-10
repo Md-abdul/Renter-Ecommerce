@@ -487,13 +487,13 @@ const SingleProductPage = () => {
               <button
                 onClick={handleAddToCart}
                 disabled={!selectedColor || !selectedSize || isOutOfStock}
-                className={`flex items-center justify-center w-full rounded-lg px-6 py-3 text-sm font-medium transition-colors duration-200 ${
+                className={`flex items-center justify-center w-full rounded-lg px-6 py-3 text-sm font-medium transition-colors duration-200 cursor-pointer ${
                   !selectedColor || !selectedSize || isOutOfStock
                     ? "bg-gray-100 text-gray-500 cursor-not-allowed"
                     : "bg-yellow-500 hover:bg-yellow-600 text-white"
                 }`}
               >
-                <div className="flex items-center">
+                <div className="flex items-center ">
                   <ShoppingCart size={20} className="mr-2" />
                   <span>{isOutOfStock ? "Out of Stock" : "Add to Cart"}</span>
                 </div>
@@ -514,6 +514,10 @@ const SingleProductPage = () => {
                 </div>
               </button>
             </div>
+
+            <div className="mt-2 border-t border-gray-200 pt-8">
+                <FeatureIcons />
+              </div>
           </div>
         </div>
       </div>
@@ -603,9 +607,7 @@ const SingleProductPage = () => {
                 <li>1 x {product.title}</li>
               </ul>
               <h4 className="font-semibold mt-6 mb-2">Our Services</h4>
-              <div className="mt-2 border-t border-gray-200 pt-8">
-                <FeatureIcons />
-              </div>
+              
             </div>
           </div>
         </div>

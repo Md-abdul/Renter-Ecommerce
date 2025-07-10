@@ -9,19 +9,19 @@ import {
 const FeatureIcons = () => {
   const features = [
     {
-      icon: <FaExchangeAlt size={24} />,
+      icon: <FaExchangeAlt size={14} />,
       label: "10-Day Returns & Exchange"
     },
     {
-      icon: <FaMoneyBillAlt size={24} />,
+      icon: <FaMoneyBillAlt size={14} />,
       label: "Cash/Pay on Delivery"
     },
     {
-      icon: <FaTruck size={24} />,
+      icon: <FaTruck size={14} />,
       label: "Free Delivery",
     },
     {
-      icon: <FaTrophy size={24} />,
+      icon: <FaTrophy size={14} />,
       label: "Top Brand",
     },
   ];
@@ -37,7 +37,7 @@ const FeatureIcons = () => {
             {React.cloneElement(feature.icon, { className: "text-black" })}
           </div>
           <div>
-            <p className="font-bold text-black-400 mb-1">{feature.label}</p>
+            <p className="test-sm text-black-400 mb-1">{feature.label}</p>
             {/* <p className="text-sm text-gray-300">{feature.description}</p> */}
           </div>
         </div>
