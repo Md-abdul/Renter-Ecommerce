@@ -69,9 +69,9 @@ const sendOrderConfirmationEmail = async (orderId) => {
         <!-- Header -->
         <div style="background-color: #f8f8f8; padding: 20px; text-align: center; border-bottom: 1px solid #eaeaea;">
           <h1 style="margin: 0; color: #2c3e50;">Thank you for your order!</h1>
-          <p style="margin: 10px 0 0 0; color: #7f8c8d;">Order #${order._id
-            .toString()
-            .slice(-5)} • ${order.createdAt.toLocaleString()}</p>
+         <p style={{ margin: "10px 0 0 0", color: "#7f8c8d" }}>
+            {order.createdAt.toLocaleString()}
+          </p>
         </div>
         
         <!-- Order Summary -->
@@ -142,11 +142,7 @@ const sendOrderConfirmationEmail = async (orderId) => {
           </div>
           
           <!-- CTA Button -->
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.FRONTEND_URL}/orders/${
-      order._id
-    }" style="display: inline-block; padding: 12px 24px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">View Your Order</a>
-          </div>
+    
         </div>
         
         <!-- Footer -->
