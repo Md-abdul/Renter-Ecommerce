@@ -26,7 +26,7 @@ const TermOfUses = () => {
       <div>
         <h2 className="text-2xl font-bold mb-4">INTRODUCTION</h2>
         <p className="mb-4">
-          The Terms of Use outlined below are for reanter® Loop Member Program Terms & Conditions, please click here
+          The Terms of Use outlined below are for ranter® Loop Member Program Terms & Conditions, please click here
         </p>
         
         <p className="mb-4">

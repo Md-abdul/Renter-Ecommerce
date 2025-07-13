@@ -202,9 +202,10 @@ export const Orders = () => {
             <div style="flex: 1;">
               <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px;">From</h3>
               <p><strong>Renter</strong></p>
-              <p>123 Business Street</p>
-              <p>Commerce City, CC 12345</p>
-              <p>India</p>
+              <p>shop 10 Ground Floor Ghansoli</p>
+              <p>Howrah Chowk sector 3 Ambika</p>
+              <p>Darshan SocietyThane, Maharashtra,</p>
+              <p>400701, India</p>
             </div>
             
             <div style="flex: 1; text-align: right;">
@@ -339,7 +340,7 @@ export const Orders = () => {
           
           <div style="clear: both; margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 0.9em; color: #777;">
             <p>Thank you for your business!</p>
-            <p>Renter E-commerce | support@renter.com | +91 9876543210</p>
+            <p>Ranter | info.ranter@gmail.com | 9029297732</p>
           </div>
         </div>
       `;
@@ -477,7 +478,6 @@ export const Orders = () => {
     }
     return "N/A";
   };
-
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 min-h-screen">
