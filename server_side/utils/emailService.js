@@ -32,7 +32,7 @@ const transporter = nodemailer.createTransport({
 
 const sendOTPEmail = async (to, otpCode) => {
   const mailOptions = {
-    from: `Renter Shop <${process.env.SENDER_NODEMAILER_EMAIL}>`,
+    from: `Ranter Shop <${process.env.SENDER_NODEMAILER_EMAIL}>`,
     to,
     subject: "Password Reset OTP",
     html: `<p>Your OTP for resetting your password is <strong>${otpCode}</strong>. It will expire in 10 minutes.</p>`,
