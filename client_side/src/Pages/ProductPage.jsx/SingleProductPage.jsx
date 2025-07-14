@@ -156,6 +156,25 @@ const SingleProductPage = () => {
     const token = localStorage.getItem("token");
     if (!token) {
       toast.error("Please log in to buy this product.");
+      // Store the intended destination for redirect after login
+      localStorage.setItem("intendedDestination", "/checkout");
+      localStorage.setItem(
+        "buyNowProduct",
+        JSON.stringify({
+          product: {
+            ...product,
+            selectedColor: selectedColor.name,
+            selectedSize,
+            price: calculateFinalPrice(),
+            image: selectedColor.images.main,
+            colorPriceAdjustment: selectedColor.priceAdjustment || 0,
+            sizePriceAdjustment:
+              selectedColor.sizes.find((s) => s.size === selectedSize)
+                ?.priceAdjustment || 0,
+          },
+          quantity: selectedQuantity,
+        })
+      );
       navigate("/login");
       return;
     }
@@ -180,6 +199,25 @@ const SingleProductPage = () => {
 
       if (!isProfileComplete) {
         toast.error("Please complete your profile before checkout.");
+        // Store the intended destination and product data for redirect after profile completion
+        localStorage.setItem("intendedDestination", "/checkout");
+        localStorage.setItem(
+          "buyNowProduct",
+          JSON.stringify({
+            product: {
+              ...product,
+              selectedColor: selectedColor.name,
+              selectedSize,
+              price: calculateFinalPrice(),
+              image: selectedColor.images.main,
+              colorPriceAdjustment: selectedColor.priceAdjustment || 0,
+              sizePriceAdjustment:
+                selectedColor.sizes.find((s) => s.size === selectedSize)
+                  ?.priceAdjustment || 0,
+            },
+            quantity: selectedQuantity,
+          })
+        );
         navigate("/user/profile");
         return;
       }

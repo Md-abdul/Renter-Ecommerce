@@ -437,6 +437,12 @@ export const CartProvider = ({ children }) => {
       const token = localStorage.getItem("token");
       if (!token) {
         toast.error("Please log in to buy this product.");
+        // Store the intended destination for redirect after login
+        localStorage.setItem("intendedDestination", "/checkout");
+        localStorage.setItem(
+          "buyNowProduct",
+          JSON.stringify({ product, quantity })
+        );
         navigate("/login");
         return;
       }
@@ -447,11 +453,119 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // New function to handle redirect after profile completion
+  const handleRedirectAfterProfileCompletion = () => {
+    const intendedDestination = localStorage.getItem("intendedDestination");
+    const buyNowProduct = localStorage.getItem("buyNowProduct");
+
+    console.log("Handling profile completion redirect:", {
+      intendedDestination,
+      buyNowProduct: !!buyNowProduct,
+    });
+
+    if (intendedDestination && buyNowProduct) {
+      try {
+        // Clear the stored data first
+        localStorage.removeItem("intendedDestination");
+        localStorage.removeItem("buyNowProduct");
+
+        // Parse the stored product data
+        const { product, quantity } = JSON.parse(buyNowProduct);
+        console.log("Replacing cart with product:", product.title);
+
+        // Replace cart with the product and redirect to checkout
+        replaceCartWithItem(product, quantity)
+          .then(() => {
+            console.log("Cart replaced, navigating to:", intendedDestination);
+            navigate(intendedDestination);
+          })
+          .catch((error) => {
+            console.error("Error replacing cart:", error);
+            toast.error("Failed to load product. Please try again.");
+            navigate("/");
+          });
+      } catch (error) {
+        console.error("Error parsing stored product data:", error);
+        toast.error("Failed to load product data. Please try again.");
+        navigate("/");
+      }
+    } else if (intendedDestination && !buyNowProduct) {
+      // Just a regular redirect (not buy now flow)
+      console.log("Regular redirect to:", intendedDestination);
+      localStorage.removeItem("intendedDestination");
+      navigate(intendedDestination);
+    }
+  };
+
+  // New function to check if user should be redirected after login
+  const checkAndHandlePostLoginRedirect = () => {
+    const intendedDestination = localStorage.getItem("intendedDestination");
+    const buyNowProduct = localStorage.getItem("buyNowProduct");
+
+    // console.log("Checking post-login redirect:", {
+    //   intendedDestination,
+    //   buyNowProduct: !!buyNowProduct,
+    // });
+
+    if (intendedDestination && buyNowProduct) {
+      // Check if profile is complete
+      const token = localStorage.getItem("token");
+      if (token) {
+        // console.log("Checking profile completeness...");
+        // Fetch user profile to check completeness
+        axios
+          .get(`${API_BASE_URL}/user/userDetails`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          .then((response) => {
+            const user = response.data.user;
+            const isProfileComplete =
+              user?.name &&
+              user?.phoneNumber &&
+              user?.address?.street &&
+              user?.address?.city &&
+              user?.address?.zipCode &&
+              user?.address?.state;
+
+            console.log("Profile complete:", isProfileComplete);
+
+            if (isProfileComplete) {
+              // Profile is complete, proceed with redirect
+              // console.log("Profile complete, handling redirect...");
+              handleRedirectAfterProfileCompletion();
+            } else {
+              // Profile incomplete, redirect to profile page
+              // console.log("Profile incomplete, redirecting to profile...");
+              toast.error("Please complete your profile before checkout.");
+              navigate("/user/profile");
+            }
+          })
+          .catch((error) => {
+            // console.error("Error checking profile:", error);
+            toast.error("Failed to verify profile. Please try again.");
+            // Clear stored data on error
+            localStorage.removeItem("intendedDestination");
+            localStorage.removeItem("buyNowProduct");
+            navigate("/");
+          });
+      }
+    } else if (intendedDestination && !buyNowProduct) {
+      // Just a regular redirect (not buy now flow)
+      // console.log("Regular redirect to:", intendedDestination);
+      localStorage.removeItem("intendedDestination");
+      navigate(intendedDestination);
+    } else {
+      navigate("/user/profile");
+    }
+  };
+
   // Initialize cart and orders when component mounts
   useEffect(() => {
     if (localStorage.getItem("token")) {
       fetchCart();
       fetchOrders();
+      // Check for post-login redirect
+      checkAndHandlePostLoginRedirect();
     }
   }, []);
 
@@ -474,7 +588,9 @@ export const CartProvider = ({ children }) => {
         applyCoupon,
         removeCoupon,
         initiatePhonePePayment,
-        replaceCartWithItem, // <-- add here
+        replaceCartWithItem,
+        handleRedirectAfterProfileCompletion,
+        checkAndHandlePostLoginRedirect,
       }}
     >
       {children}

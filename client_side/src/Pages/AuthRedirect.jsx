@@ -3,11 +3,13 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { signIn } from "../Redux/Users/action";
 import { toast } from "react-toastify";
+import { useCart } from "../context/CartContext";
 
 const AuthRedirect = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { checkAndHandlePostLoginRedirect } = useCart();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -29,12 +31,16 @@ const AuthRedirect = () => {
       localStorage.setItem("user", JSON.stringify(user));
 
       toast.success("Login successful");
-      navigate("/"); // Redirect to home page
+
+      // Check if there's an intended destination to redirect to
+      setTimeout(() => {
+        checkAndHandlePostLoginRedirect();
+      }, 100); // Small delay to ensure token is stored
     } else {
       toast.error("Google login failed");
       navigate("/login");
     }
-  }, [location, navigate, dispatch]);
+  }, [location, navigate, dispatch, checkAndHandlePostLoginRedirect]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">

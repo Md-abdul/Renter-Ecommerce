@@ -37,6 +37,7 @@ const CheckoutPage = () => {
     appliedCoupon,
     loading: cartLoading,
     initiatePhonePePayment,
+    replaceCartWithItem,
   } = useCart();
 
   const navigate = useNavigate();
@@ -115,6 +116,36 @@ const CheckoutPage = () => {
 
     fetchUserProfile();
   }, [navigate]);
+
+  // Add new useEffect to handle stored buyNowProduct data
+  useEffect(() => {
+    const handleStoredBuyNowProduct = async () => {
+      const buyNowProduct = localStorage.getItem("buyNowProduct");
+      const intendedDestination = localStorage.getItem("intendedDestination");
+
+      if (
+        buyNowProduct &&
+        intendedDestination === "/checkout" &&
+        cart.length === 0
+      ) {
+        try {
+          const { product, quantity } = JSON.parse(buyNowProduct);
+          await replaceCartWithItem(product, quantity);
+          // Clear the stored data after successful cart replacement
+          localStorage.removeItem("buyNowProduct");
+          localStorage.removeItem("intendedDestination");
+        } catch (error) {
+          console.error("Error handling stored buy now product:", error);
+          toast.error("Failed to load product. Please try again.");
+          navigate("/");
+        }
+      }
+    };
+
+    if (!cartLoading) {
+      handleStoredBuyNowProduct();
+    }
+  }, [cart, cartLoading, replaceCartWithItem, navigate]);
 
   // Calculate subtotal
   const subtotal = cart.reduce(

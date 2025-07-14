@@ -9,7 +9,8 @@ import {
   FiArrowLeft,
 } from "react-icons/fi";
 import { toast } from "react-toastify";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useCart } from "../../context/CartContext";
 
 const ProfileDetails = () => {
   const [loading, setLoading] = useState(false);
@@ -36,6 +37,8 @@ const ProfileDetails = () => {
 
   const userDataa = JSON.parse(localStorage.getItem("user"));
   const userId = userDataa?.userId;
+  const navigate = useNavigate();
+  const { handleRedirectAfterProfileCompletion } = useCart();
 
   const fetchUserDetails = async () => {
     try {
@@ -150,6 +153,13 @@ const ProfileDetails = () => {
       toast.success("Profile updated successfully");
       fetchUserDetails();
       setIsEditing(false);
+
+      // Check if there's an intended destination to redirect to
+      const intendedDestination = localStorage.getItem("intendedDestination");
+      if (intendedDestination) {
+        // Profile is now complete, handle the redirect
+        handleRedirectAfterProfileCompletion();
+      }
     } catch (error) {
       console.error("Error updating user details:", error);
       toast.error("Failed to update profile");
