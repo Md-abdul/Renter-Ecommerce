@@ -166,7 +166,7 @@ const ProductCard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className=" bg-gray-50">
       {/* Carousel */}
       <div className="relative h-[600px] overflow-hidden shadow-lg">
         {carouselSlides.map((slide, index) => (

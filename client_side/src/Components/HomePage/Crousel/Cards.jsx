@@ -37,6 +37,7 @@ const Cards = () => {
         marginTop: "8rem",
         height: "70vh", // Default height for larger screens
         padding: "10px", // Add padding around the container
+        border:'3px solid red'
       }}
     >
       <Carousel
@@ -139,28 +140,28 @@ const Cards = () => {
         {`
           @media (max-width: 1024px) {
             .carousel-container {
-              height: 50vh; /* Adjust height for tablets */
+              height: 5vh; /* Adjust height for tablets */
             }
             .carousel-container img {
-              height: 50vh; /* Adjust height for tablets */
+              height: 5vh; /* Adjust height for tablets */
             }
           }
 
           @media (max-width: 768px) {
             .carousel-container {
-              height: 40vh; /* Adjust height for smaller tablets */
+              height: 20vh; /* Adjust height for smaller tablets */
             }
             .carousel-container img {
-              height: 40vh; /* Adjust height for smaller tablets */
+              height: 20vh; /* Adjust height for smaller tablets */
             }
           }
 
           @media (max-width: 480px) {
             .carousel-container {
-              height: 30vh; /* Adjust height for mobile devices */
+              height: 10vh; /* Adjust height for mobile devices */
             }
             .carousel-container img {
-              height: 30vh; /* Adjust height for mobile devices */
+              height: 10vh; /* Adjust height for mobile devices */
             }
           }
         `}
