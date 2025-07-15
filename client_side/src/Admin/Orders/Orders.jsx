@@ -340,7 +340,7 @@ export const Orders = () => {
           
           <div style="clear: both; margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 0.9em; color: #777;">
             <p>Thank you for your business!</p>
-            <p>Ranter | info.ranter@gmail.com | 9029297732</p>
+            <p>Ranter store | info.ranter@gmail.com | 9029297732</p>
           </div>
         </div>
       `;

@@ -9,6 +9,7 @@ import { LogoutUsers } from "../../../Redux/Users/action";
 import { toast } from "react-toastify";
 import navdata from "./NavbarLinks";
 import { useCart } from "../../../context/CartContext";
+import logo from "../../../assets/ranter-website-logo.png";
 
 export const TopNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -95,12 +96,15 @@ export const TopNavbar = () => {
         <div className="flex items-center justify-between h-16 max-w-screen-xl mx-auto px-4">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to={"/"}>
-              <h1 className="text-2xl font-bold">
-                <span className="text-yellow-400">Ra</span>nter
-              </h1>
-            </Link>
-          </div>
+  <Link to="/">
+    <img
+      src={logo}
+      alt="web_logo"
+      className="h-35 w-auto object-contain" // h-10 can be adjusted as needed
+    />
+  </Link>
+</div>
+
 
           {/* Desktop Navigation Links */}
           <div className="hidden md:flex flex-grow justify-center space-x-8">

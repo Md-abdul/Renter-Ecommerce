@@ -630,6 +630,7 @@ const CheckoutPage = () => {
                       checked={formData.paymentMethod === "cod"}
                       onChange={handleInputChange}
                       className="h-5 w-5 text-yellow-600 focus:ring-yellow-500 border-gray-300"
+                      required
                     />
                     <img
                       src={codIllustration}

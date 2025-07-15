@@ -27,7 +27,7 @@ const Return = () => {
           you can initiate a return online. Please note that items must be
           returned within 10 days of the order delivered date and that items are
           in their original condition, where the item is unworn, unwashed,
-          without alterations and has all tags attached. Ranter.in reserves the
+          without alterations and has all tags attached. Ranter Store.in reserves the
           right to deny refund if the item does not meet its Return Policy
           guidelines. Final sales, promotional items or opened packaged items
           may not be exchanged, returned or refunded.
@@ -118,7 +118,7 @@ const Return = () => {
           We now allow exchanges for a different product within 10 days of the
           order confirmation date, subject to availability. The returned item
           must be in its original condition—unworn, unwashed, unaltered, and
-          with all tags attached. Ranter.in reserves the right to reject exchanges
+          with all tags attached. Ranter Store.in reserves the right to reject exchanges
           if the item does not meet these criteria.
         </p>
         <ul className="list-disc pl-6 mb-4">
@@ -128,12 +128,12 @@ const Return = () => {
           </li>
           <li>
             If the exchange product costs less, the remaining balance will be
-            issued as a Ranter.in gift card, which can be used for future
+            issued as a Ranter Store.in gift card, which can be used for future
             purchases on our website.
           </li>
         </ul>
         <p className="mb-4">
-          Please note: Exchange is only valid for items bought on Ranter.in and
+          Please note: Exchange is only valid for items bought on Ranter Store.in and
           cannot be processed at physical stores.
         </p>
         <p className="mb-4">
@@ -151,8 +151,8 @@ const Return = () => {
       <div>
         <h2 className="text-2xl font-bold mb-4">WARRANTY</h2>
         <p className="mb-4">
-          At Ranter, we stand behind the quality of our products and want you to
-          love every purchase. A 6-Months warranty backs all Ranter's India
+          At Ranter Store, we stand behind the quality of our products and want you to
+          love every purchase. A 6-Months warranty backs all Ranter Store's India
           products against manufacturing and material defects (excluding normal
           wear and tear).
         </p>
@@ -226,7 +226,7 @@ const Return = () => {
 
         <p className="mb-4">How to Initiate a Warranty Claim:</p>
         <ul className="list-disc pl-6 mb-4">
-          <li>Send an email to customercare@Ranter.in</li>
+          <li>Send an email to info.ranter@gmail.com</li>
           <li>
             Attach pictures of the defect, size label, country label, and
             product style label
@@ -242,7 +242,7 @@ const Return = () => {
         <ul className="list-disc pl-6 mb-4">
           <li>
             If we confirm a defect, we'll send you a voucher for a replacement
-            at Ranter.in
+            at Ranter Store in
           </li>
           <li>The voucher is for one-time use only</li>
           <li>
