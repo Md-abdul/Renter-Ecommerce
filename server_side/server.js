@@ -62,8 +62,8 @@ app.use("/api/orders", orderRoutes);
 app.use("/auth/google", router);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", PaymentRoutes);
-app.use("/api/phonepe", phonepeRoutes); // Add this line for PhonePe routes
-app.use("/api/contact", contactRoutes); // Add this line for PhonePe routes
+app.use("/api/phonepe", phonepeRoutes); // Add this line for PhonePe routes====
+app.use("/api/contact", contactRoutes); // Add this line for PhonePe routes====
 app.use("/api/stores", storeRoutes);
 
 // Start server
