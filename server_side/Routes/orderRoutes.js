@@ -176,19 +176,18 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
 
     console.log(`Starting email send process for order ${order._id}`);
     // Send order confirmation email
-    sendOrderConfirmationEmail(order._id)
-      .then((success) => {
-        if (!success) {
-          console.error("Failed to send order confirmation email");
-        }
-      })
-      .catch((emailError) => {
-        console.error("Email sending failed with error:", {
-          orderId: order._id,
-          error: emailError.message,
-          stack: emailError.stack,
-        });
+    try {
+      const success = await sendOrderConfirmationEmail(order._id);
+      if (!success) {
+        console.error("Failed to send order confirmation email");
+      }
+    } catch (emailError) {
+      console.error("Email sending failed with error:", {
+        orderId: order._id,
+        error: emailError.message,
+        stack: emailError.stack,
       });
+    }
 
     res.status(201).json({
       message: "Order created successfully",
