@@ -290,6 +290,8 @@ export const TopNavbar = () => {
         </div>
       </div>
 
+
+
       {/* Mobile Drawer - Only for navigation links */}
       <div
         className={`fixed inset-0 bg-opacity-25 z-50 transform transition-transform duration-500 ease-in-out ${
