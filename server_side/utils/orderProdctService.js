@@ -10,12 +10,19 @@ apiKey.apiKey = process.env.BREVO_API_KEY;
 
 const sendOrderConfirmationEmail = async (orderId) => {
   try {
+    console.log(`Attempting to send email for order: ${orderId}`);
     const order = await OrderModel.findById(orderId).populate("userId");
     if (!order) {
       console.error("Order not found");
       return false;
     }
+    // Verify we have all required data
+    if (!order.userId?.email) {
+      console.error("No user email found for order:", orderId);
+      return false;
+    }
 
+    console.log(`Preparing email for ${order.userId.email}`);
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
@@ -171,10 +178,21 @@ const sendOrderConfirmationEmail = async (orderId) => {
       name: process.env.STORE_NAME || "Ranter Support",
     };
 
-    await apiInstance.sendTransacEmail(sendSmtpEmail);
+    const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log("Email API response:", {
+      messageId: response?.messageId || "No messageId returned",
+      status: "success",
+    });
     return true;
   } catch (error) {
-    console.error("Error sending order confirmation email:", error);
+    console.error("Error sending order confirmation email:");
+    console.error("Message:", error.message);
+    console.error(
+      "Response body:",
+      JSON.stringify(error.response?.body, null, 2)
+    );
+    console.error("Stack:", error.stack);
+
     return false;
   }
 };
