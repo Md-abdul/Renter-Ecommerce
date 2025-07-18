@@ -14,7 +14,7 @@ const router = require("./Routes/googleSignup");
 const phonepeRoutes = require("./Routes/phonepeRoutes"); // Add this line
 const contactRoutes = require("./Routes/ContactRoutes");
 const storeRoutes = require("./Routes/storeRoutes");
-const couponExpiryCheck = require('./utils/couponCron');
+const couponExpiryCheck = require("./utils/couponCron");
 
 const app = express();
 dotenv.config();
@@ -24,7 +24,11 @@ connectDB();
 couponExpiryCheck.start();
 
 // CORS configuration
-const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL];
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_URL,
+  "https://renter-ecommerce-2n7u.vercel.app", // just to be safe
+];
 
 app.use(
   cors({
@@ -32,7 +36,7 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        callback(new Error("CORS not allowed from this origin: " + origin));
       }
     },
     credentials: true,
@@ -58,8 +62,8 @@ app.use("/api/orders", orderRoutes);
 app.use("/auth/google", router);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", PaymentRoutes);
-app.use("/api/phonepe", phonepeRoutes); // Add this line for PhonePe routes
-app.use("/api/contact", contactRoutes); // Add this line for PhonePe routes
+app.use("/api/phonepe", phonepeRoutes); // Add this line for PhonePe routes====
+app.use("/api/contact", contactRoutes); // Add this line for PhonePe routes====
 app.use("/api/stores", storeRoutes);
 
 // Start server

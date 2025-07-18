@@ -26,7 +26,7 @@ const PrivacyPolicy = () => {
       <div>
         <h2 className="text-2xl font-bold mb-4">INTRODUCTION</h2>
         <p className="mb-4">
-          The Terms of Use outlined below are for reanter in. For ranter Loop
+          The Terms of Use outlined below are for reanter in. For ranter store Loop
           Member Program Terms & Conditions, please click here.
         </p>
         <p className="mb-4">
@@ -176,7 +176,7 @@ const PrivacyPolicy = () => {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-semibold text-gray-900">RANTER STRAUSS & CO. PRIVACY POLICY</h1>
+          <h1 className="text-3xl font-semibold text-gray-900">RANTER STORE STRAUSS & CO. PRIVACY POLICY</h1>
         </div>
       </header>
 

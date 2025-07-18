@@ -26,11 +26,9 @@ const TermOfUses = () => {
       <div>
         <h2 className="text-2xl font-bold mb-4">INTRODUCTION</h2>
         <p className="mb-4">
-          The Terms of Use outlined below are for reanter® Loop Member Program Terms & Conditions, please click here
+          The Terms of Use outlined below are for ranter® store Loop Member Program Terms & Conditions, please click here
         </p>
-        <p className="mb-4">
-          These Terms of Use apply to all online visitors to the websites operated by or on behalf of reanter  Strauss (India) Private Limited, having its registered office at ITC Green Centre, 5th Floor - North Tower No 18, Banaswadi Main Road, Maruthi Seva Nagar, Bangalore - 560005 (hereinafter, "we", "us", "our" or "ours"), including reanter. in (the "Primary Website") and other Indian websites which we may make available to consumers from time to time ("Other Websites"; collectively with the Primary Website, "Websites").
-        </p>
+        
         <p className="mb-4">
           Our Websites have different purposes and functionalities. We describe these differences on this page, so please read it carefully. If you have any questions regarding the Terms of Use, please contact us through the information provided towards the end of this document.
         </p>
@@ -130,13 +128,13 @@ const TermOfUses = () => {
       <div>
         <h2 className="text-2xl font-bold mb-4">ACCOUNTS, PASSWORDS AND SECURITY</h2>
         <p className="mb-4">
-          Certain features or services offered on or through our Websites may require you to open an account (including setting up a ranter® Loop Member Program account and password). You are entirely responsible for maintaining the confidentiality of your account information, including your password, and for any and all activity that occurs under your account.
+          Certain features or services offered on or through our Websites may require you to open an account (including setting up a ranter® store Loop Member Program account and password). You are entirely responsible for maintaining the confidentiality of your account information, including your password, and for any and all activity that occurs under your account.
         </p>
         <p className="mb-4">
-          You agree to notify us immediately of any unauthorized use of your account or password, or any other breach of security. However, you may be held liable for losses incurred by us or any other user of or visitor to our Websites due to someone else using your ranter® Loop Member Program account or password.
+          You agree to notify us immediately of any unauthorized use of your account or password, or any other breach of security. However, you may be held liable for losses incurred by us or any other user of or visitor to our Websites due to someone else using your ranter® store Loop Member Program account or password.
         </p>
         <p className="mb-4">
-          You may not use anyone else's ranter® Loop Member Program account or password at any time without the express permission and consent of the holder of that ranter® Loop Member Program account or password.
+          You may not use anyone else's ranter® store Loop Member Program account or password at any time without the express permission and consent of the holder of that ranter® store Loop Member Program account or password.
         </p>
       </div>
     ),

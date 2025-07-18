@@ -1,16 +1,18 @@
 // export default LoginPage;
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate,Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { adminLogin, signIn } from "../Redux/Users/action";
 import { toast } from "react-toastify";
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
+import { useCart } from "../context/CartContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { checkAndHandlePostLoginRedirect } = useCart();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,10 @@ const LoginPage = () => {
     const userSuccess = await dispatch(signIn(userData));
     if (userSuccess) {
       setLoading(false);
-      navigate("/");
+      // Check if there's an intended destination to redirect to
+      setTimeout(() => {
+        checkAndHandlePostLoginRedirect();
+      }, 100); // Small delay to ensure token is stored
       return;
     }
 
@@ -95,9 +100,7 @@ const LoginPage = () => {
 
               <div className="text-right">
                 <Link to={"/forgot_password"}>
-                  <p
-                    className="text-sm text-gray-600 hover:text-gray-800"
-                  >
+                  <p className="text-sm text-gray-600 hover:text-gray-800">
                     Forgot Password?
                   </p>
                 </Link>

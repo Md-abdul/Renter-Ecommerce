@@ -173,7 +173,7 @@ const HomePage = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
       >
-        <div className="max-w-7xl mx-auto relative z-10">
+        <div className="max-w-7xl mx-auto relative z-10" >
           <motion.div
             initial="hidden"
             whileInView="visible"

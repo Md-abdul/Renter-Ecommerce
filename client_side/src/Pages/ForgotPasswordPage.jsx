@@ -17,7 +17,11 @@ const ForgotPasswordPage = () => {
   const sendOtp = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.post(`http://localhost:5000/password`, { email });
+      const res = await axios.post(
+        `https://renter-ecommerce.vercel.app/api/user/forgot-password`,
+        // `http://localhost:5000/api/user/forgot-password`,
+        { email }
+      );
       toast.success(res.data.message);
       setStep(2); // Move to OTP step
     } catch (error) {
@@ -28,10 +32,10 @@ const ForgotPasswordPage = () => {
   };
 
   const verifyOtp = async () => {
-    setIsLoading(true);
-    try {
+    //renter-ecommerce.vercel.app/
+    setIshttps: try {
       const res = await axios.post(
-        `http://localhost:5000/api/user/verify-otp`,
+        `https://renter-ecommerce.vercel.app/api/user/verify-otp`,
         {
           email,
           otp,
@@ -51,10 +55,10 @@ const ForgotPasswordPage = () => {
       toast.error("Passwords do not match");
       return;
     }
-    setIsLoading(true);
-    try {
+    //renter-ecommerce.vercel.app/
+    setIshttps: try {
       const res = await axios.post(
-        `http://localhost:5000/api/user/reset-password`,
+        `https://renter-ecommerce.vercel.app/api/user/reset-password`,
         {
           email,
           otp,

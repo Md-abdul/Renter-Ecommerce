@@ -6,6 +6,7 @@ import {
   FaLinkedin,
 } from "react-icons/fa";
 import backgroundImage from "../../../assets/wave.png";
+import logo from "../../../assets/ranter-website-logo.png"
 
 const Footer = () => {
   return (
@@ -28,6 +29,7 @@ const Footer = () => {
       ></div>
 
       <div className="max-w-7xl mx-auto flex flex-wrap justify-between gap-8 -mt-10 sm:mt-30">
+        
         {/* Account Section */}
         <div className="w-full sm:w-auto">
           <h4 className="mb-3 text-lg font-semibold">Account</h4>
@@ -141,7 +143,7 @@ const Footer = () => {
           <h4 className="mb-3 text-lg font-semibold">Exclusive</h4>
           <p className="text-gray-800">Subscribe</p>
           <p className="text-gray-800">Get 10% off your first order</p>
-          <div className="flex mt-2">
+          {/* <div className="flex mt-2">
             <input
               type="email"
               placeholder="Enter your email"
@@ -150,7 +152,7 @@ const Footer = () => {
             <button className="px-4 py-2 bg-black text-white rounded-r-md hover:bg-gray-900 transition">
               &#x27A4;
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
       <div className="max-w-7xl mx-auto mt-8 flex flex-col sm:flex-row justify-between items-center px-6 lg:-mb-2.5">

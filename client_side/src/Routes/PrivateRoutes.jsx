@@ -9,6 +9,8 @@ export const PrivateRoutes = ({ children }) => {
 
   useEffect(() => {
     if (!auth) {
+      // Store the intended destination for redirect after login
+      localStorage.setItem("intendedDestination", location.pathname);
       // Optionally, you can add some logging or other side-effects here if needed.
       // console.log("User is not authenticated, redirecting to login.");
     }
