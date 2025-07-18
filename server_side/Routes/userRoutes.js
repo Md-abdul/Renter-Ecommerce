@@ -257,6 +257,7 @@ UserRoutes.post("/login", async (req, res) => {
 });
 
 // Get user details route (GET)
+// Get user details route (GET)
 // Modified Get user details route (GET) using the middleware
 UserRoutes.get("/userDetails", verifyToken, async (req, res) => {
   try {
