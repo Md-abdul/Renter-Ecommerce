@@ -31,6 +31,8 @@ const UserOrders = () => {
   const [availableSizes, setAvailableSizes] = useState([]);
   const [exchangeColor, setExchangeColor] = useState("");
   const [availableColors, setAvailableColors] = useState([]);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [pendingRequestType, setPendingRequestType] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -91,12 +93,27 @@ const UserOrders = () => {
   };
 
   const openReturnModal = (item) => {
+    if (
+      isReturnOrExchangeActive(item, "return") ||
+      isReturnOrExchangeActive(item, "exchange")
+    ) {
+      toast.error("You already have an active request for this item");
+      return;
+    }
     setSelectedItem(item);
     setReturnReason("");
     setShowReturnModal(true);
   };
 
   const openExchangeModal = async (item) => {
+    if (
+      isReturnOrExchangeActive(item, "return") ||
+      isReturnOrExchangeActive(item, "exchange")
+    ) {
+      toast.error("You already have an active request for this item");
+      return;
+    }
+
     try {
       setSelectedItem(item);
       setExchangeSize("");
@@ -108,16 +125,10 @@ const UserOrders = () => {
       );
 
       const product = productResponse.data;
-
-      // Find the color object that matches the current item's color
       const currentColorObj = product.colors.find((c) => c.name === item.color);
-
-      // Get available colors (excluding current color)
       const availableColors = product.colors
         .filter((c) => c.name !== item.color)
         .map((c) => c.name);
-
-      // Get available sizes from the current color (excluding current size)
       const availableSizes = currentColorObj
         ? currentColorObj.sizes
             .filter((s) => s.size !== item.size && s.quantity > 0)
@@ -133,68 +144,120 @@ const UserOrders = () => {
     }
   };
 
-  const handleReturnRequest = async (type) => {
-    try {
-      if (!returnReason) {
-        toast.error("Please provide a reason");
-        return;
-      }
+  // const openExchangeModal = async (item) => {
+  //   try {
+  //     setSelectedItem(item);
+  //     setExchangeSize("");
+  //     setExchangeColor("");
+  //     setReturnReason("");
 
-      if (type === "exchange" && (!exchangeSize || !exchangeColor)) {
-        toast.error("Please select both color and size for exchange");
-        return;
-      }
+  //     const productResponse = await axios.get(
+  //       `https://renter-ecommerce.vercel.app/api/products/${item.productId}`
+  //     );
 
-      const response = await axios.post(
-        `https://renter-ecommerce.vercel.app/api/orders/${selectedItem.orderId}/return`,
-        {
-          itemId: selectedItem._id,
-          type,
-          reason: returnReason,
-          exchangeSize: type === "exchange" ? exchangeSize : undefined,
-          exchangeColor: type === "exchange" ? exchangeColor : undefined,
-          exchangeProductId:
-            type === "exchange" ? selectedItem.productId : undefined,
-        },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
+  //     const product = productResponse.data;
 
-      toast.success(
-        `${
-          type === "return" ? "Return" : "Exchange"
-        } request submitted successfully`
-      );
-      fetchOrders();
-      setShowReturnModal(false);
-      setShowExchangeModal(false);
-    } catch (error) {
-      if (
-        error.response?.data?.message ===
-        "Active request already exists for this item"
-      ) {
-        const existingRequest = error.response.data.existingRequest;
+  //     // Find the color object that matches the current item's color
+  //     const currentColorObj = product.colors.find((c) => c.name === item.color);
 
-        let errorMessage = "An active request already exists for this item";
-        if (existingRequest.type && existingRequest.status) {
-          errorMessage = `You already have a ${existingRequest.type} request (status: ${existingRequest.status})`;
-          if (existingRequest.requestedAt) {
-            errorMessage += ` submitted on ${new Date(
-              existingRequest.requestedAt
-            ).toLocaleDateString()}`;
-          }
-        }
+  //     // Get available colors (excluding current color)
+  //     const availableColors = product.colors
+  //       .filter((c) => c.name !== item.color)
+  //       .map((c) => c.name);
 
-        toast.error(errorMessage, { autoClose: 7000 });
-        fetchOrders();
-      } else {
-        toast.error(
-          error.response?.data?.message || "Failed to submit request"
-        );
-      }
-      console.error("Error submitting request:", error);
+  //     // Get available sizes from the current color (excluding current size)
+  //     const availableSizes = currentColorObj
+  //       ? currentColorObj.sizes
+  //           .filter((s) => s.size !== item.size && s.quantity > 0)
+  //           .map((s) => s.size)
+  //       : [];
+
+  //     setAvailableColors(availableColors);
+  //     setAvailableSizes(availableSizes);
+  //     setShowExchangeModal(true);
+  //   } catch (error) {
+  //     toast.error("Failed to fetch product details");
+  //     console.error("Error fetching product:", error);
+  //   }
+  // };
+
+  // const handleReturnRequest = async (type) => {
+  //   try {
+  //     if (!returnReason) {
+  //       toast.error("Please provide a reason");
+  //       return;
+  //     }
+
+  //     if (type === "exchange" && (!exchangeSize || !exchangeColor)) {
+  //       toast.error("Please select both color and size for exchange");
+  //       return;
+  //     }
+
+  //     const response = await axios.post(
+  //       `https://renter-ecommerce.vercel.app/api/orders/${selectedItem.orderId}/return`,
+  //       {
+  //         itemId: selectedItem._id,
+  //         type,
+  //         reason: returnReason,
+  //         exchangeSize: type === "exchange" ? exchangeSize : undefined,
+  //         exchangeColor: type === "exchange" ? exchangeColor : undefined,
+  //         exchangeProductId:
+  //           type === "exchange" ? selectedItem.productId : undefined,
+  //       },
+  //       {
+  //         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  //       }
+  //     );
+
+  //     toast.success(
+  //       `${
+  //         type === "return" ? "Return" : "Exchange"
+  //       } request submitted successfully`
+  //     );
+  //     fetchOrders();
+  //     setShowReturnModal(false);
+  //     setShowExchangeModal(false);
+  //   } catch (error) {
+  //     if (
+  //       error.response?.data?.message ===
+  //       "Active request already exists for this item"
+  //     ) {
+  //       const existingRequest = error.response.data.existingRequest;
+
+  //       let errorMessage = "An active request already exists for this item";
+  //       if (existingRequest.type && existingRequest.status) {
+  //         errorMessage = `You already have a ${existingRequest.type} request (status: ${existingRequest.status})`;
+  //         if (existingRequest.requestedAt) {
+  //           errorMessage += ` submitted on ${new Date(
+  //             existingRequest.requestedAt
+  //           ).toLocaleDateString()}`;
+  //         }
+  //       }
+
+  //       toast.error(errorMessage, { autoClose: 7000 });
+  //       fetchOrders();
+  //     } else {
+  //       toast.error(
+  //         error.response?.data?.message || "Failed to submit request"
+  //       );
+  //     }
+  //     console.error("Error submitting request:", error);
+  //   }
+  // };
+
+  const handleReturnRequest = (type) => {
+    if (!returnReason) {
+      toast.error("Please provide a reason");
+      return;
     }
+
+    if (type === "exchange" && (!exchangeSize || !exchangeColor)) {
+      toast.error("Please select both color and size for exchange");
+      return;
+    }
+
+    setPendingRequestType(type);
+    setShowConfirmationModal(true);
   };
 
   const cancelReturnRequest = async (orderId, itemId) => {
@@ -267,6 +330,66 @@ const UserOrders = () => {
       </div>
     );
   }
+
+  const confirmRequest = async () => {
+    try {
+      setShowConfirmationModal(false);
+
+      const response = await axios.post(
+        `https://renter-ecommerce.vercel.app/api/orders/${selectedItem.orderId}/return`,
+        {
+          itemId: selectedItem._id,
+          type: pendingRequestType,
+          reason: returnReason,
+          exchangeSize:
+            pendingRequestType === "exchange" ? exchangeSize : undefined,
+          exchangeColor:
+            pendingRequestType === "exchange" ? exchangeColor : undefined,
+          exchangeProductId:
+            pendingRequestType === "exchange"
+              ? selectedItem.productId
+              : undefined,
+        },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+
+      toast.success(
+        `${
+          pendingRequestType === "return" ? "Return" : "Exchange"
+        } request submitted successfully`
+      );
+      fetchOrders();
+      setShowReturnModal(false);
+      setShowExchangeModal(false);
+    } catch (error) {
+      if (
+        error.response?.data?.message ===
+        "Active request already exists for this item"
+      ) {
+        const existingRequest = error.response.data.existingRequest;
+
+        let errorMessage = "An active request already exists for this item";
+        if (existingRequest.type && existingRequest.status) {
+          errorMessage = `You already have a ${existingRequest.type} request (status: ${existingRequest.status})`;
+          if (existingRequest.requestedAt) {
+            errorMessage += ` submitted on ${new Date(
+              existingRequest.requestedAt
+            ).toLocaleDateString()}`;
+          }
+        }
+
+        toast.error(errorMessage, { autoClose: 7000 });
+        fetchOrders();
+      } else {
+        toast.error(
+          error.response?.data?.message || "Failed to submit request"
+        );
+      }
+      console.error("Error submitting request:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -622,7 +745,7 @@ const UserOrders = () => {
                                         }
                                         className="ml-3 text-xs font-medium text-red-600 hover:text-red-800"
                                       >
-                                        Cancel Request
+                                        {/* Cancel Request---- */}
                                       </button>
                                     )}
 
@@ -688,20 +811,36 @@ const UserOrders = () => {
                                 </span> */}
                                 {order.status === "delivered" && (
                                   <div className="flex space-x-3 mt-4">
+                                    {/* Return Button */}
                                     <button
-                                      onClick={() =>
+                                      onClick={() => {
+                                        if (
+                                          isReturnOrExchangeActive(
+                                            item,
+                                            "return"
+                                          ) ||
+                                          isReturnOrExchangeActive(
+                                            item,
+                                            "exchange"
+                                          )
+                                        ) {
+                                          toast.error(
+                                            "You already have an active request for this item"
+                                          );
+                                          return;
+                                        }
                                         openReturnModal({
                                           ...item,
                                           orderId: order._id,
-                                        })
-                                      }
+                                        });
+                                      }}
                                       className={`text-sm font-medium text-red-600 hover:text-red-800 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors
-        ${
-          isActionDisabled(order, item, "return")
-            ? "opacity-50 cursor-not-allowed"
-            : ""
-        }
-      `}
+    ${
+      isActionDisabled(order, item, "return")
+        ? "opacity-50 cursor-not-allowed"
+        : ""
+    }
+  `}
                                       disabled={isActionDisabled(
                                         order,
                                         item,
@@ -710,20 +849,37 @@ const UserOrders = () => {
                                     >
                                       Return
                                     </button>
+
+                                    {/* Exchange Button */}
                                     <button
-                                      onClick={() =>
+                                      onClick={() => {
+                                        if (
+                                          isReturnOrExchangeActive(
+                                            item,
+                                            "return"
+                                          ) ||
+                                          isReturnOrExchangeActive(
+                                            item,
+                                            "exchange"
+                                          )
+                                        ) {
+                                          toast.error(
+                                            "You already have an active request for this item"
+                                          );
+                                          return;
+                                        }
                                         openExchangeModal({
                                           ...item,
                                           orderId: order._id,
-                                        })
-                                      }
+                                        });
+                                      }}
                                       className={`text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors
-        ${
-          isActionDisabled(order, item, "exchange")
-            ? "opacity-50 cursor-not-allowed"
-            : ""
-        }
-      `}
+    ${
+      isActionDisabled(order, item, "exchange")
+        ? "opacity-50 cursor-not-allowed"
+        : ""
+    }
+  `}
                                       disabled={isActionDisabled(
                                         order,
                                         item,
@@ -1003,6 +1159,58 @@ const UserOrders = () => {
                   }
                 >
                   Submit Exchange Request
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Confirmation Modal */}
+        {showConfirmationModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Blur Backdrop */}
+            <div
+              className="absolute inset-0 bg-gray-500 opacity-75"
+              onClick={() => setShowConfirmationModal(false)}
+            ></div>
+
+            {/* Glass Modal */}
+            <div className="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 max-w-md w-full mx-4">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
+                Confirm Request
+              </h3>
+
+              <div className="mb-6">
+                <p className="text-gray-700">
+                  You are about to submit a {pendingRequestType} request for
+                  this item. This action cannot be undone. Are you sure you want
+                  to proceed?
+                </p>
+              </div>
+
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors text-gray-700"
+                  onClick={() => setShowConfirmationModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className={`px-4 py-2 ${
+                    pendingRequestType === "return"
+                      ? "bg-red-500"
+                      : "bg-blue-500"
+                  } text-white rounded-md hover:${
+                    pendingRequestType === "return"
+                      ? "bg-red-600"
+                      : "bg-blue-600"
+                  } transition-colors`}
+                  onClick={confirmRequest}
+                >
+                  Confirm{" "}
+                  {pendingRequestType === "return" ? "Return" : "Exchange"}
                 </button>
               </div>
             </div>

@@ -554,7 +554,7 @@ export const CartProvider = ({ children }) => {
       // console.log("Regular redirect to:", intendedDestination);
       localStorage.removeItem("intendedDestination");
       navigate(intendedDestination);
-    } else {
+    } else if (window.location.pathname === "/login")  {
       navigate("/user/profile");
     }
   };
