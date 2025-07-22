@@ -157,7 +157,7 @@ const Footer = () => {
       </div>
       <div className="max-w-7xl mx-auto mt-8 flex flex-col sm:flex-row justify-between items-center px-6 lg:-mb-2.5">
         <p className="text-gray-700 text-sm">
-          &copy; Copyright Ranter 2025. All rights reserved
+          &copy; Copyright Ranter Store 2025. All rights reserved
         </p>
         <div className="flex space-x-4 mt-4 sm:mt-0">
           <a

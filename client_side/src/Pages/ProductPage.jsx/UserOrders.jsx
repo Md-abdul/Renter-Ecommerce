@@ -15,6 +15,9 @@ import {
   FiCreditCard,
   FiHome,
   FiInfo,
+  FiX,
+  FiMinus,
+  FiPlus
 } from "react-icons/fi";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -33,6 +36,7 @@ const UserOrders = () => {
   const [availableColors, setAvailableColors] = useState([]);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pendingRequestType, setPendingRequestType] = useState(null);
+  const [returnQuantity, setReturnQuantity] = useState(1);
 
   useEffect(() => {
     fetchOrders();
@@ -102,9 +106,11 @@ const UserOrders = () => {
     }
     setSelectedItem(item);
     setReturnReason("");
+    setReturnQuantity(item.quantity); // Default to full quantity
     setShowReturnModal(true);
   };
 
+  // Update the openExchangeModal function
   const openExchangeModal = async (item) => {
     if (
       isReturnOrExchangeActive(item, "return") ||
@@ -119,6 +125,7 @@ const UserOrders = () => {
       setExchangeSize("");
       setExchangeColor("");
       setReturnReason("");
+      setReturnQuantity(item.quantity); // Default to full quantity
 
       const productResponse = await axios.get(
         `https://renter-ecommerce.vercel.app/api/products/${item.productId}`
@@ -263,7 +270,8 @@ const UserOrders = () => {
   const cancelReturnRequest = async (orderId, itemId) => {
     try {
       const response = await axios.put(
-        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}`,
+        // `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}`,
+        `http://localhost:5000/api/orders/${orderId}/return/${itemId}`,
         { status: "cancelled" },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -332,38 +340,32 @@ const UserOrders = () => {
   }
 
   const confirmRequest = async () => {
-    try {
-      setShowConfirmationModal(false);
+      try {
+    setShowConfirmationModal(false);
 
-      const response = await axios.post(
-        `https://renter-ecommerce.vercel.app/api/orders/${selectedItem.orderId}/return`,
-        {
-          itemId: selectedItem._id,
-          type: pendingRequestType,
-          reason: returnReason,
-          exchangeSize:
-            pendingRequestType === "exchange" ? exchangeSize : undefined,
-          exchangeColor:
-            pendingRequestType === "exchange" ? exchangeColor : undefined,
-          exchangeProductId:
-            pendingRequestType === "exchange"
-              ? selectedItem.productId
-              : undefined,
-        },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
+    const response = await axios.post(
+      `http://localhost:5000/api/orders/${selectedItem.orderId}/return`,
+      {
+        itemId: selectedItem._id,
+        type: pendingRequestType,
+        reason: returnReason,
+        exchangeSize: pendingRequestType === "exchange" ? exchangeSize : undefined,
+        exchangeColor: pendingRequestType === "exchange" ? exchangeColor : undefined,
+        exchangeProductId: pendingRequestType === "exchange" ? selectedItem.productId : undefined,
+        returnQuantity: returnQuantity // Send the quantity
+      },
+      {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      }
+    );
 
-      toast.success(
-        `${
-          pendingRequestType === "return" ? "Return" : "Exchange"
-        } request submitted successfully`
-      );
-      fetchOrders();
-      setShowReturnModal(false);
-      setShowExchangeModal(false);
-    } catch (error) {
+    toast.success(
+      `${pendingRequestType === "return" ? "Return" : "Exchange"} request submitted successfully`
+    );
+    fetchOrders();
+    setShowReturnModal(false);
+    setShowExchangeModal(false);
+  } catch (error) {
       if (
         error.response?.data?.message ===
         "Active request already exists for this item"
@@ -969,6 +971,20 @@ const UserOrders = () => {
                 />
               </div>
 
+{/* Add quantity selector */}
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Quantity to Return (Max: {selectedItem.quantity})
+      </label>
+      <input
+        type="number"
+        min="1"
+        max={selectedItem.quantity}
+        value={returnQuantity}
+        onChange={(e) => setReturnQuantity(Math.min(parseInt(e.target.value) || 1, selectedItem.quantity))}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      />
+    </div>
               <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
                 <div className="flex">
                   <div className="flex-shrink-0">
@@ -1005,15 +1021,15 @@ const UserOrders = () => {
         )}
 
         {/* Exchange Modal */}
-        {showExchangeModal && selectedItem && (
+        {/* {showExchangeModal && selectedItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Blur Backdrop */}
+          
             <div
               className="absolute inset-0 bg-gray-500 opacity-75"
               onClick={() => setShowExchangeModal(false)}
             ></div>
 
-            {/* Glass Modal */}
+            
             <div className="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 max-w-lg w-full mx-4">
               <h3 className="text-xl font-bold text-gray-900 mb-4">
                 Request Exchange
@@ -1040,7 +1056,7 @@ const UserOrders = () => {
                 </div>
               </div>
 
-              {/* Color Selection */}
+              
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Select New Color <span className="text-red-500">*</span>
@@ -1075,7 +1091,7 @@ const UserOrders = () => {
                 )}
               </div>
 
-              {/* Size Selection */}
+              
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Select New Size <span className="text-red-500">*</span>
@@ -1110,7 +1126,7 @@ const UserOrders = () => {
                 )}
               </div>
 
-              {/* Reason for Exchange */}
+              
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Reason for Exchange <span className="text-red-500">*</span>
@@ -1124,6 +1140,20 @@ const UserOrders = () => {
                   required
                 />
               </div>
+                
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Quantity to Exchange (Max: {selectedItem.quantity})
+      </label>
+      <input
+        type="number"
+        min="1"
+        max={selectedItem.quantity}
+        value={returnQuantity}
+        onChange={(e) => setReturnQuantity(Math.min(parseInt(e.target.value) || 1, selectedItem.quantity))}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      />
+    </div>
 
               <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
                 <div className="flex">
@@ -1163,7 +1193,224 @@ const UserOrders = () => {
               </div>
             </div>
           </div>
-        )}
+        )} */}
+    {/* Exchange Modal */}
+{showExchangeModal && selectedItem && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    {/* Backdrop */}
+    <div
+     className="absolute inset-0 bg-gray-500 opacity-75"
+      onClick={() => setShowExchangeModal(false)}
+    ></div>
+
+    {/* Modal Container */}
+    <div className="relative bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      {/* Modal Header */}
+      <div className="sticky top-0 bg-white p-6 border-b border-gray-200 rounded-t-xl flex justify-between items-center">
+        <h3 className="text-2xl font-bold text-gray-900">Request Exchange</h3>
+        <button
+          onClick={() => setShowExchangeModal(false)}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Modal Content */}
+      <div className="p-6 space-y-6">
+        {/* Current Item */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h4 className="text-sm font-medium text-gray-500 mb-3">CURRENT ITEM</h4>
+          <div className="flex items-start space-x-4">
+            <img
+              src={selectedItem.image}
+              alt={selectedItem.name}
+              className="w-20 h-20 object-cover rounded-lg"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-lg font-medium text-gray-900 truncate">{selectedItem.name}</p>
+              <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                <div>
+                  <p className="text-gray-500">Color</p>
+                  <p className="font-medium">{selectedItem.color}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Size</p>
+                  <p className="font-medium">{selectedItem.size}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Quantity</p>
+                  <p className="font-medium">{selectedItem.quantity}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Price</p>
+                  <p className="font-medium">${selectedItem.price?.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Exchange Options */}
+        <div className="space-y-6">
+          <h4 className="text-lg font-medium text-gray-900">Exchange Options</h4>
+          
+          {/* Grid Layout for Exchange Options */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Color Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Color <span className="text-red-500">*</span>
+              </label>
+              {availableColors.length > 0 ? (
+                <select
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={exchangeColor}
+                  onChange={(e) => setExchangeColor(e.target.value)}
+                  required
+                >
+                  <option value="">Select color</option>
+                  {availableColors.map((color) => (
+                    <option key={color} value={color}>
+                      {color}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
+                  <div className="flex items-center">
+                    <svg className="h-5 w-5 text-red-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-sm text-red-700">No other colors available</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Size Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Size <span className="text-red-500">*</span>
+              </label>
+              {availableSizes.length > 0 ? (
+                <select
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={exchangeSize}
+                  onChange={(e) => setExchangeSize(e.target.value)}
+                  required
+                >
+                  <option value="">Select size</option>
+                  {availableSizes.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
+                  <div className="flex items-center">
+                    <svg className="h-5 w-5 text-red-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-sm text-red-700">No other sizes available</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Quantity Selection */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Quantity to Exchange <span className="text-gray-500">(Max: {selectedItem.quantity})</span>
+              </label>
+              <div className="flex items-center">
+                <button 
+                  onClick={() => setReturnQuantity(Math.max(1, returnQuantity - 1))}
+                  className="px-3 py-2 border border-gray-300 rounded-l-lg bg-gray-100 hover:bg-gray-200"
+                  disabled={returnQuantity <= 1}
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  max={selectedItem.quantity}
+                  value={returnQuantity}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 1;
+                    setReturnQuantity(Math.min(Math.max(value, 1), selectedItem.quantity));
+                  }}
+                  className="w-16 px-3 py-2 border-t border-b border-gray-300 text-center"
+                />
+                <button 
+                  onClick={() => setReturnQuantity(Math.min(selectedItem.quantity, returnQuantity + 1))}
+                  className="px-3 py-2 border border-gray-300 rounded-r-lg bg-gray-100 hover:bg-gray-200"
+                  disabled={returnQuantity >= selectedItem.quantity}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Reason for Exchange */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Reason for Exchange <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              rows="3"
+              value={returnReason}
+              onChange={(e) => setReturnReason(e.target.value)}
+              placeholder="Please specify why you want to exchange this item..."
+              required
+            />
+          </div>
+        </div>
+
+        {/* Information Notice */}
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+          <div className="flex items-start">
+            <svg className="h-5 w-5 text-blue-400 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-blue-800">Exchange Process</p>
+              <p className="text-sm text-blue-700 mt-1">
+                Your exchange request will be processed within 3-5 business days. Once approved, you'll receive return instructions and tracking for your replacement item.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal Footer */}
+      <div className="sticky bottom-0 bg-white p-6 border-t border-gray-200 rounded-b-xl flex justify-end space-x-3">
+        <button
+          onClick={() => setShowExchangeModal(false)}
+          className="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => handleReturnRequest("exchange")}
+          className={`px-5 py-2.5 rounded-lg font-medium transition-colors ${
+            (availableSizes.length === 0 || availableColors.length === 0)
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+          disabled={availableSizes.length === 0 || availableColors.length === 0}
+        >
+          Submit Exchange Request
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
         {/* Confirmation Modal */}
         {showConfirmationModal && (

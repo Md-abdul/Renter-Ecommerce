@@ -279,7 +279,7 @@ const sendOrderConfirmationEmail = async (orderId) => {
         process.env.STORE_EMAIL || "store@ranter.com"
       }>`,
       to: `${order.userId.name} <${order.userId.email}>`,
-      subject: `Your Ranter Order #${order.orderNumber}`,
+      subject: `Your Ranter Store Order #${order.orderNumber}`,
       html: `
         <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
           <!-- Header -->

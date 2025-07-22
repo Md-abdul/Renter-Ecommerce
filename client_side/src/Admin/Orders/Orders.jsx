@@ -53,7 +53,7 @@ export const Orders = () => {
       }
 
       const response = await axios.get(
-        "https://renter-ecommerce.vercel.app/api/orders/admin",
+        "http://localhost:5000/api/orders/admin",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -80,7 +80,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.get(
-        "https://renter-ecommerce.vercel.app/api/orders/returns",
+        "http://localhost:5000/api/orders/returns",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -112,7 +112,7 @@ export const Orders = () => {
       }
 
       await axios.put(
-        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/status`,
+        `http://localhost:5000/api/orders/${orderId}/status`,
         { status: newStatus },
         {
           headers: {
@@ -135,7 +135,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.put(
-        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}`,
+        `http://localhost:5000/api/orders/${orderId}/return/${itemId}`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -155,7 +155,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       await axios.put(
-        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}/tracking`,
+        `http://localhost:5000/api/orders/${orderId}/return/${itemId}/tracking`,
         { trackingNumber: trackingInput },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -201,7 +201,7 @@ export const Orders = () => {
           <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
             <div style="flex: 1;">
               <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px;">From</h3>
-              <p><strong>Renter</strong></p>
+              <p><strong>Ranter Store</strong></p>
               <p>shop 10 Ground Floor Ghansoli</p>
               <p>Howrah Chowk sector 3 Ambika</p>
               <p>Darshan SocietyThane, Maharashtra,</p>

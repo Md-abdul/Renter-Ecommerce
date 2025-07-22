@@ -291,15 +291,27 @@ orderRoutes.put("/:id/status", verifyToken, async (req, res) => {
   }
 });
 
-// Request return/exchange
 // orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
 //   try {
 //     const { orderId } = req.params;
-//     const { itemId, type, reason, exchangeSize, exchangeColor, exchangeProductId } = req.body;
+//     const {
+//       itemId,
+//       type,
+//       reason,
+//       exchangeSize,
+//       exchangeColor,
+//       exchangeProductId,
+//     } = req.body;
 //     const userId = req.user.userId;
 
-//     if (!type || !reason || (type === "exchange" && (!exchangeSize || !exchangeColor))) {
-//       return res.status(400).json({ message: "Missing required fields for exchange" });
+//     if (!type || !reason) {
+//       return res.status(400).json({ message: "Missing required fields" });
+//     }
+
+//     if (type === "exchange" && (!exchangeSize || !exchangeColor)) {
+//       return res.status(400).json({
+//         message: "For exchanges, both size and color are required",
+//       });
 //     }
 
 //     const order = await OrderModel.findOne({
@@ -328,16 +340,13 @@ orderRoutes.put("/:id/status", verifyToken, async (req, res) => {
 //     }
 
 //     // Check for existing active request
-//     if (
-//       item.returnRequest &&
-//       ["requested", "approved", "processing", "shipped"].includes(item.returnRequest.status)
-//     ) {
-//       return res.status(400).json({
-//         message: "Active request already exists for this item",
-//       });
-//     }
+//     // if (item.returnRequest && item.returnRequest.status !== "rejected") {
+//     //   return res.status(400).json({
+//     //     message: "Active request already exists for this item",
+//     //   });
+//     // }
 
-//     // Create return/exchange request
+//     // Create return request
 //     item.returnRequest = {
 //       type,
 //       reason,
@@ -347,7 +356,7 @@ orderRoutes.put("/:id/status", verifyToken, async (req, res) => {
 //       ...(type === "exchange" && {
 //         exchangeSize,
 //         exchangeColor,
-//         ...(exchangeProductId && { exchangeProductId })
+//         exchangeProductId: exchangeProductId || item.productId,
 //       }),
 //     };
 
@@ -366,8 +375,7 @@ orderRoutes.put("/:id/status", verifyToken, async (req, res) => {
 //   }
 // });
 
-// Request return/exchange
-
+// Update the return request endpoint
 orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -378,6 +386,7 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
       exchangeSize,
       exchangeColor,
       exchangeProductId,
+      returnQuantity, // Add this new field
     } = req.body;
     const userId = req.user.userId;
 
@@ -388,6 +397,13 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
     if (type === "exchange" && (!exchangeSize || !exchangeColor)) {
       return res.status(400).json({
         message: "For exchanges, both size and color are required",
+      });
+    }
+
+    // Validate return quantity
+    if (returnQuantity && isNaN(returnQuantity)) {
+      return res.status(400).json({
+        message: "Invalid return quantity",
       });
     }
 
@@ -416,12 +432,27 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Item not found in order" });
     }
 
+    // Check if requested quantity is valid
+    const requestedQty = returnQuantity
+      ? parseInt(returnQuantity)
+      : item.quantity;
+    if (requestedQty <= 0 || requestedQty > item.quantity) {
+      return res.status(400).json({
+        message: `Invalid quantity. Maximum allowed: ${item.quantity}`,
+      });
+    }
+
     // Check for existing active request
-    // if (item.returnRequest && item.returnRequest.status !== "rejected") {
-    //   return res.status(400).json({
-    //     message: "Active request already exists for this item",
-    //   });
-    // }
+    if (
+      item.returnRequest &&
+      ["requested", "approved", "processing", "shipped"].includes(
+        item.returnRequest.status
+      )
+    ) {
+      return res.status(400).json({
+        message: "Active request already exists for this item",
+      });
+    }
 
     // Create return request
     item.returnRequest = {
@@ -430,6 +461,7 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
       status: "requested",
       requestedAt: new Date(),
       updatedAt: new Date(),
+      requestedQuantity: requestedQty, // Store the requested quantity
       ...(type === "exchange" && {
         exchangeSize,
         exchangeColor,
@@ -521,44 +553,73 @@ orderRoutes.put(
   }
 );
 
-// Get return requests (admin only)
-// Get return requests (admin only)
-// orderRoutes.get("/returns", verifyToken, verifyAdmin, async (req, res) => {
-//   try {
-//     const orders = await OrderModel.find({
-//       "items.returnRequest": { $exists: true, $ne: null },
-//     }).populate("userId", "name email");
+// Update the admin approve/reject endpoint
+orderRoutes.put(
+  "/:orderId/return/:itemId",
+  verifyToken,
+  verifyAdmin,
+  async (req, res) => {
+    try {
+      const { orderId, itemId } = req.params;
+      const { status } = req.body;
 
-//     const returnRequests = orders.flatMap((order) =>
-//       order.items
-//         .filter((item) => item.returnRequest)
-//         .map((item) => ({
-//           orderId: order._id,
-//           orderNumber: `${
-//             item.returnRequest.type === "exchange" ? "Ex" : "Re"
-//           }_${order.orderNumber}`,
-//           customer: order.userId.name,
-//           email: order.userId.email,
-//           itemId: item._id,
-//           productName: item.name,
-//           quantity: item.quantity,
-//           price: item.price,
-//           image: item.image,
-//           type: item.returnRequest.type,
-//           reason: item.returnRequest.reason,
-//           status: item.returnRequest.status,
-//           requestedAt: item.returnRequest.requestedAt,
-//           updatedAt: item.returnRequest.updatedAt,
-//           exchangeSize: item.returnRequest.exchangeSize,
-//           originalOrderNumber: order.orderNumber, // Keep original for reference if needed
-//         }))
-//     );
+      const order = await OrderModel.findById(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
 
-//     res.status(200).json(returnRequests);
-//   } catch (error) {
-//     res.status(500).json({ message: "Server error", error: error.message });
-//   }
-// });
+      const item = order.items.id(itemId);
+      if (!item || !item.returnRequest) {
+        return res
+          .status(404)
+          .json({ message: "Item or return request not found" });
+      }
+
+      const validStatuses = [
+        "approved",
+        "rejected",
+        "processing",
+        "pickuped",
+        "shipped",
+        "delivered",
+        "refund_completed",
+        "completed",
+      ];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      // If approving or completing, restock only the requested quantity
+      if (status === "approved" || status === "completed") {
+        const product = await ProductModal.findById(item.productId);
+        if (product) {
+          const colorObj = product.colors.find((c) => c.name === item.color);
+          if (colorObj) {
+            const sizeObj = colorObj.sizes.find((s) => s.size === item.size);
+            if (sizeObj) {
+              sizeObj.quantity +=
+                item.returnRequest.requestedQuantity || item.quantity;
+              await product.save();
+            }
+          }
+        }
+      }
+
+      item.returnRequest.status = status;
+      item.returnRequest.updatedAt = new Date();
+
+      await order.save();
+
+      res.status(200).json({
+        message: `Return request ${status} successfully`,
+        order,
+      });
+    } catch (error) {
+      console.error("Error updating return request:", error);
+      res.status(500).json({ message: "Server error", error: error.message });
+    }
+  }
+);
 
 // Get return requests (admin only)
 orderRoutes.get("/returns", verifyToken, verifyAdmin, async (req, res) => {
@@ -814,5 +875,40 @@ orderRoutes.get("/:orderId", verifyToken, async (req, res) => {
     });
   }
 });
+
+orderRoutes.get("/returns", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const orders = await OrderModel.find().populate("userId", "name email");
+
+    const returnRequests = [];
+
+    for (const order of orders) {
+      for (const item of order.items) {
+        if (item.returnRequest && item.returnRequest.status) {
+          returnRequests.push({
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            user: order.userId,
+            itemId: item._id,
+            productId: item.productId,
+            productName: item.name,
+            image: item.image,
+            size: item.size,
+            color: item.color,
+            quantity: item.quantity,
+            price: item.price,
+            ...item.returnRequest,
+          });
+        }
+      }
+    }
+
+    return res.status(200).json(returnRequests);
+  } catch (error) {
+    console.error("Error fetching return requests:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 
 module.exports = { orderRoutes };
