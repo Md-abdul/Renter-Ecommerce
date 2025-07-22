@@ -433,7 +433,7 @@ export const Orders = () => {
       requested: ["approved", "rejected"],
       approved: ["processing", "pickuped", "refund_completed", "rejected"],
       processing: ["processing", "pickuped", "refund_completed", "rejected"],
-      pickuped: ["processing", "pickuped", "refund_completed", "rejected"],
+      pickuped: ["processing", "refund_completed", "rejected"],
       refund_completed: ["completed"],
       rejected: [],
       cancelled: [],
