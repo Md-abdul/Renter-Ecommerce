@@ -432,8 +432,8 @@ export const Orders = () => {
     const returnStatusFlow = {
       requested: ["approved", "rejected"],
       approved: ["processing", "pickuped", "refund_completed", "rejected"],
-      processing: ["pickuped", "rejected"],
-      pickuped: ["refund_completed", "rejected"],
+      processing: ["processing", "pickuped", "refund_completed", "rejected"],
+      pickuped: ["processing", "pickuped", "refund_completed", "rejected"],
       refund_completed: ["completed"],
       rejected: [],
       cancelled: [],
@@ -444,8 +444,8 @@ export const Orders = () => {
     const exchangeStatusFlow = {
       requested: ["approved", "rejected"],
       approved: ["processing", "shipped", "delivered", "rejected"],
-      processing: ["shipped", "rejected"],
-      shipped: ["delivered", "rejected"],
+      processing: ["processing", "shipped", "delivered", "rejected"],
+      shipped: ["processing", "shipped", "delivered", "rejected"],
       delivered: ["completed"],
       rejected: [],
       cancelled: [],
