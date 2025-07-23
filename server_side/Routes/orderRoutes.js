@@ -376,6 +376,9 @@ orderRoutes.put("/:id/status", verifyToken, async (req, res) => {
 // });
 
 // Update the return request endpoint
+
+// Admin approve/reject return
+
 orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -386,27 +389,27 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
       exchangeSize,
       exchangeColor,
       exchangeProductId,
-      returnQuantity, // Add this new field
+      requestedQuantity, // This handles both return and exchange quantities
     } = req.body;
     const userId = req.user.userId;
 
-    if (!type || !reason) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
+    // ... existing validation ...
 
-    if (type === "exchange" && (!exchangeSize || !exchangeColor)) {
+    // Validate return/exchange quantity
+    const requestedQty = requestedQuantity ? parseInt(requestedQuantity) : 1;
+    if (isNaN(requestedQty)) {
       return res.status(400).json({
-        message: "For exchanges, both size and color are required",
+        message: "Invalid quantity format",
       });
     }
 
-    // Validate return quantity
-    if (returnQuantity && isNaN(returnQuantity)) {
+    if (requestedQty <= 0) {
       return res.status(400).json({
-        message: "Invalid return quantity",
+        message: "Quantity must be at least 1",
       });
     }
 
+    // Get the order and item
     const order = await OrderModel.findOne({
       _id: orderId,
       userId,
@@ -416,14 +419,7 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
 
     if (!order) {
       return res.status(404).json({
-        message: "Order not found or not eligible for return",
-      });
-    }
-
-    // Check return window
-    if (new Date() > order.returnWindow) {
-      return res.status(400).json({
-        message: "Return window has expired (7 days from delivery)",
+        message: "Order not found or not eligible for return/exchange",
       });
     }
 
@@ -433,12 +429,9 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
     }
 
     // Check if requested quantity is valid
-    const requestedQty = returnQuantity
-      ? parseInt(returnQuantity)
-      : item.quantity;
-    if (requestedQty <= 0 || requestedQty > item.quantity) {
+    if (requestedQty > item.quantity) {
       return res.status(400).json({
-        message: `Invalid quantity. Maximum allowed: ${item.quantity}`,
+        message: `Requested quantity (${requestedQty}) exceeds ordered quantity (${item.quantity})`,
       });
     }
 
@@ -451,10 +444,11 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
     ) {
       return res.status(400).json({
         message: "Active request already exists for this item",
+        existingRequest: item.returnRequest,
       });
     }
 
-    // Create return request
+    // Create return/exchange request with quantity
     item.returnRequest = {
       type,
       reason,
@@ -472,11 +466,13 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
     await order.save();
 
     res.status(200).json({
-      message: "Return/exchange request submitted successfully",
+      message: `${
+        type === "return" ? "Return" : "Exchange"
+      } request submitted successfully`,
       order,
     });
   } catch (error) {
-    console.error("Error creating return request:", error);
+    console.error("Error creating request:", error);
     res.status(500).json({
       message: "Server error",
       error: error.message,
@@ -484,7 +480,6 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
   }
 });
 
-// Admin approve/reject return
 orderRoutes.put(
   "/:orderId/return/:itemId",
   verifyToken,
@@ -492,7 +487,7 @@ orderRoutes.put(
   async (req, res) => {
     try {
       const { orderId, itemId } = req.params;
-      const { status } = req.body;
+      const { status, trackingNumber } = req.body;
 
       const order = await OrderModel.findById(orderId);
       if (!order) {
@@ -520,39 +515,66 @@ orderRoutes.put(
         return res.status(400).json({ message: "Invalid status" });
       }
 
-      // If approving or completing, restock
+      // If approving or completing, handle quantities
       if (status === "approved" || status === "completed") {
+        // Restock the returned items (using requested quantity)
         const product = await ProductModal.findById(item.productId);
         if (product) {
-          // Find the color that matches the item's color
           const colorObj = product.colors.find((c) => c.name === item.color);
           if (colorObj) {
-            // Find the size within the color
             const sizeObj = colorObj.sizes.find((s) => s.size === item.size);
             if (sizeObj) {
-              sizeObj.quantity += item.quantity;
+              sizeObj.quantity +=
+                item.returnRequest.requestedQuantity || item.quantity;
               await product.save();
+            }
+          }
+        }
+
+        // For exchanges, reduce stock of the new item
+        if (item.returnRequest.type === "exchange" && status === "completed") {
+          const exchangeProduct = await ProductModal.findById(
+            item.returnRequest.exchangeProductId || item.productId
+          );
+          if (exchangeProduct) {
+            const exchangeColorObj = exchangeProduct.colors.find(
+              (c) => c.name === item.returnRequest.exchangeColor
+            );
+            if (exchangeColorObj) {
+              const exchangeSizeObj = exchangeColorObj.sizes.find(
+                (s) => s.size === item.returnRequest.exchangeSize
+              );
+              if (exchangeSizeObj) {
+                exchangeSizeObj.quantity -=
+                  item.returnRequest.requestedQuantity || item.quantity;
+                await exchangeProduct.save();
+              }
             }
           }
         }
       }
 
+      // Update the request status
       item.returnRequest.status = status;
       item.returnRequest.updatedAt = new Date();
+
+      // Add tracking number if provided
+      if (trackingNumber) {
+        item.returnRequest.trackingNumber = trackingNumber;
+      }
 
       await order.save();
 
       res.status(200).json({
-        message: `Return request ${status} successfully`,
+        message: `Request ${status} successfully`,
         order,
       });
     } catch (error) {
-      console.error("Error updating return request:", error);
+      console.error("Error updating request:", error);
       res.status(500).json({ message: "Server error", error: error.message });
     }
   }
 );
-
 // Update the admin approve/reject endpoint
 orderRoutes.put(
   "/:orderId/return/:itemId",
@@ -621,42 +643,69 @@ orderRoutes.put(
   }
 );
 
-// Get return requests (admin only)
 orderRoutes.get("/returns", verifyToken, verifyAdmin, async (req, res) => {
   try {
     const orders = await OrderModel.find({
-      "items.returnRequest": { $exists: true, $ne: null },
+      "items.returnRequest.status": {
+        $in: [
+          "requested",
+          "approved",
+          "processing",
+          "pickuped",
+          "shipped",
+          "delivered",
+          "refund_completed",
+          "completed", // <-- ADD THIS
+        ],
+      },
     }).populate("userId", "name email");
 
-    const returnRequests = orders.flatMap((order) =>
-      order.items
-        .filter((item) => item.returnRequest && item.returnRequest.type)
-        .map((item) => ({
-          orderId: order._id,
-          orderNumber:
-            `${item.returnRequest.type === "exchange" ? "Ex" : "Re"}_${
-              order.orderNumber
-            }` || "N/A",
-          customer: order.userId?.name || "N/A",
-          email: order.userId?.email || "N/A",
-          itemId: item._id,
-          productName: item.name || "N/A",
-          quantity: item.quantity || 0,
-          price: item.price || 0,
-          image: item.image || "/default-product.png",
-          type: item.returnRequest.type,
-          reason: item.returnRequest.reason || "No reason provided",
-          status: item.returnRequest.status || "requested",
-          requestedAt: item.returnRequest.requestedAt || new Date(),
-          updatedAt: item.returnRequest.updatedAt || new Date(),
-          exchangeSize: item.returnRequest.exchangeSize || "N/A",
-          exchangeColor: item.returnRequest.exchangeColor || "N/A",
-        }))
-    );
+    const returnRequests = [];
 
-    res.status(200).json(returnRequests);
+    orders.forEach((order) => {
+      order.items.forEach((item) => {
+        if (
+          item.returnRequest &&
+          item.returnRequest.status &&
+          item.returnRequest.status !== "null"
+        ) {
+          returnRequests.push({
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            itemId: item._id,
+            productId: item.productId,
+            name: item.name,
+            image: item.image,
+            size: item.size,
+            color: item.color,
+            quantity: item.quantity,
+            price: item.price,
+            user: order.userId,
+            type: item.returnRequest.type,
+            status: item.returnRequest.status,
+            reason: item.returnRequest.reason,
+            requestedQuantity: item.returnRequest.requestedQuantity,
+            requestedAt: item.returnRequest.requestedAt,
+            exchangeSize: item.returnRequest.exchangeSize,
+            exchangeColor: item.returnRequest.exchangeColor,
+            exchangeProductId: item.returnRequest.exchangeProductId,
+            trackingNumber: item.returnRequest.trackingNumber || "",
+            paymentDetails: item.returnRequest.paymentDetails || null,
+            paymentDetailsProvided:
+              item.returnRequest.paymentDetailsProvided || false,
+            paymentDetailsProvidedAt:
+              item.returnRequest.paymentDetailsProvidedAt || null,
+          });
+        }
+      });
+    });
+
+    return res.status(200).json(returnRequests);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error fetching return requests:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 });
 // Add this route to orderRoutes.js
@@ -910,5 +959,128 @@ orderRoutes.get("/returns", verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
+// Save payment details for a return/exchange
+orderRoutes.post(
+  "/:orderId/return/:itemId/payment-details",
+  verifyToken,
+  async (req, res) => {
+    try {
+      const { orderId, itemId } = req.params;
+      const { bankAccount, upiId } = req.body;
+      const userId = req.user.userId;
 
+      const order = await OrderModel.findOne({ _id: orderId, userId });
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Find the item by its _id
+      const item = order.items.find((i) => i._id.toString() === itemId);
+      console.log("orderId:", orderId, "itemId:", itemId);
+      console.log("Found item:", item);
+      if (!item || !item.returnRequest) {
+        return res.status(400).json({
+          message: "Invalid selection. Please select a return item again.",
+        });
+      }
+
+      if (item.returnRequest.status !== "approved") {
+        return res.status(400).json({
+          message:
+            "Return/exchange must be approved before adding payment details",
+        });
+      }
+
+      // Save payment details
+      item.returnRequest.paymentDetails = {
+        bankAccount: bankAccount || null,
+        upiId: upiId || null,
+      };
+      item.returnRequest.paymentDetailsProvided = true;
+      item.returnRequest.paymentDetailsProvidedAt = new Date();
+
+      await order.save();
+
+      res
+        .status(200)
+        .json({ message: "Payment details submitted successfully" });
+    } catch (error) {
+      console.error("Error submitting payment details:", error);
+      res.status(500).json({ message: "Server error", error: error.message });
+    }
+  }
+);
+
+// Admin refund processing route
+orderRoutes.post(
+  "/:orderId/return/:itemId/process-refund",
+  verifyToken,
+  verifyAdmin,
+  async (req, res) => {
+    try {
+      const { orderId, itemId } = req.params;
+      const { refundAmount, refundMethod } = req.body;
+
+      // Validate input
+      if (!refundAmount || isNaN(refundAmount) || !refundMethod) {
+        return res
+          .status(400)
+          .json({ message: "Valid refund amount and method are required" });
+      }
+
+      const order = await OrderModel.findById(orderId).populate("userId");
+      if (!order) return res.status(404).json({ message: "Order not found" });
+
+      const item = order.items.id(itemId);
+      if (!item || !item.returnRequest) {
+        return res
+          .status(404)
+          .json({ message: "Item or return request not found" });
+      }
+
+      if (item.returnRequest.status !== "approved") {
+        return res.status(400).json({
+          message: "Return must be approved before processing refund",
+        });
+      }
+
+      if (!item.returnRequest.paymentDetailsProvided) {
+        return res
+          .status(400)
+          .json({ message: "User has not provided payment details" });
+      }
+
+      // Update return status
+      item.returnRequest.status = "refund_processing";
+      item.returnRequest.refundAmount = refundAmount;
+      item.returnRequest.refundMethod = refundMethod;
+      item.returnRequest.refundInitiatedAt = new Date();
+      await order.save();
+
+      // Here you would typically integrate with your payment gateway to process the refund
+      // For now, we'll just simulate it
+
+      // Simulate processing delay
+      setTimeout(async () => {
+        try {
+          item.returnRequest.status = "refund_completed";
+          item.returnRequest.refundCompletedAt = new Date();
+          await order.save();
+
+          // In a real implementation, you would send a notification to the user
+        } catch (error) {
+          console.error("Error completing refund:", error);
+        }
+      }, 5000);
+
+      res.status(200).json({
+        message: "Refund processing initiated",
+        order,
+      });
+    } catch (error) {
+      console.error("Error processing refund:", error);
+      res.status(500).json({ message: "Server error", error: error.message });
+    }
+  }
+);
 module.exports = { orderRoutes };

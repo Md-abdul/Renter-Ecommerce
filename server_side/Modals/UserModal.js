@@ -35,6 +35,7 @@ const orderItemSchema = new mongoose.Schema({
       ],
       default: null,
     },
+    requestedQuantity: { type: Number, default: null },
     requestedAt: Date,
     updatedAt: Date,
     exchangeSize: String,
@@ -44,6 +45,18 @@ const orderItemSchema = new mongoose.Schema({
       ref: "product",
     },
     trackingNumber: String,
+    // ✅ ADD these fields:
+    paymentDetails: {
+      bankAccount: {
+        accountNumber: String,
+        accountName: String,
+        ifscCode: String,
+        bankName: String,
+      },
+      upiId: String,
+    },
+    paymentDetailsProvided: { type: Boolean, default: false },
+    paymentDetailsProvidedAt: Date,
   },
 });
 
@@ -120,6 +133,7 @@ const orderSchema = new mongoose.Schema(
         return this.status === "delivered";
       },
     },
+
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },

@@ -38,6 +38,7 @@ export const Orders = () => {
   const [editingTracking, setEditingTracking] = useState(null);
   const [trackingInput, setTrackingInput] = useState("");
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const [viewingBankDetails, setViewingBankDetails] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -53,7 +54,7 @@ export const Orders = () => {
       }
 
       const response = await axios.get(
-        "http://localhost:5000/api/orders/admin",
+        "https://renter-ecommerce.vercel.app/api/orders/admin",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -80,7 +81,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.get(
-        "http://localhost:5000/api/orders/returns",
+        "https://renter-ecommerce.vercel.app/api/returns",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -112,7 +113,7 @@ export const Orders = () => {
       }
 
       await axios.put(
-        `http://localhost:5000/api/orders/${orderId}/status`,
+        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/status`,
         { status: newStatus },
         {
           headers: {
@@ -135,7 +136,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.put(
-        `http://localhost:5000/api/orders/${orderId}/return/${itemId}`,
+        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -155,7 +156,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       await axios.put(
-        `http://localhost:5000/api/orders/${orderId}/return/${itemId}/tracking`,
+        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}/tracking`,
         { trackingNumber: trackingInput },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -479,8 +480,145 @@ export const Orders = () => {
     return "N/A";
   };
 
+  const BankDetailsModal = ({ request, onClose }) => {
+    if (!request.paymentDetails) {
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Payment Details
+              </h3>
+              <button
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FiX className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="text-center py-8">
+              <FiCreditCard className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-gray-600">No payment details provided yet</p>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Refund Payment Details
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <FiX className="h-6 w-6" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {request.paymentDetails?.upiId &&
+            (!request.paymentDetails.bankAccount ||
+              Object.keys(request.paymentDetails.bankAccount).length === 0) ? (
+              <div className="bg-blue-50 p-4 rounded-md">
+                <h4 className="font-medium text-blue-800 mb-2 flex items-center">
+                  <FiCreditCard className="mr-2" />
+                  UPI Details
+                </h4>
+                <div className="bg-white p-3 rounded border border-blue-100">
+                  <p className="font-mono text-blue-900 break-all">
+                    {request.paymentDetails.upiId}
+                  </p>
+                </div>
+              </div>
+            ) : request.paymentDetails?.bankAccount &&
+              Object.keys(request.paymentDetails.bankAccount).length > 0 &&
+              !request.paymentDetails?.upiId ? (
+              <div className="bg-green-50 p-4 rounded-md">
+                <h4 className="font-medium text-green-800 mb-2 flex items-center">
+                  <FiCreditCard className="mr-2" />
+                  Bank Account Details
+                </h4>
+                <div className="bg-white p-3 rounded border border-green-100 space-y-2">
+                  {request.paymentDetails.bankAccount.accountName && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Account Name:</span>
+                      <span className="font-medium">
+                        {request.paymentDetails.bankAccount.accountName}
+                      </span>
+                    </div>
+                  )}
+                  {request.paymentDetails.bankAccount.accountNumber && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Account Number:</span>
+                      <span className="font-mono">
+                        {request.paymentDetails.bankAccount.accountNumber}
+                      </span>
+                    </div>
+                  )}
+                  {request.paymentDetails.bankAccount.bankName && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Bank Name:</span>
+                      <span className="font-medium">
+                        {request.paymentDetails.bankAccount.bankName}
+                      </span>
+                    </div>
+                  )}
+                  {request.paymentDetails.bankAccount.ifscCode && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">IFSC Code:</span>
+                      <span className="font-mono">
+                        {request.paymentDetails.bankAccount.ifscCode}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-yellow-50 p-4 rounded-md text-sm text-gray-600 italic border border-yellow-100">
+                <FiCreditCard className="inline mr-2" />
+                No payment details available
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const handleViewBankDetails = (request) => {
+    setViewingBankDetails(request);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 min-h-screen">
+      {viewingBankDetails && (
+        <BankDetailsModal
+          request={viewingBankDetails}
+          onClose={() => setViewingBankDetails(null)}
+        />
+      )}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -626,12 +764,29 @@ export const Orders = () => {
                               <div className="text-sm font-medium text-gray-900">
                                 Order #{request.orderNumber}
                               </div>
-                              {/* <div className="text-xs text-gray-500 mt-1">
-                                {formatDate(request.requestedAt)}
-                              </div> */}
+
                               <div className="text-xs text-gray-500 mt-1">
-                                Customer: {request.customer}
+                                Customer: {request.user.name}
                               </div>
+                              {request.type === "return" && (
+                                <button
+                                  onClick={() => handleViewBankDetails(request)}
+                                  className={`px-3 py-1 rounded-md text-sm flex items-center mt-2 ${
+                                    request.paymentDetails
+                                      ? "bg-purple-50 text-purple-700 hover:bg-purple-100"
+                                      : "bg-gray-50 text-gray-500 cursor-not-allowed"
+                                  }`}
+                                  disabled={!request.paymentDetails}
+                                  title={
+                                    request.paymentDetails
+                                      ? "View bank details for refund"
+                                      : "No bank details provided"
+                                  }
+                                >
+                                  <FiCreditCard className="mr-1" />
+                                  View Bank Details
+                                </button>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -663,6 +818,22 @@ export const Orders = () => {
                               </span>
                             </div>
 
+                            {request.type === "return" && (
+                              <div className="bg-blue-50 p-2 rounded-md">
+                                <div className="text-xs font-medium text-blue-800 mb-1">
+                                  Return Preferences:
+                                </div>
+                                <div className="text-xs text-blue-700">
+                                  {/* {request.exchangeSize && ( */}
+                                  <div>
+                                    • Product Quntity:{" "}
+                                    {request.requestedQuantity}
+                                  </div>
+                                  {/* )} */}
+                                </div>
+                              </div>
+                            )}
+
                             {request.type === "exchange" && (
                               <div className="bg-blue-50 p-2 rounded-md">
                                 <div className="text-xs font-medium text-blue-800 mb-1">
@@ -674,6 +845,12 @@ export const Orders = () => {
                                   )}
                                   {request.exchangeSize && (
                                     <div>• Size: {request.exchangeSize}</div>
+                                  )}
+                                  {request.exchangeSize && (
+                                    <div>
+                                      • Product Quntity:{" "}
+                                      {request.requestedQuantity}
+                                    </div>
                                   )}
                                 </div>
                               </div>
@@ -765,9 +942,12 @@ export const Orders = () => {
                             </div>
                           )}
 
-                          {["approved", "processing", "shipped"].includes(
-                            request.status
-                          ) && (
+                          {[
+                            "approved",
+                            "processing",
+                            "shipped",
+                            "pickuped",
+                          ].includes(request.status) && (
                             <div className="flex flex-col gap-2">
                               <select
                                 value={request.status}
