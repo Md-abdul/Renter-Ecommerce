@@ -81,7 +81,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.get(
-        "https://renter-ecommerce.vercel.app/api/returns",
+        "https://renter-ecommerce.vercel.app/api/orders/returns",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
