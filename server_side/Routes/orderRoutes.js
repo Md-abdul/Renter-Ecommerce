@@ -219,7 +219,7 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
 orderRoutes.get("/user", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const orders = await OrderModel.find({ userId }).sort({ createdAt: -1 });
+    const orders = await OrderModel.find({ userId, orderNumber: { $not: /_COPY$/ }, }).sort({ createdAt: -1 });
     res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
@@ -1083,4 +1083,51 @@ orderRoutes.post(
     }
   }
 );
+
+// POST /api/orders/:orderId/copy/:itemId
+orderRoutes.post("/:orderId/copy/:itemId", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { orderId, itemId } = req.params;
+    const originalOrder = await OrderModel.findById(orderId).populate("userId");
+
+    if (!originalOrder) {
+      return res.status(404).json({ message: "Original order not found" });
+    }
+
+    const item = originalOrder.items.id(itemId);
+    if (!item || !item.returnRequest || !["exchange", "return"].includes(item.returnRequest.type)) {
+      return res.status(400).json({ message: "Invalid return/exchange item" });
+    }
+
+    const exchangeData = item.returnRequest;
+    const copiedItem = {
+      productId: exchangeData.exchangeProductId || item.productId,
+      quantity: exchangeData.requestedQuantity || item.quantity,
+      price: item.price,
+      name: item.name,
+      image: item.image,
+      size: exchangeData.exchangeSize || item.size,
+      color: exchangeData.exchangeColor || item.color,
+    };
+
+    const copiedOrder = new OrderModel({
+      userId: originalOrder.userId,
+      items: [copiedItem],
+      totalAmount: copiedItem.price * copiedItem.quantity,
+      shippingAddress: originalOrder.shippingAddress,
+      paymentMethod: originalOrder.paymentMethod,
+      status: "processing",
+      orderNumber: `EX#${originalOrder.orderNumber}_COPY`,
+      canReturn: false,
+      returnWindow: null,
+    });
+
+    await copiedOrder.save();
+    res.status(201).json({ message: "Exchange copy order created", order: copiedOrder });
+  } catch (error) {
+    console.error("Error creating copy order:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 module.exports = { orderRoutes };

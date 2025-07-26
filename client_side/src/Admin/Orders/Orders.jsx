@@ -764,14 +764,13 @@ export const Orders = () => {
                               <div className="text-sm font-medium text-gray-900">
                                 {/* Order #{request.orderNumber} */}
                                 <span className="font-medium text-sm text-gray-700">
-                                Order ID:{" "}
-                                {request.type === "return"
-                                  ? `RE#${request.orderNumber}`
-                                  : request.type === "exchange"
-                                  ? `EX#${request.orderNumber}`
-                                  : `#${request.orderNumber}`}
-                              </span>
-
+                                  Order ID:{" "}
+                                  {request.type === "return"
+                                    ? `RE#${request.orderNumber}`
+                                    : request.type === "exchange"
+                                    ? `EX#${request.orderNumber}`
+                                    : `#${request.orderNumber}`}
+                                </span>
                               </div>
 
                               <div className="text-xs text-gray-500 mt-1">
@@ -904,6 +903,38 @@ export const Orders = () => {
                                 </button>
                               </div>
                             )}
+
+                            {["approved", "delivered", "completed"].includes(
+                              request.status
+                            ) &&
+                              request.type === "exchange" && (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const token =
+                                        localStorage.getItem("adminToken");
+                                      await axios.post(
+                                        `https://renter-ecommerce.vercel.app/api/orders/${request.orderId}/copy/${request.itemId}`,
+                                        {},
+                                        {
+                                          headers: {
+                                            Authorization: `Bearer ${token}`,
+                                          },
+                                        }
+                                      );
+                                      toast.success("Copy order created!");
+                                      fetchOrders(); // Refresh
+                                    } catch (err) {
+                                      toast.error(
+                                        "Failed to create copy order"
+                                      );
+                                    }
+                                  }}
+                                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm"
+                                >
+                                  Copy Order
+                                </button>
+                              )}
                           </div>
                         </td>
                         <td className="px-6 py-4">
