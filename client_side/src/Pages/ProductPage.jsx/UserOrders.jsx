@@ -342,13 +342,6 @@ const UserOrders = () => {
         paymentData = { bankAccount: bankDetails };
       }
 
-      // ✅ Log API details
-      console.log("Submitting payment details...");
-      console.log("Order ID:", selectedItem.orderId);
-      console.log("Item ID:", selectedItem._id);
-      console.log("Payment Method:", paymentMethod);
-      console.log("Payment Data:", paymentData);
-
       const response = await axios.post(
         `https://renter-ecommerce.vercel.app/api/orders/${selectedItem.orderId}/return/${selectedItem._id}/payment-details`,
         paymentData,
