@@ -1085,6 +1085,51 @@ orderRoutes.post(
 );
 
 // POST /api/orders/:orderId/copy/:itemId
+// orderRoutes.post("/:orderId/copy/:itemId", verifyToken, verifyAdmin, async (req, res) => {
+//   try {
+//     const { orderId, itemId } = req.params;
+//     const originalOrder = await OrderModel.findById(orderId).populate("userId");
+
+//     if (!originalOrder) {
+//       return res.status(404).json({ message: "Original order not found" });
+//     }
+
+//     const item = originalOrder.items.id(itemId);
+//     if (!item || !item.returnRequest || !["exchange", "return"].includes(item.returnRequest.type)) {
+//       return res.status(400).json({ message: "Invalid return/exchange item" });
+//     }
+
+//     const exchangeData = item.returnRequest;
+//     const copiedItem = {
+//       productId: exchangeData.exchangeProductId || item.productId,
+//       quantity: exchangeData.requestedQuantity || item.quantity,
+//       price: item.price,
+//       name: item.name,
+//       image: item.image,
+//       size: exchangeData.exchangeSize || item.size,
+//       color: exchangeData.exchangeColor || item.color,
+//     };
+
+//     const copiedOrder = new OrderModel({
+//       userId: originalOrder.userId,
+//       items: [copiedItem],
+//       totalAmount: copiedItem.price * copiedItem.quantity,
+//       shippingAddress: originalOrder.shippingAddress,
+//       paymentMethod: originalOrder.paymentMethod,
+//       status: "processing",
+//       orderNumber: `EX#${originalOrder.orderNumber}_COPY`,
+//       canReturn: false,
+//       returnWindow: null,
+//     });
+
+//     await copiedOrder.save();
+//     res.status(201).json({ message: "Exchange copy order created", order: copiedOrder });
+//   } catch (error) {
+//     console.error("Error creating copy order:", error);
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// });
+
 orderRoutes.post("/:orderId/copy/:itemId", verifyToken, verifyAdmin, async (req, res) => {
   try {
     const { orderId, itemId } = req.params;
@@ -1100,14 +1145,16 @@ orderRoutes.post("/:orderId/copy/:itemId", verifyToken, verifyAdmin, async (req,
     }
 
     const exchangeData = item.returnRequest;
+
+    const isExchange = exchangeData.type === "exchange";
     const copiedItem = {
-      productId: exchangeData.exchangeProductId || item.productId,
+      productId: isExchange ? (exchangeData.exchangeProductId || item.productId) : item.productId,
       quantity: exchangeData.requestedQuantity || item.quantity,
       price: item.price,
       name: item.name,
       image: item.image,
-      size: exchangeData.exchangeSize || item.size,
-      color: exchangeData.exchangeColor || item.color,
+      size: isExchange ? (exchangeData.exchangeSize || item.size) : item.size,
+      color: isExchange ? (exchangeData.exchangeColor || item.color) : item.color,
     };
 
     const copiedOrder = new OrderModel({
@@ -1117,17 +1164,18 @@ orderRoutes.post("/:orderId/copy/:itemId", verifyToken, verifyAdmin, async (req,
       shippingAddress: originalOrder.shippingAddress,
       paymentMethod: originalOrder.paymentMethod,
       status: "processing",
-      orderNumber: `EX#${originalOrder.orderNumber}_COPY`,
+      orderNumber: `${isExchange ? "EX" : "RE"}#${originalOrder.orderNumber}_COPY`,
       canReturn: false,
       returnWindow: null,
     });
 
     await copiedOrder.save();
-    res.status(201).json({ message: "Exchange copy order created", order: copiedOrder });
+    res.status(201).json({ message: `${exchangeData.type} copy order created`, order: copiedOrder });
   } catch (error) {
     console.error("Error creating copy order:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
+
 
 module.exports = { orderRoutes };

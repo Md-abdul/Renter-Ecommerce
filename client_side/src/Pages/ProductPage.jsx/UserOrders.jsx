@@ -168,10 +168,11 @@ const UserOrders = () => {
       return;
     }
 
-    if (type === "exchange" && (!exchangeSize || !exchangeColor)) {
-      toast.error("Please select both color and size for exchange");
-      return;
-    }
+   if (type === "exchange" && !exchangeSize && !exchangeColor) {
+  toast.error("Please select at least color or size for exchange");
+  return;
+}
+
 
     setPendingRequestType(type);
     setShowConfirmationModal(true);
@@ -311,7 +312,7 @@ const UserOrders = () => {
   };
 
   const submitPaymentDetails = async () => {
-    alert('skjflk')
+    // alert('skjflk')
     try {
       if (!selectedItem || !selectedItem.orderId || !selectedItem._id) {
         toast.error("Invalid order or item selection");
@@ -1129,8 +1130,9 @@ const UserOrders = () => {
                     {/* Color Selection */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        New Color <span className="text-red-500">*</span>
+                        New Color <span className="text-gray-400">(optional)</span>
                       </label>
+
                       {availableColors.length > 0 ? (
                         <select
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -1172,8 +1174,9 @@ const UserOrders = () => {
                     {/* Size Selection */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        New Size <span className="text-red-500">*</span>
+                        New Size <span className="text-gray-400">(optional)</span>
                       </label>
+
                       {availableSizes.length > 0 ? (
                         <select
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -1333,13 +1336,13 @@ const UserOrders = () => {
                 <button
                   onClick={() => handleReturnRequest("exchange")}
                   className={`px-5 py-2.5 rounded-lg font-medium transition-colors ${
-                    availableSizes.length === 0 || availableColors.length === 0
+                    availableSizes.length === 0 && availableColors.length === 0
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                       : "bg-blue-600 text-white hover:bg-blue-700"
                   }`}
-                  disabled={
-                    availableSizes.length === 0 || availableColors.length === 0
-                  }
+                  // disabled={
+                  //   availableSizes.length === 0 || availableColors.length === 0
+                  // }
                 >
                   Submit Exchange Request
                 </button>

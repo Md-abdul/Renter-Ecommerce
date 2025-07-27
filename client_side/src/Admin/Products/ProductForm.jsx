@@ -585,6 +585,7 @@ const ProductForm = ({
                                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
                                 required
                               >
+                                <option value="">-- Select size --</option>
                                 {getSizeOptions().map((option) => (
                                   <option key={option} value={option}>
                                     {option}
