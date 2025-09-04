@@ -752,7 +752,7 @@ export const Orders = () => {
                       rejected: "bg-red-100 text-red-800",
                       cancelled: "bg-red-100 text-red-800",
                     };
-
+// order === splice  => RE / Ex order === Re 
                     return (
                       <tr key={requestKey} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
@@ -1306,10 +1306,17 @@ export const Orders = () => {
                             </div>
 
                             {/* Shipping Address */}
-                            <h4 className="font-semibold text-gray-900 mt-6 mb-3 flex items-center">
+                            {/* <h4 className="font-semibold text-gray-900 mt-6 mb-3 flex items-center">
                               <FiMapPin className="mr-2" />
                               Shipping Address
+                            </h4> */}
+                            <h4 className="font-semibold text-gray-900 mt-6 mb-3 flex items-center">
+                              <FiMapPin className="mr-2" />
+                              {order.orderNumber?.includes("RE") || order.orderNumber?.includes("EX")
+                                ? "Pickup Address"
+                                : "Shipping Address"}
                             </h4>
+
                             <div className="bg-gray-50 rounded-lg p-4 space-y-1">
                               {order?.shippingAddress ? (
                                 <>

@@ -53,6 +53,7 @@ const CheckoutPage = () => {
     name: "",
     address: "",
     city: "",
+    state: "",  
     zipCode: "",
     phoneNumber: "",
     alternatePhone: "",
@@ -103,6 +104,7 @@ const CheckoutPage = () => {
             name: user.name || "",
             address: user.address?.street || "",
             city: user.address?.city || "",
+            state: user.address?.state || "",
             zipCode: user.address?.zipCode || "",
             phoneNumber: user.phoneNumber || "",
             alternatePhone: user.address?.alternatePhone || "",
@@ -225,6 +227,7 @@ const CheckoutPage = () => {
       name: userProfile.name || "",
       address: userProfile.address?.street || "",
       city: userProfile.address?.city || "",
+      state: user.address?.state || "",
       zipCode: userProfile.address?.zipCode || "",
       phoneNumber: userProfile.phoneNumber || "",
       alternatePhone: userProfile.address?.alternatePhone || "",
@@ -256,7 +259,7 @@ const CheckoutPage = () => {
           street: formData.address,
           city: formData.city,
           zipCode: formData.zipCode,
-          state: "", // Add state if you have it
+          state: formData.state, // Add state if you have it
           alternatePhone: formData.alternatePhone || "",
           addressType: "home", // Default or from form
         },
@@ -418,7 +421,7 @@ const CheckoutPage = () => {
                     </div>
                   )}
                 </div>
-                {useProfileAddress && (
+                {/* {useProfileAddress && (
                   <div className="mt-2 text-sm text-gray-600">
                     <p>Name: {userProfile.name}</p>
                     <p>Address: {userProfile.address?.street}</p>
@@ -431,7 +434,23 @@ const CheckoutPage = () => {
                       </p>
                     )}
                   </div>
-                )}
+                )} */}
+                {useProfileAddress && (
+  <div className="mt-2 text-sm text-gray-600">
+    <p>Name: {userProfile.name}</p>
+    <p>Address: {userProfile.address?.street}</p>
+    <p>City: {userProfile.address?.city}</p>
+    <p>State: {userProfile.address?.state}</p> {/* ← Add this line */}
+    <p>Zip Code: {userProfile.address?.zipCode}</p>
+    <p>Phone: {userProfile.phoneNumber}</p>
+    {userProfile.address?.alternatePhone && (
+      <p>
+        Alternate Phone: {userProfile.address.alternatePhone}
+      </p>
+    )}
+  </div>
+)}
+
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -477,6 +496,20 @@ const CheckoutPage = () => {
                     placeholder="New York"
                   />
                 </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700 mb-2 font-medium">
+                    State
+                  </label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all shadow-sm"
+                    required
+                  />
+                </div>
+
                 <div className="mb-4">
                   <label className="block text-gray-700 mb-2 font-medium">
                     Zip Code

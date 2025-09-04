@@ -25,6 +25,7 @@ const ProductList = () => {
       setIsLoading(true);
       const response = await fetch(
         "https://renter-ecommerce.vercel.app/api/products"
+        // "http://localhost:5000/api/products"
       );
       const data = await response.json();
       setProducts(data);

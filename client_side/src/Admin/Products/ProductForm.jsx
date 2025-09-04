@@ -15,6 +15,10 @@ const ProductForm = ({
     category: "mens",
     wearCategory: "top",
     sku: "",
+    packageWeight: 0, // Add these new fields
+    packageLength: 0,
+    packageBreadth: 0,
+    packageHeight: 0,
     discount: 0,
     colors: [
       {
@@ -76,6 +80,10 @@ const ProductForm = ({
         category: product.category || "mens",
         wearCategory: product.wearCategory || "top",
         sku: product.sku || "",
+        packageWeight: product.packageWeight || 0,
+        packageLength: product.packageLength || 0,
+        packageBreadth: product.packageBreadth || 0,
+        packageHeight: product.packageHeight || 0,
         discount: product.discount || 0,
         colors: product.colors
           ? product.colors.map((color) => ({
@@ -220,6 +228,8 @@ const ProductForm = ({
       const url = product
         ? `https://renter-ecommerce.vercel.app/api/products/${product._id}`
         : "https://renter-ecommerce.vercel.app/api/products";
+        // ? `http://localhost:5000/api/products/${product._id}`
+        // : "http://localhost:5000/api/products";
 
       const response = await fetch(url, {
         method,
@@ -338,6 +348,7 @@ const ProductForm = ({
                     max="100"
                   />
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
                     Category*
@@ -368,6 +379,66 @@ const ProductForm = ({
                     <option value="top">Top</option>
                     <option value="bottom">Bottom</option>
                   </select>
+                </div>
+              </div>
+
+              {/* // Add these new input fields to the form, right after the discount field: */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Package Weight (g)
+                  </label>
+                  <input
+                    type="number"
+                    name="packageWeight"
+                    value={formData.packageWeight}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                    min="1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Package Length (cm)
+                  </label>
+                  <input
+                    type="number"
+                    name="packageLength"
+                    value={formData.packageLength}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                    min="1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Package Breadth (cm)
+                  </label>
+                  <input
+                    type="number"
+                    name="packageBreadth"
+                    value={formData.packageBreadth}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                    min="1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Package Height (cm)
+                  </label>
+                  <input
+                    type="number"
+                    name="packageHeight"
+                    value={formData.packageHeight}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                    min="1"
+                    required
+                  />
                 </div>
               </div>
 
