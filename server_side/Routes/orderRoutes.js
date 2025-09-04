@@ -4,6 +4,8 @@ const { verifyToken, verifyAdmin } = require("../Middlewares/VerifyToken");
 const ProductModal = require("../Modals/productModal");
 const CouponModel = require("../Modals/coupanModal");
 const { sendOrderConfirmationEmail } = require("../utils/orderProdctService");
+const { createShipment } = require("../utils/xpressbeesService");
+
 
 const orderRoutes = express.Router();
 
@@ -43,7 +45,7 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
         message: "Missing required shipping information",
       });
     }
-
+    // console.log(shippingAddress)
     const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -168,7 +170,23 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
       }
     }
 
-    await order.save();
+    // await order.save();
+
+    try {
+      const shipmentRes = await createShipment(order);
+      console.log("Xpressbees response:", shipmentRes); // For debugging
+
+      if (shipmentRes.status && shipmentRes.data?.awb_number) {
+        order.awbNumber = shipmentRes.data.awb_number;
+        order.shippingLabelUrl = shipmentRes.data.label || null;
+        await order.save();
+      } else {
+        console.error("AWB generation failed:", shipmentRes);
+      }
+    } catch (err) {
+      console.error("Xpressbees AWB generation error:", err.message);
+    }
+
 
     // Clear user's cart
     user.cart = new Map();
@@ -463,7 +481,18 @@ orderRoutes.post("/:orderId/return", verifyToken, async (req, res) => {
       }),
     };
 
-    await order.save();
+    // await order.save();
+
+    try {
+      const shipmentRes = await createShipment(order);
+      if (shipmentRes.status && shipmentRes.data.awb_number) {
+        order.awbNumber = shipmentRes.data.awb_number;
+        order.shippingLabelUrl = shipmentRes.data.label;
+        await order.save();
+      }
+    } catch (err) {
+      console.error("Xpressbees AWB generation failed:", err.message);
+    }
 
     res.status(200).json({
       message: `${

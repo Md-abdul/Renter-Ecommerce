@@ -38,7 +38,16 @@ const ProductSchema = new mongoose.Schema({
   rating: { type: Number, default: 0 },
   reviews: { type: Number, default: 0 },
   sku: { type: String, required: true, unique: true },
+
+  packageWeight: { type: Number, default: 300 }, // in grams
+  packageLength: { type: Number, default: 10 }, // in cm
+  packageBreadth: { type: Number, default: 10 }, // in cm
+  packageHeight: { type: Number, default: 10 }, // in cm
   createdAt: { type: Date, default: Date.now },
+
+  awbNumber: { type: String, default: null },
+  shippingLabelUrl: { type: String, default: null },
+
 });
 
 const Product = mongoose.model("Product", ProductSchema);
