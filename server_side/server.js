@@ -28,6 +28,8 @@ const allowedOrigins = [
   "http://localhost:5173",
   process.env.FRONTEND_URL,
   "https://renter-ecommerce-2n7u.vercel.app", // just to be safe
+  process.env.DEPLOYED_URL,
+  "https://www.ranterstore.in",
 ];
 
 app.use(
