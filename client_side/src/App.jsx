@@ -9,6 +9,7 @@ function App() {
   const isAdmin = useSelector((state) => state?.UsersReducer.isAdmin);
 
   useEffect(() => {
+    
     // Check on app load
     const isSessionActive = sessionStorage.getItem("isSessionActive");
 
