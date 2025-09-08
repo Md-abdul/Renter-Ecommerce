@@ -72,7 +72,7 @@
 
 //     try {
 //       const response = await axios.post(
-//         "https://renter-ecommerce.vercel.app/api/contact/sendEmail",
+//         "https://www.ranterstore.in/api/contact/sendEmail",
 //         {
 //           name: formData.name,
 //           email: formData.email,
@@ -167,8 +167,7 @@
 
 // export default ContactPage;
 
-
- import React, { useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -199,47 +198,47 @@ const ContactPage = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
     }
-    
+
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Please enter a valid email address";
     }
-    
+
     if (!formData.message.trim()) {
       newErrors.message = "Message is required";
     } else if (formData.message.trim().length < 10) {
       newErrors.message = "Message should be at least 10 characters";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const response = await axios.post(
         "https://renter-ecommerce.vercel.app/api/contact/sendEmail",
-        {
+        {https://www.ranterstore.in
           name: formData.name,
           email: formData.email,
           message: formData.message,
           to: "info.ranter@gmail.com", // Your email address
         }
       );
-      
+
       toast.success("Message sent successfully!");
       setFormData({
         name: "",
@@ -249,7 +248,8 @@ const ContactPage = () => {
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error(
-        error.response?.data?.message || "Failed to send message. Please try again later."
+        error.response?.data?.message ||
+          "Failed to send message. Please try again later."
       );
     } finally {
       setIsSubmitting(false);
@@ -384,6 +384,3 @@ const ContactPage = () => {
 };
 
 export default ContactPage;
- 
-
-

@@ -24,7 +24,7 @@ const ProductList = () => {
     try {
       setIsLoading(true);
       const response = await fetch(
-        "https://renter-ecommerce.vercel.app/api/products"
+        "https://www.ranterstore.in/api/products"
         // "http://localhost:5000/api/products"
       );
       const data = await response.json();
@@ -48,7 +48,7 @@ const ProductList = () => {
   const handleDelete = async () => {
     try {
       const response = await fetch(
-        `https://renter-ecommerce.vercel.app/api/products/${productToDelete._id}`,
+        `https://www.ranterstore.in/api/products/${productToDelete._id}`,
         { method: "DELETE" }
       );
       if (response.ok) {
@@ -77,7 +77,7 @@ const ProductList = () => {
 
     try {
       const response = await fetch(
-        "https://renter-ecommerce.vercel.app/api/products/upload-excel",
+        "https://www.ranterstore.in/api/products/upload-excel",
         {
           method: "POST",
           body: formData,
@@ -87,7 +87,7 @@ const ProductList = () => {
       const data = await response.json();
       if (response.ok) {
         const productsResponse = await fetch(
-          "https://renter-ecommerce.vercel.app/api/products"
+          "https://www.ranterstore.in/api/products"
         );
         const productsData = await productsResponse.json();
         setProducts(productsData);

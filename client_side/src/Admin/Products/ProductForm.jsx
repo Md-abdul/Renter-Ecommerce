@@ -226,10 +226,10 @@ const ProductForm = ({
     try {
       const method = product ? "PUT" : "POST";
       const url = product
-        ? `https://renter-ecommerce.vercel.app/api/products/${product._id}`
-        : "https://renter-ecommerce.vercel.app/api/products";
-        // ? `http://localhost:5000/api/products/${product._id}`
-        // : "http://localhost:5000/api/products";
+        ? `https://www.ranterstore.in/api/products/${product._id}`
+        : "https://www.ranterstore.in/api/products";
+      // ? `http://localhost:5000/api/products/${product._id}`
+      // : "http://localhost:5000/api/products";
 
       const response = await fetch(url, {
         method,

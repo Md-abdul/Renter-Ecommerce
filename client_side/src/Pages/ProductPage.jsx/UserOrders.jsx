@@ -139,7 +139,7 @@ const UserOrders = () => {
       setReturnQuantity(item.quantity); // Default to full quantity
 
       const productResponse = await axios.get(
-        `https://renter-ecommerce.vercel.app/api/products/${item.productId}`
+        `https://www.ranterstore.in/api/products/${item.productId}`
       );
 
       const product = productResponse.data;
@@ -168,11 +168,10 @@ const UserOrders = () => {
       return;
     }
 
-   if (type === "exchange" && !exchangeSize && !exchangeColor) {
-  toast.error("Please select at least color or size for exchange");
-  return;
-}
-
+    if (type === "exchange" && !exchangeSize && !exchangeColor) {
+      toast.error("Please select at least color or size for exchange");
+      return;
+    }
 
     setPendingRequestType(type);
     setShowConfirmationModal(true);
@@ -181,8 +180,8 @@ const UserOrders = () => {
   const cancelReturnRequest = async (orderId, itemId) => {
     try {
       const response = await axios.put(
-        // `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}`,
-        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}`,
+        // `https://www.ranterstore.in/api/orders/${orderId}/return/${itemId}`,
+        `https://www.ranterstore.in/api/orders/${orderId}/return/${itemId}`,
         { status: "cancelled" },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -255,7 +254,7 @@ const UserOrders = () => {
       setShowConfirmationModal(false);
 
       const response = await axios.post(
-        `https://renter-ecommerce.vercel.app/api/orders/${selectedItem.orderId}/return`,
+        `https://www.ranterstore.in/api/orders/${selectedItem.orderId}/return`,
         {
           itemId: selectedItem._id,
           type: pendingRequestType,
@@ -344,7 +343,7 @@ const UserOrders = () => {
       }
 
       const response = await axios.post(
-        `https://renter-ecommerce.vercel.app/api/orders/${selectedItem.orderId}/return/${selectedItem._id}/payment-details`,
+        `https://www.ranterstore.in/api/orders/${selectedItem.orderId}/return/${selectedItem._id}/payment-details`,
         paymentData,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -1130,7 +1129,8 @@ const UserOrders = () => {
                     {/* Color Selection */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        New Color <span className="text-gray-400">(optional)</span>
+                        New Color{" "}
+                        <span className="text-gray-400">(optional)</span>
                       </label>
 
                       {availableColors.length > 0 ? (
@@ -1174,7 +1174,8 @@ const UserOrders = () => {
                     {/* Size Selection */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        New Size <span className="text-gray-400">(optional)</span>
+                        New Size{" "}
+                        <span className="text-gray-400">(optional)</span>
                       </label>
 
                       {availableSizes.length > 0 ? (
@@ -1544,24 +1545,27 @@ const UserOrders = () => {
                   >
                     Cancel
                   </button>
-                 <button
-  onClick={() => {
-    if (selectedItem && selectedItem.orderId && selectedItem._id) {
-      console.log("Order ID:", selectedItem.orderId);
-      console.log("Item ID:", selectedItem._id);
+                  <button
+                    onClick={() => {
+                      if (
+                        selectedItem &&
+                        selectedItem.orderId &&
+                        selectedItem._id
+                      ) {
+                        console.log("Order ID:", selectedItem.orderId);
+                        console.log("Item ID:", selectedItem._id);
 
-      submitPaymentDetails();
-    } else {
-      toast.error(
-        "Invalid selection. Please select a return item again."
-      );
-    }
-  }}
-  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
->
-  Submit Details
-</button>
-
+                        submitPaymentDetails();
+                      } else {
+                        toast.error(
+                          "Invalid selection. Please select a return item again."
+                        );
+                      }
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Submit Details
+                  </button>
                 </div>
               </div>
             </div>

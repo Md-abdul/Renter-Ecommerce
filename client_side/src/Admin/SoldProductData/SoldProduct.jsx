@@ -37,27 +37,27 @@ const SoldProduct = () => {
       ? format(parsedDate, formatStr)
       : "Invalid Date";
   };
-const splitWordsIntoLines = (text, wordsPerLine = 5) => {
-  if (!text) return null;
-  const words = text.split(" ");
-  const lines = [];
-  for (let i = 0; i < words.length; i += wordsPerLine) {
-    lines.push(words.slice(i, i + wordsPerLine).join(" "));
-  }
-  return lines.map((line, idx) => (
-    <span key={idx}>
-      {line}
-      <br />
-    </span>
-  ));
-};
+  const splitWordsIntoLines = (text, wordsPerLine = 5) => {
+    if (!text) return null;
+    const words = text.split(" ");
+    const lines = [];
+    for (let i = 0; i < words.length; i += wordsPerLine) {
+      lines.push(words.slice(i, i + wordsPerLine).join(" "));
+    }
+    return lines.map((line, idx) => (
+      <span key={idx}>
+        {line}
+        <br />
+      </span>
+    ));
+  };
 
   const fetchSoldProducts = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("adminToken");
       const response = await axios.get(
-        "https://renter-ecommerce.vercel.app/api/orders/sold-products",
+        "https://www.ranterstore.in/api/orders/sold-products",
         {
           headers: { Authorization: `Bearer ${token}` },
           params: {
@@ -221,7 +221,7 @@ const splitWordsIntoLines = (text, wordsPerLine = 5) => {
             </div>
             {soldProducts.length > 0 && (
               <div className="text-lg font-semibold">
-                Total :-- ₹  {Math.floor(totalAmounts.toFixed(2))}
+                Total :-- ₹ {Math.floor(totalAmounts.toFixed(2))}
               </div>
             )}
           </div>

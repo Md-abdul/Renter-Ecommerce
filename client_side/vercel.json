@@ -1,5 +1,16 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+    {
+      "source": "/api/(.*)",
+      "destination": "https://renter-ecommerce.vercel.app/api/$1"
+    },
+    {
+      "source": "/auth/(.*)",
+      "destination": "https://renter-ecommerce.vercel.app/auth/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
   ]
 }

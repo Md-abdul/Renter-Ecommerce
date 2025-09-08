@@ -30,15 +30,12 @@ const SingleProductPage = () => {
   useEffect(() => {
     const fetchRelatedProducts = async () => {
       try {
-        const response = await fetch(
-          "https://renter-ecommerce.vercel.app/api/products",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await fetch("https://www.ranterstore.inucts", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         const data = await response.json();
         setRelatedProducts(data);
       } catch (error) {
@@ -52,10 +49,10 @@ const SingleProductPage = () => {
     const fetchProduct = async () => {
       try {
         const response = await fetch(
-          `https://renter-ecommerce.vercel.app/api/products/${_id}`
+          `https://www.ranterstore.inucts/${_id}`
         );
         const data = await response.json();
-        if (data) {
+        if https://www.ranterstore.in
           setProduct(data);
           if (data.colors && data.colors.length > 0) {
             setSelectedColor(data.colors[0]);
@@ -182,10 +179,10 @@ const SingleProductPage = () => {
     // 2. Fetch user profile to check completeness
     try {
       const response = await fetch(
-        "https://renter-ecommerce.vercel.app/api/user/userDetails",
+        "https://www.ranterstore.in/api/user/userDetails",
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        }https://www.ranterstore.in
       );
       const data = await response.json();
       const user = data.user;

@@ -20,7 +20,7 @@ export const CartProvider = ({ children }) => {
 
   // Use local backend for development
   // const API_BASE_URL = "http://localhost:5000/api";
-  const API_BASE_URL = "https://renter-ecommerce.vercel.app/api";
+  const API_BASE_URL = "https://www.ranterstore.in/api";
 
   // Calculate total price of items in cart
   // const getTotalPrice = () => {
@@ -317,7 +317,7 @@ export const CartProvider = ({ children }) => {
 
       setLoading(true);
       const response = await axios.post(
-        `https://renter-ecommerce.vercel.app/api/coupons/apply`,
+        `https://www.ranterstore.in/api/coupons/apply`,
         { couponCode },
         {
           headers: {
@@ -554,7 +554,7 @@ export const CartProvider = ({ children }) => {
       // console.log("Regular redirect to:", intendedDestination);
       localStorage.removeItem("intendedDestination");
       navigate(intendedDestination);
-    } else if (window.location.pathname === "/login")  {
+    } else if (window.location.pathname === "/login") {
       navigate("/user/profile");
     }
   };

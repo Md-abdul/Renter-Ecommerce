@@ -32,9 +32,7 @@ const StoreLocator_Admin = () => {
   const fetchStores = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(
-        "https://renter-ecommerce.vercel.app/api/stores"
-      );
+      const response = await axios.get("https://www.ranterstore.in/api/stores");
       setStores(response.data);
     } catch (error) {
       toast.error("Failed to fetch stores");
@@ -45,9 +43,7 @@ const StoreLocator_Admin = () => {
 
   const deleteStore = async (id) => {
     try {
-      await axios.delete(
-        `https://renter-ecommerce.vercel.app/api/stores/${id}`
-      );
+      await axios.delete(`https://www.ranterstore.in/api/stores/${id}`);
       toast.success("Store deleted successfully");
       fetchStores();
     } catch (error) {
@@ -100,15 +96,13 @@ const StoreLocator_Admin = () => {
     try {
       if (editingId) {
         await axios.put(
-          `https://renter-ecommerce.vercel.app/api/stores/${editingId}`,
+          `https://www.ranterstore.in/api/stores/${editingId}`,
           formData
         );
-        toast.success("Store updated successfully");
+        //www.ranterstore.in
+        https: toast.success("Store updated successfully");
       } else {
-        await axios.post(
-          "https://renter-ecommerce.vercel.app/api/stores",
-          formData
-        );
+        await axios.post("https://www.ranterstore.in/api/stores", formData);
         toast.success("Store added successfully");
       }
       resetForm();
@@ -146,7 +140,7 @@ const StoreLocator_Admin = () => {
     setEditingId(store._id);
   };
 
-  // const deleteStore = async https://renter-ecommerce.vercel.app/
+  // const deleteStore = async https://www.ranterstore.in/
   //   if (window.confirm("Are you sure you want to delete this store?")) {
   //     try {
   //       await axios.delete(`http://localhost:5000/api/stores/${id}`);

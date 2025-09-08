@@ -13,7 +13,7 @@ export const ProductProvider = ({ children }) => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get(
-          "https://renter-ecommerce.vercel.app/api/products"
+          "https://www.ranterstore.in/api/products"
         );
         setProducts(response.data);
         // console.log(response.data)

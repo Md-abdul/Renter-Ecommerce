@@ -45,7 +45,7 @@ const UserProfile = () => {
         }
 
         const response = await axios.get(
-          "https://renter-ecommerce.vercel.app/api/user/userDetails",
+          "https://www.ranterstore.in/api/user/userDetails",
           {
             headers: { Authorization: `Bearer ${token}` },
           }

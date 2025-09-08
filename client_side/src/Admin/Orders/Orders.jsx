@@ -54,7 +54,7 @@ export const Orders = () => {
       }
 
       const response = await axios.get(
-        "https://renter-ecommerce.vercel.app/api/orders/admin",
+        "https://www.ranterstore.in/api/orders/admin",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -81,7 +81,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.get(
-        "https://renter-ecommerce.vercel.app/api/orders/returns",
+        "https://www.ranterstore.in/api/orders/returns",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -113,7 +113,7 @@ export const Orders = () => {
       }
 
       await axios.put(
-        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/status`,
+        `https://www.ranterstore.in/api/orders/${orderId}/status`,
         { status: newStatus },
         {
           headers: {
@@ -136,7 +136,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const response = await axios.put(
-        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}`,
+        `https://www.ranterstore.in/api/orders/${orderId}/return/${itemId}`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -156,7 +156,7 @@ export const Orders = () => {
     try {
       const token = localStorage.getItem("adminToken");
       await axios.put(
-        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}/tracking`,
+        `https://www.ranterstore.in/api/orders/${orderId}/return/${itemId}/tracking`,
         { trackingNumber: trackingInput },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -752,7 +752,7 @@ export const Orders = () => {
                       rejected: "bg-red-100 text-red-800",
                       cancelled: "bg-red-100 text-red-800",
                     };
-// order === splice  => RE / Ex order === Re 
+                    // order === splice  => RE / Ex order === Re
                     return (
                       <tr key={requestKey} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
@@ -817,14 +817,16 @@ export const Orders = () => {
                           {["approved", "delivered", "completed"].includes(
                             request.status
                           ) &&
-                            (request.type === "exchange" || request.type === "return") && ["exchange", "return"].includes(request.type) &&  (
+                            (request.type === "exchange" ||
+                              request.type === "return") &&
+                            ["exchange", "return"].includes(request.type) && (
                               <button
                                 onClick={async () => {
                                   try {
                                     const token =
                                       localStorage.getItem("adminToken");
                                     await axios.post(
-                                      `https://renter-ecommerce.vercel.app/api/orders/${request.orderId}/copy/${request.itemId}`,
+                                      `https://www.ranterstore.in/api/orders/${request.orderId}/copy/${request.itemId}`,
                                       // `http://localhost:5000/api/orders/${request.orderId}/copy/${request.itemId}`,
                                       {},
                                       {
@@ -958,7 +960,7 @@ export const Orders = () => {
                                       const token =
                                         localStorage.getItem("adminToken");
                                       await axios.post(
-                                        `https://renter-ecommerce.vercel.app/api/orders/${request.orderId}/copy/${request.itemId}`,
+                                        `https://www.ranterstore.in/api/orders/${request.orderId}/copy/${request.itemId}`,
                                         {},
                                         {
                                           headers: {
@@ -1312,7 +1314,8 @@ export const Orders = () => {
                             </h4> */}
                             <h4 className="font-semibold text-gray-900 mt-6 mb-3 flex items-center">
                               <FiMapPin className="mr-2" />
-                              {order.orderNumber?.includes("RE") || order.orderNumber?.includes("EX")
+                              {order.orderNumber?.includes("RE") ||
+                              order.orderNumber?.includes("EX")
                                 ? "Pickup Address"
                                 : "Shipping Address"}
                             </h4>

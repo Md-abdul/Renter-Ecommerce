@@ -53,7 +53,7 @@ const CheckoutPage = () => {
     name: "",
     address: "",
     city: "",
-    state: "",  
+    state: "",
     zipCode: "",
     phoneNumber: "",
     alternatePhone: "",
@@ -77,7 +77,7 @@ const CheckoutPage = () => {
         }
 
         const response = await axios.get(
-          "https://renter-ecommerce.vercel.app/api/user/userDetails",
+          "https://www.ranterstore.in/api/user/userDetails",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -436,21 +436,21 @@ const CheckoutPage = () => {
                   </div>
                 )} */}
                 {useProfileAddress && (
-  <div className="mt-2 text-sm text-gray-600">
-    <p>Name: {userProfile.name}</p>
-    <p>Address: {userProfile.address?.street}</p>
-    <p>City: {userProfile.address?.city}</p>
-    <p>State: {userProfile.address?.state}</p> {/* ← Add this line */}
-    <p>Zip Code: {userProfile.address?.zipCode}</p>
-    <p>Phone: {userProfile.phoneNumber}</p>
-    {userProfile.address?.alternatePhone && (
-      <p>
-        Alternate Phone: {userProfile.address.alternatePhone}
-      </p>
-    )}
-  </div>
-)}
-
+                  <div className="mt-2 text-sm text-gray-600">
+                    <p>Name: {userProfile.name}</p>
+                    <p>Address: {userProfile.address?.street}</p>
+                    <p>City: {userProfile.address?.city}</p>
+                    <p>State: {userProfile.address?.state}</p>{" "}
+                    {/* ← Add this line */}
+                    <p>Zip Code: {userProfile.address?.zipCode}</p>
+                    <p>Phone: {userProfile.phoneNumber}</p>
+                    {userProfile.address?.alternatePhone && (
+                      <p>
+                        Alternate Phone: {userProfile.address.alternatePhone}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

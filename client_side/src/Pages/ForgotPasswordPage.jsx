@@ -18,7 +18,7 @@ const ForgotPasswordPage = () => {
     setIsLoading(true);
     try {
       const res = await axios.post(
-        `https://renter-ecommerce.vercel.app/api/user/forgot-password`,
+        `https://www.ranterstore.in/api/user/forgot-password`,
         { email }
       );
       toast.success(res.data.message);
@@ -34,7 +34,7 @@ const ForgotPasswordPage = () => {
     //renter-ecommerce.vercel.app/
     setIshttps: try {
       const res = await axios.post(
-        `https://renter-ecommerce.vercel.app/api/user/verify-otp`,
+        `https://www.ranterstore.in/api/user/verify-otp`,
         {
           email,
           otp,
@@ -57,7 +57,7 @@ const ForgotPasswordPage = () => {
     //renter-ecommerce.vercel.app/
     setIshttps: try {
       const res = await axios.post(
-        `https://renter-ecommerce.vercel.app/api/user/reset-password`,
+        `https://www.ranterstore.in/api/user/reset-password`,
         {
           email,
           otp,
