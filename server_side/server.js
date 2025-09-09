@@ -26,8 +26,8 @@ couponExpiryCheck.start();
 // CORS configuration
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://renter-ecommerce.vercel.app",
-  "https://ranterstore.in", // add this
+  "https://www.ranterstore.in", // ✅ actual frontend
+  "https://ranterstore.in", // optional (non-www in case)
 ];
 
 app.use(
