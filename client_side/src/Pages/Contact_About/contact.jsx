@@ -231,7 +231,7 @@ const ContactPage = () => {
     try {
       const response = await axios.post(
         "https://renter-ecommerce.vercel.app/api/contact/sendEmail",
-        {https://www.ranterstore.in
+        {
           name: formData.name,
           email: formData.email,
           message: formData.message,

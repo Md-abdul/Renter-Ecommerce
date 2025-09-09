@@ -12,20 +12,20 @@ const DashboardWidgets = () => {
       try {
         // Fetch products
         const productsResponse = await axios.get(
-          "https://www.ranterstore.in/api/products"
+          "https://renter-ecommerce.vercel.app/api/products"
         );
         setProductsCount(productsResponse.data.length);
 
         // Fetch users
         const usersResponse = await axios.get(
-          "https://www.ranterstore.in/api/user/allUser"
+          "https://renter-ecommerce.vercel.app/api/user/allUser"
         );
         setUsersCount(usersResponse.data.length);
 
         // Fetch orders (with token)
         const token = localStorage.getItem("adminToken");
         const ordersResponse = await axios.get(
-          "https://www.ranterstore.in/api/orders/admin",
+          "https://renter-ecommerce.vercel.app/api/orders/admin",
           {
             headers: {
               Authorization: `Bearer ${token}`,

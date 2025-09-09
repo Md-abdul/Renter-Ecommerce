@@ -57,7 +57,7 @@ const SoldProduct = () => {
       setLoading(true);
       const token = localStorage.getItem("adminToken");
       const response = await axios.get(
-        "https://www.ranterstore.in/api/orders/sold-products",
+        "https://renter-ecommerce.vercel.app/api/orders/sold-products",
         {
           headers: { Authorization: `Bearer ${token}` },
           params: {

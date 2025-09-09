@@ -139,7 +139,7 @@ const UserOrders = () => {
       setReturnQuantity(item.quantity); // Default to full quantity
 
       const productResponse = await axios.get(
-        `https://www.ranterstore.in/api/products/${item.productId}`
+        `https://renter-ecommerce.vercel.app/api/products/${item.productId}`
       );
 
       const product = productResponse.data;
@@ -180,8 +180,8 @@ const UserOrders = () => {
   const cancelReturnRequest = async (orderId, itemId) => {
     try {
       const response = await axios.put(
-        // `https://www.ranterstore.in/api/orders/${orderId}/return/${itemId}`,
-        `https://www.ranterstore.in/api/orders/${orderId}/return/${itemId}`,
+        // `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}`,
+        `https://renter-ecommerce.vercel.app/api/orders/${orderId}/return/${itemId}`,
         { status: "cancelled" },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -254,7 +254,7 @@ const UserOrders = () => {
       setShowConfirmationModal(false);
 
       const response = await axios.post(
-        `https://www.ranterstore.in/api/orders/${selectedItem.orderId}/return`,
+        `https://renter-ecommerce.vercel.app/api/orders/${selectedItem.orderId}/return`,
         {
           itemId: selectedItem._id,
           type: pendingRequestType,
@@ -343,7 +343,7 @@ const UserOrders = () => {
       }
 
       const response = await axios.post(
-        `https://www.ranterstore.in/api/orders/${selectedItem.orderId}/return/${selectedItem._id}/payment-details`,
+        `https://renter-ecommerce.vercel.app/api/orders/${selectedItem.orderId}/return/${selectedItem._id}/payment-details`,
         paymentData,
         {
           headers: { Authorization: `Bearer ${token}` },

@@ -27,15 +27,15 @@ const DashboardCharts = () => {
     const fetchData = async () => {
       try {
         const productsResponse = await axios.get(
-          "https://www.ranterstore.in/api/products"
+          "https://renter-ecommerce.vercel.app/api/products"
         );
         const usersResponse = await axios.get(
-          "https://www.ranterstore.in/api/user/allUser"
+          "https://renter-ecommerce.vercel.app/api/user/allUser"
         );
 
         const token = localStorage.getItem("adminToken");
         const ordersResponse = await axios.get(
-          "https://www.ranterstore.in/api/orders/admin",
+          "https://renter-ecommerce.vercel.app/api/orders/admin",
           {
             headers: {
               Authorization: `Bearer ${token}`,

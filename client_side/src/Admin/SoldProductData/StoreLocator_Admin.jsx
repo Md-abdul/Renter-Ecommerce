@@ -32,7 +32,9 @@ const StoreLocator_Admin = () => {
   const fetchStores = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get("https://www.ranterstore.in/api/stores");
+      const response = await axios.get(
+        "https://renter-ecommerce.vercel.app/api/stores"
+      );
       setStores(response.data);
     } catch (error) {
       toast.error("Failed to fetch stores");
@@ -43,7 +45,7 @@ const StoreLocator_Admin = () => {
 
   const deleteStore = async (id) => {
     try {
-      await axios.delete(`https://www.ranterstore.in/api/stores/${id}`);
+      await axios.delete(`https://renter-ecommerce.vercel.app/api/stores/${id}`);
       toast.success("Store deleted successfully");
       fetchStores();
     } catch (error) {
