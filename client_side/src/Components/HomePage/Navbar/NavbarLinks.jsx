@@ -24,12 +24,12 @@ const navdata = () => {
           icon: "fa fa-kids"
         },
         
-        {
-          id: "storeLocator",
-          label: "Store Locator",
-          link: "/storelocator",
-          icon: "fa fa-kids"
-        },
+        // {
+        //   id: "storeLocator",
+        //   label: "Store Locator",
+        //   link: "/storelocator",
+        //   icon: "fa fa-kids"
+        // },
         {
           id: "contact",
           label: "Contact",
