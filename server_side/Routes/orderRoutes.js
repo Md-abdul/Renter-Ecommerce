@@ -169,8 +169,9 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
         throw new Error(`Failed to update product ${item.productId}`);
       }
     }
-
-    // await order.save();
+    console.log('order is prepreaing')
+    await order.save();
+    console.log('order is done')
 
     try {
       const shipmentRes = await createShipment(order);

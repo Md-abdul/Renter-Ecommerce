@@ -207,7 +207,7 @@ const { OrderModel } = require("../Modals/UserModal");
 // Create reusable transporter object using SMTP transport
 const transporter = nodemailer.createTransport({
   service: "gmail",
-  secure: true,
+  // secure: true,
   auth: {
     user: process.env.SENDER_NODEMAILER_EMAIL,
     pass: process.env.SENDER_NODEMAILER_PASSWORD,
