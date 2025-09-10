@@ -22,7 +22,10 @@ export const signIn = (userData) => async (dispatch) => {
     dispatch({ type: LOGIN_SUCCESS, payload: token });
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user)); // Store user details in localStorage
-    toast.success("Login successful");
+    // toast.success("Login successful");
+    if (!userData.isGoogleLogin) {
+      toast.success("Login successful");
+    }
     return true; // Return true indicating successful login
   } catch (error) {
     console.error("Sign In Error:", error);
@@ -65,6 +68,9 @@ export const adminLogin = (adminData) => async (dispatch) => {
     localStorage.setItem("adminToken", token);
     localStorage.setItem("admin", JSON.stringify(admin)); // Store admin details in localStorage
     toast.success("Admin login successful");
+    if (!adminData.isGoogleLogin) {
+      toast.success("Admin login successful");
+    }
     return true; // Return true indicating successful admin login
   } catch (error) {
     dispatch({ type: "ADMIN_LOGIN_ERROR" });
