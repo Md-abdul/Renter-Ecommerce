@@ -333,6 +333,8 @@ const CheckoutPage = () => {
 
   // Update the profile check condition to:
   if (!profileComplete) {
+    
+    localStorage.setItem("intendedDestination", "/checkout");
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg overflow-hidden p-8">

@@ -498,66 +498,146 @@ export const CartProvider = ({ children }) => {
   };
 
   // New function to check if user should be redirected after login
-  const checkAndHandlePostLoginRedirect = () => {
-    const intendedDestination = localStorage.getItem("intendedDestination");
-    const buyNowProduct = localStorage.getItem("buyNowProduct");
+  // const checkAndHandlePostLoginRedirect = () => {
+  //   const intendedDestination = localStorage.getItem("intendedDestination");
+  //   const buyNowProduct = localStorage.getItem("buyNowProduct");
 
-    // console.log("Checking post-login redirect:", {
-    //   intendedDestination,
-    //   buyNowProduct: !!buyNowProduct,
-    // });
+  //   // console.log("Checking post-login redirect:", {
+  //   //   intendedDestination,
+  //   //   buyNowProduct: !!buyNowProduct,
+  //   // });
 
-    if (intendedDestination && buyNowProduct) {
-      // Check if profile is complete
-      const token = localStorage.getItem("token");
-      if (token) {
-        // console.log("Checking profile completeness...");
-        // Fetch user profile to check completeness
-        axios
-          .get(`${API_BASE_URL}/user/userDetails`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          .then((response) => {
-            const user = response.data.user;
-            const isProfileComplete =
-              user?.name &&
-              user?.phoneNumber &&
-              user?.address?.street &&
-              user?.address?.city &&
-              user?.address?.zipCode &&
-              user?.address?.state;
+  //   if (intendedDestination && buyNowProduct) {
+  //     // Check if profile is complete
+  //     const token = localStorage.getItem("token");
+  //     if (token) {
+  //       // console.log("Checking profile completeness...");
+  //       // Fetch user profile to check completeness
+  //       axios
+  //         .get(`${API_BASE_URL}/user/userDetails`, {
+  //           headers: { Authorization: `Bearer ${token}` },
+  //         })
+  //         .then((response) => {
+  //           const user = response.data.user;
+  //           const isProfileComplete =
+  //             user?.name &&
+  //             user?.phoneNumber &&
+  //             user?.address?.street &&
+  //             user?.address?.city &&
+  //             user?.address?.zipCode &&
+  //             user?.address?.state;
 
-            console.log("Profile complete:", isProfileComplete);
+  //           console.log("Profile complete:", isProfileComplete);
 
-            if (isProfileComplete) {
-              // Profile is complete, proceed with redirect
-              // console.log("Profile complete, handling redirect...");
-              handleRedirectAfterProfileCompletion();
-            } else {
-              // Profile incomplete, redirect to profile page
-              // console.log("Profile incomplete, redirecting to profile...");
-              toast.error("Please complete your profile before checkout.");
-              navigate("/user/profile");
-            }
-          })
-          .catch((error) => {
-            // console.error("Error checking profile:", error);
-            toast.error("Failed to verify profile. Please try again.");
-            // Clear stored data on error
-            localStorage.removeItem("intendedDestination");
-            localStorage.removeItem("buyNowProduct");
-            navigate("/");
-          });
-      }
-    } else if (intendedDestination && !buyNowProduct) {
-      // Just a regular redirect (not buy now flow)
-      // console.log("Regular redirect to:", intendedDestination);
-      localStorage.removeItem("intendedDestination");
-      navigate(intendedDestination);
-    } else if (window.location.pathname === "/login") {
-      navigate("/user/profile");
+  //           if (isProfileComplete) {
+  //             // Profile is complete, proceed with redirect
+  //             // console.log("Profile complete, handling redirect...");
+  //             handleRedirectAfterProfileCompletion();
+  //           } else {
+  //             // Profile incomplete, redirect to profile page
+  //             // console.log("Profile incomplete, redirecting to profile...");
+  //             toast.error("Please complete your profile before checkout.");
+  //             navigate("/user/profile");
+  //           }
+  //         })
+  //         .catch((error) => {
+  //           // console.error("Error checking profile:", error);
+  //           toast.error("Failed to verify profile. Please try again.");
+  //           // Clear stored data on error
+  //           localStorage.removeItem("intendedDestination");
+  //           localStorage.removeItem("buyNowProduct");
+  //           navigate("/");
+  //         });
+  //     }
+  //   } else if (intendedDestination && !buyNowProduct) {
+  //     // Just a regular redirect (not buy now flow)
+  //     // console.log("Regular redirect to:", intendedDestination);
+  //     localStorage.removeItem("intendedDestination");
+  //     navigate(intendedDestination);
+  //   } else if (window.location.pathname === "/login") {
+  //     navigate("/user/profile");
+  //   }
+  // };
+
+
+  // In CartContext.jsx - Update the checkAndHandlePostLoginRedirect function
+const checkAndHandlePostLoginRedirect = () => {
+  const intendedDestination = localStorage.getItem("intendedDestination");
+  const buyNowProduct = localStorage.getItem("buyNowProduct");
+
+  if (intendedDestination && buyNowProduct) {
+    // Check if profile is complete
+    const token = localStorage.getItem("token");
+    if (token) {
+      axios
+        .get(`${API_BASE_URL}/user/userDetails`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((response) => {
+          const user = response.data.user;
+          const isProfileComplete =
+            user?.name &&
+            user?.phoneNumber &&
+            user?.address?.street &&
+            user?.address?.city &&
+            user?.address?.zipCode &&
+            user?.address?.state;
+
+          if (isProfileComplete) {
+            // Profile is complete, proceed with redirect
+            handleRedirectAfterProfileCompletion();
+          } else {
+            // Profile incomplete, redirect to profile page
+            toast.info("Please complete your profile before checkout.");
+            navigate("/user/profile");
+          }
+        })
+        .catch((error) => {
+          console.error("Error checking profile:", error);
+          toast.error("Failed to verify profile. Please try again.");
+          navigate("/");
+        });
     }
-  };
+  } else if (intendedDestination === "/checkout") {
+    // Regular checkout flow (not buy now)
+    const token = localStorage.getItem("token");
+    if (token) {
+      axios
+        .get(`${API_BASE_URL}/user/userDetails`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((response) => {
+          const user = response.data.user;
+          const isProfileComplete =
+            user?.name &&
+            user?.phoneNumber &&
+            user?.address?.street &&
+            user?.address?.city &&
+            user?.address?.zipCode &&
+            user?.address?.state;
+
+          if (isProfileComplete) {
+            // Profile is complete, redirect to checkout
+            localStorage.removeItem("intendedDestination");
+            navigate("/checkout");
+          } else {
+            // Profile incomplete, redirect to profile page
+            toast.info("Please complete your profile before checkout.");
+            navigate("/user/profile");
+          }
+        })
+        .catch((error) => {
+          console.error("Error checking profile:", error);
+          toast.error("Failed to verify profile. Please try again.");
+          navigate("/");
+        });
+    }
+  } else if (intendedDestination) {
+    // Just a regular redirect (not checkout flow)
+    localStorage.removeItem("intendedDestination");
+    navigate(intendedDestination);
+  }
+};
 
   // Initialize cart and orders when component mounts
   useEffect(() => {

@@ -67,7 +67,7 @@ export const adminLogin = (adminData) => async (dispatch) => {
     dispatch({ type: "ADMIN_LOGIN_SUCCESS", payload: token });
     localStorage.setItem("adminToken", token);
     localStorage.setItem("admin", JSON.stringify(admin)); // Store admin details in localStorage
-    toast.success("Admin login successful");
+    // toast.success("Admin login successful");
     if (!adminData.isGoogleLogin) {
       toast.success("Admin login successful");
     }

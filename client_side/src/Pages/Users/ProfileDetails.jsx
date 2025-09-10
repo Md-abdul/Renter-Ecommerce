@@ -118,6 +118,59 @@ const ProfileDetails = () => {
     }
   };
 
+  // const handleSave = async () => {
+  //   if (errors.phoneNumber || errors.alternatePhone) {
+  //     toast.error("Please fix validation errors before saving");
+  //     return;
+  //   }
+
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     if (!token) return;
+
+  //     setLoading(true);
+
+  //     await axios.put(
+  //       `https://renter-ecommerce.vercel.app/api/user/${userId}`,
+  //       {
+  //         name: editData.name,
+  //         email: editData.email,
+  //         phoneNumber: editData.phoneNumber,
+  //         address: {
+  //           street: editData.address.street,
+  //           city: editData.address.city,
+  //           zipCode: editData.address.zipCode,
+  //           state: editData.address.state,
+  //           alternatePhone: editData.address.alternatePhone,
+  //           addressType: editData.address.addressType,
+  //         },
+  //       },
+  //       {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       }
+  //     );
+
+  //     toast.success("Profile updated successfully");
+  //     fetchUserDetails();
+  //     setIsEditing(false);
+
+  //     // Check if there's an intended destination to redirect to
+  //     const intendedDestination = localStorage.getItem("intendedDestination");
+  //     if (intendedDestination) {
+  //       // Profile is now complete, handle the redirect
+  //       handleRedirectAfterProfileCompletion();
+  //     }
+  //   } catch (error) {
+  //     console.error("Error updating user details:", error);
+  //     toast.error("Failed to update profile");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // In ProfileDetails.jsx
+// Update the handleSave function to handle redirect after profile completion
+
   const handleSave = async () => {
     if (errors.phoneNumber || errors.alternatePhone) {
       toast.error("Please fix validation errors before saving");
@@ -156,9 +209,21 @@ const ProfileDetails = () => {
 
       // Check if there's an intended destination to redirect to
       const intendedDestination = localStorage.getItem("intendedDestination");
-      if (intendedDestination) {
-        // Profile is now complete, handle the redirect
+      const buyNowProduct = localStorage.getItem("buyNowProduct");
+      
+      // If we came from checkout and have a buyNowProduct, use the cart context handler
+      if (intendedDestination === "/checkout" && buyNowProduct) {
         handleRedirectAfterProfileCompletion();
+      } 
+      // If we just came from checkout without buyNowProduct (regular cart checkout)
+      else if (intendedDestination === "/checkout") {
+        localStorage.removeItem("intendedDestination");
+        navigate("/checkout");
+      }
+      // If we came from any other intended destination
+      else if (intendedDestination) {
+        localStorage.removeItem("intendedDestination");
+        navigate(intendedDestination);
       }
     } catch (error) {
       console.error("Error updating user details:", error);
