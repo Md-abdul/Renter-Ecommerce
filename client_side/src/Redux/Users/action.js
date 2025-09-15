@@ -19,9 +19,10 @@ export const signIn = (userData) => async (dispatch) => {
     const response = await axios.post(`${API_URL}/login`, userData);
     const token = response.data.token;
     const user = response.data.user; // Assuming the API returns user details
-    dispatch({ type: LOGIN_SUCCESS, payload: token });
-    localStorage.setItem("token", token);
+        localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user)); // Store user details in localStorage
+    dispatch({ type: LOGIN_SUCCESS, payload: token });
+
     // toast.success("Login successful");
     if (!userData.isGoogleLogin) {
       toast.success("Login successful");
@@ -86,4 +87,23 @@ export const googleLoginSuccess = (token, user) => (dispatch) => {
   localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(user));
   toast.success("Google login successful");
+};
+
+
+// In action.js - add this export
+export const handleGoogleAuth = (token, userData) => async (dispatch) => {
+  try {
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(userData));
+    
+    dispatch({ 
+      type: LOGIN_SUCCESS, 
+      payload: token 
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Google auth error:", error);
+    return false;
+  }
 };
