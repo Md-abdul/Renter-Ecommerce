@@ -98,20 +98,20 @@ export const CartProvider = ({ children }) => {
   };
 
   // Clear cart after order is placed
-  const clearCart = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+  // const clearCart = async () => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     if (!token) return;
 
-      await axios.delete(`${API_BASE_URL}/cart/clear`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  //     await axios.delete(`${API_BASE_URL}/cart/clear`, {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
 
-      setCart([]);
-    } catch (error) {
-      console.error("Error clearing cart:", error);
-    }
-  };
+  //     setCart([]);
+  //   } catch (error) {
+  //     console.error("Error clearing cart:", error);
+  //   }
+  // };
 
   // const addToCart = async (product, quantity = 1) => {
   //   try {
@@ -198,30 +198,70 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const removeFromCart = async (productId) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Please log in to modify your cart.");
-        return;
-      }
+  // const removeFromCart = async (productId) => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     if (!token) {
+  //       toast.error("Please log in to modify your cart.");
+  //       return;
+  //     }
 
-      const response = await axios.delete(
-        `${API_BASE_URL}/cart/remove/${productId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  //     const response = await axios.delete(
+  //       `${API_BASE_URL}/cart/remove/${productId}`,
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
 
-      if (response.status === 200) {
-        toast.success("Product removed from cart");
-        await fetchCart();
-      }
-    } catch (error) {
-      console.error("Error removing from cart:", error);
-      toast.error(error.response?.data?.message || "Failed to remove product");
-    }
-  };
+  //     if (response.status === 200) {
+  //       toast.success("Product removed from cart");
+  //       await fetchCart();
+  //     }
+  //   } catch (error) {
+  //     console.error("Error removing from cart:", error);
+  //     toast.error(error.response?.data?.message || "Failed to remove product");
+  //   }
+  // };
 
   // Update product quantity in cart
+  
+  // In CartContext.jsx
+
+    const clearCart = async () => {
+      try {
+        setCart([]); // immediately clear local state so Navbar updates
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        await axios.delete(`${API_BASE_URL}/cart/clear`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (error) {
+        console.error("Error clearing cart:", error);
+      }
+    };
+
+    const removeFromCart = async (productId) => {
+      try {
+        setCart((prevCart) => prevCart.filter((item) => item._id !== productId)); // update instantly
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Please log in to modify your cart.");
+          return;
+        }
+
+        await axios.delete(`${API_BASE_URL}/cart/remove/${productId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        toast.success("Product removed from cart");
+      } catch (error) {
+        console.error("Error removing from cart:", error);
+        toast.error(error.response?.data?.message || "Failed to remove product");
+        fetchCart(); // fallback in case local update failed
+      }
+    };
+
+  
   const updateQuantity = async (itemId, newQuantity) => {
     try {
       if (newQuantity < 1) {
