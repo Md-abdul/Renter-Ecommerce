@@ -157,47 +157,118 @@ export const CartProvider = ({ children }) => {
 
   // Remove product from cart
 
-  const addToCart = async (product, quantity = 1) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Please log in to add products to your cart.");
-        navigate("/login");
-        return;
-      }
+  // =============
+  // const addToCart = async (product, quantity = 1) => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     if (!token) {
+  //       toast.error("Please log in to add products to your cart.");
+  //       navigate("/login");
+  //       return;
+  //     }
 
-      // Extract color and size from product
-      const color = product.selectedColor; // Should be a string (e.g., "Red")
-      const size = product.selectedSize; // Should be a string (e.g., "M")
+  //     // Extract color and size from product
+  //     const color = product.selectedColor; // Should be a string (e.g., "Red")
+  //     const size = product.selectedSize; // Should be a string (e.g., "M")
 
-      if (!color || !size) {
-        toast.error("Color and size are required.");
-        return;
-      }
+  //     if (!color || !size) {
+  //       toast.error("Color and size are required.");
+  //       return;
+  //     }
 
-      const response = await axios.post(
-        `${API_BASE_URL}/cart/add`,
-        {
-          productId: product._id,
-          quantity,
-          color: color.toString(), // Ensure string
-          size: size.toString(), // Ensure string
-          price: product.basePrice, // Send the calculated price from SingleProductPage
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  //     const response = await axios.post(
+  //       `${API_BASE_URL}/cart/add`,
+  //       {
+  //         productId: product._id,
+  //         quantity,
+  //         color: color.toString(), // Ensure string
+  //         size: size.toString(), // Ensure string
+  //         price: product.basePrice, // Send the calculated price from SingleProductPage
+  //       },
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
 
-      if (response.status === 200) {
-        toast.success("Product added to cart");
-        await fetchCart(); // Refresh cart data
-        return response.data.addedItem; // Use the renamed `addedItem` from backend
-      }
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-      toast.error(error.response?.data?.message || "Failed to add to cart");
-      throw error;
+  //     if (response.status === 200) {
+  //       toast.success("Product added to cart");
+  //       await fetchCart(); // Refresh cart data
+  //       return response.data.addedItem; // Use the renamed `addedItem` from backend
+  //     }
+  //   } catch (error) {
+  //     console.error("Error adding to cart:", error);
+  //     toast.error(error.response?.data?.message || "Failed to add to cart");
+  //     throw error;
+  //   }
+  // };
+
+  // Replace the existing addToCart in CartContext.jsx with this
+const addToCart = async (product, quantity = 1) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please log in to add products to your cart.");
+      navigate("/login");
+      return;
     }
-  };
+
+    // Read selected color/size from product object (ensure SingleProduct passes these)
+    const color = product.selectedColor;
+    const size = product.selectedSize;
+
+    if (!color || !size) {
+      toast.error("Color and size are required.");
+      return;
+    }
+
+    // Safely compute price adjustments
+    const base = Number(product.basePrice) || 0;
+    const colorObj =
+      (product.colors || []).find(
+        (c) =>
+          c.name &&
+          c.name.toString().toLowerCase() === color.toString().toLowerCase()
+      ) || {};
+    const colorAdj = Number(colorObj.priceAdjustment) || 0;
+
+    const sizeObj =
+      (colorObj.sizes || []).find(
+        (s) =>
+          s.size &&
+          s.size.toString().toLowerCase() === size.toString().toLowerCase()
+      ) || {};
+    const sizeAdj = Number(sizeObj.priceAdjustment) || 0;
+
+    const originalPrice = base + colorAdj + sizeAdj;
+    const discount = Number(product.discount) || 0;
+    const finalPrice =
+      discount > 0
+        ? Math.round(originalPrice * (1 - discount / 100))
+        : Math.round(originalPrice);
+
+    const response = await axios.post(
+      `${API_BASE_URL}/cart/add`,
+      {
+        productId: product._id,
+        quantity,
+        color: color.toString(),
+        size: size.toString(),
+        // include calculated price but server will recompute/override for safety
+        price: finalPrice,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (response.status === 200) {
+      toast.success("Product added to cart");
+      await fetchCart(); // Refresh cart data to reflect server-side values
+      return response.data.addedItem;
+    }
+  } catch (error) {
+    console.error("Error adding to cart:", error);
+    toast.error(error.response?.data?.message || "Failed to add to cart");
+    throw error;
+  }
+};
+
 
   // const removeFromCart = async (productId) => {
   //   try {
