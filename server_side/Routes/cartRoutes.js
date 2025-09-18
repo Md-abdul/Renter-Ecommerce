@@ -85,36 +85,114 @@ const MAX_CART_TOTAL = 40000; // Maximum cart total limit in rupees
 //   }
 // });
 
+// ===========
+// CartRoutes.post("/add", verifyToken, async (req, res) => {
+//   try {
+//     const { productId, quantity, color, size, price } = req.body;
+//     const userId = req.user.userId;
+
+//     // Validate required fields
+//     if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+//       return res.status(400).json({ message: "Invalid product ID format" });
+//     }
+
+//     if (quantity <= 0) {
+//       return res.status(400).json({ message: "Invalid quantity" });
+//     }
+
+//     if (!color || typeof color !== "string") {
+//       return res
+//         .status(400)
+//         .json({ message: "Color is required and must be a string" });
+//     }
+
+//     if (!size || typeof size !== "string") {
+//       return res
+//         .status(400)
+//         .json({ message: "Size is required and must be a string" });
+//     }
+
+//     if (!price || typeof price !== "number") {
+//       return res
+//         .status(400)
+//         .json({ message: "Price is required and must be a number" });
+//     }
+
+//     const user = await UserModel.findById(userId);
+//     const product = await Product.findById(productId);
+//     if (!user || !product) {
+//       return res.status(404).json({ message: "User or product not found" });
+//     }
+
+//     // Find the selected color
+//     const selectedColor = product.colors.find(c => c.name === color);
+//     if (!selectedColor) {
+//       return res.status(400).json({ message: "Selected color not available" });
+//     }
+
+//     // Find matching size within the selected color (case-insensitive)
+//     const sizeObj = selectedColor.sizes.find(
+//       (s) => s.size?.toString().toLowerCase() === size.toLowerCase()
+//     );
+
+//     if (!sizeObj || sizeObj.quantity < quantity) {
+//       return res.status(400).json({
+//         message: "Insufficient stock",
+//         available: sizeObj?.quantity || 0,
+//       });
+//     }
+
+//     const itemId = new mongoose.Types.ObjectId().toString();
+
+//     const newCartItem = {
+//       _id: itemId,
+//       productId,
+//       name: product.title,
+//       image: selectedColor.images.main || "https://via.placeholder.com/150",
+//       originalPrice: product.basePrice + (sizeObj.priceAdjustment || 0),
+//       price: price,
+//       quantity,
+//       color,
+//       size,
+//       maxQuantity: sizeObj.quantity,
+//       discount: product.discount || 0,
+//     };
+
+//     user.cart.set(itemId, newCartItem);
+//     await user.save();
+
+//     res.status(200).json({
+//       message: "Added to cart",
+//       addedItem: newCartItem,
+//       cart: Array.from(user.cart.values()),
+//     });
+//   } catch (err) {
+//     console.error("Error in /add cart:", err);
+//     res.status(500).json({ message: "Server error", error: err.message });
+//   }
+// });
+
+// Replace the POST /add handler in cartRoutes.js with this
 CartRoutes.post("/add", verifyToken, async (req, res) => {
   try {
-    const { productId, quantity, color, size, price } = req.body;
+    const { productId, quantity, color, size } = req.body;
     const userId = req.user.userId;
 
-    // Validate required fields
     if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
       return res.status(400).json({ message: "Invalid product ID format" });
     }
-
     if (quantity <= 0) {
       return res.status(400).json({ message: "Invalid quantity" });
     }
-
     if (!color || typeof color !== "string") {
       return res
         .status(400)
         .json({ message: "Color is required and must be a string" });
     }
-
     if (!size || typeof size !== "string") {
       return res
         .status(400)
         .json({ message: "Size is required and must be a string" });
-    }
-
-    if (!price || typeof price !== "number") {
-      return res
-        .status(400)
-        .json({ message: "Price is required and must be a number" });
     }
 
     const user = await UserModel.findById(userId);
@@ -123,17 +201,17 @@ CartRoutes.post("/add", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "User or product not found" });
     }
 
-    // Find the selected color
-    const selectedColor = product.colors.find(c => c.name === color);
+    // find the color and size inside product (case-insensitive)
+    const selectedColor = product.colors.find(
+      (c) => c.name?.toString().toLowerCase() === color.toLowerCase()
+    );
     if (!selectedColor) {
       return res.status(400).json({ message: "Selected color not available" });
     }
 
-    // Find matching size within the selected color (case-insensitive)
     const sizeObj = selectedColor.sizes.find(
       (s) => s.size?.toString().toLowerCase() === size.toLowerCase()
     );
-
     if (!sizeObj || sizeObj.quantity < quantity) {
       return res.status(400).json({
         message: "Insufficient stock",
@@ -141,20 +219,28 @@ CartRoutes.post("/add", verifyToken, async (req, res) => {
       });
     }
 
+    // Compute original price and discounted price server-side
+    const colorAdj = Number(selectedColor.priceAdjustment) || 0;
+    const sizeAdj = Number(sizeObj.priceAdjustment) || 0;
+    const originalPrice = Number(product.basePrice || 0) + colorAdj + sizeAdj;
+    const discount = Number(product.discount || 0);
+    const price =
+      discount > 0 ? Math.round(originalPrice * (1 - discount / 100)) : Math.round(originalPrice);
+
     const itemId = new mongoose.Types.ObjectId().toString();
 
     const newCartItem = {
       _id: itemId,
       productId,
       name: product.title,
-      image: selectedColor.images.main || "https://via.placeholder.com/150",
-      originalPrice: product.basePrice + (sizeObj.priceAdjustment || 0),
-      price: price,
+      image: selectedColor.images?.main || "https://via.placeholder.com/150",
+      originalPrice,
+      price,
       quantity,
       color,
       size,
       maxQuantity: sizeObj.quantity,
-      discount: product.discount || 0,
+      discount,
     };
 
     user.cart.set(itemId, newCartItem);
@@ -164,13 +250,13 @@ CartRoutes.post("/add", verifyToken, async (req, res) => {
       message: "Added to cart",
       addedItem: newCartItem,
       cart: Array.from(user.cart.values()),
+      cartTotal: calculateCartTotal(user.cart),
     });
   } catch (err) {
     console.error("Error in /add cart:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
-
 
 CartRoutes.get("/items", verifyToken, async (req, res) => {
   try {
