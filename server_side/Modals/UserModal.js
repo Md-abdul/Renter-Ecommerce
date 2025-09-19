@@ -12,6 +12,11 @@ const orderItemSchema = new mongoose.Schema({
   image: { type: String, required: true },
   size: { type: String },
   color: { type: String },
+  sku: { type: String },            
+  packageWeight: { type: Number },  
+  packageLength: { type: Number },  
+  packageBreadth: { type: Number }, 
+  packageHeight: { type: Number },  
   returnRequest: {
     type: {
       type: String,
@@ -119,6 +124,8 @@ const orderSchema = new mongoose.Schema(
       discountPercentage: Number,
       discountAmount: Number,
     },
+    awbNumber: { type: String, default: null },
+    shippingLabelUrl: { type: String, default: null },
     returnWindow: {
       type: Date,
       default: function () {
@@ -223,6 +230,12 @@ const userSchema = new mongoose.Schema(
         size: { type: String, required: true },
         maxQuantity: { type: Number, required: true },
         _id: { type: String, required: true },
+        // New fields
+        sku: { type: String },
+        packageWeight: { type: Number },
+        packageLength: { type: Number },
+        packageBreadth: { type: Number },
+        packageHeight: { type: Number },
       }),
       default: {},
     },

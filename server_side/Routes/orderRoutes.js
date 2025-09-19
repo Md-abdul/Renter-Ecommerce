@@ -62,6 +62,12 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
       image: item.image,
       size: item.size,
       color: item.color,
+      sku: item.sku,                      
+      packageWeight: item.packageWeight,  
+      packageLength: item.packageLength,  
+      packageBreadth: item.packageBreadth,
+      packageHeight: item.packageHeight,  
+
     }));
 
     // Calculate total amount
@@ -224,6 +230,8 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
         shippingAddress: order.shippingAddress,
         paymentMethod: order.paymentMethod,
         appliedCoupon: order.appliedCoupon,
+        awbNumber: order.awbNumber,        
+        shippingLabelUrl: order.shippingLabelUrl 
       },
     });
   } catch (error) {

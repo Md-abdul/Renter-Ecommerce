@@ -241,6 +241,11 @@ CartRoutes.post("/add", verifyToken, async (req, res) => {
       size,
       maxQuantity: sizeObj.quantity,
       discount,
+      sku: product.sku,                       
+      packageWeight: product.packageWeight,   
+      packageLength: product.packageLength,   
+      packageBreadth: product.packageBreadth, 
+      packageHeight: product.packageHeight,   
     };
 
     user.cart.set(itemId, newCartItem);
