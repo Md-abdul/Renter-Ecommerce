@@ -436,12 +436,28 @@ const UserOrders = () => {
                           <span className="text-sm text-gray-500">
                             {format(orderDate, "MMM dd, yyyy 'at' h:mm a")}
                           </span>
+                          <br />
                         </div>
+
                         <div className="flex items-center mt-1">
                           {getStatusIcon(order.status)}
                           <span className="text-sm font-medium capitalize text-gray-700">
                             {order.status}
                           </span>
+                        </div>
+
+                        <div className="mt-2">
+                          <span className="text-sm text-gray-500 font-bold">
+                            📦 Shipment via XpressBees
+                          </span>
+                          <p className="text-sm text-gray-600">
+                            Your package has been assigned an AWB Number:{" "}
+                            <span className="font-semibold text-gray-800">
+                              {order.awbNumber}
+                            </span>
+                            . You can use this number to track your shipment on
+                            the XpressBees website.
+                          </p>
                         </div>
                       </div>
                     </div>

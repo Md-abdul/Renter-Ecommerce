@@ -22,27 +22,56 @@ const LoginPage = () => {
     setShowPassword((prev) => !prev);
   };
 
+  // const handleLogin = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   const userData = { email, password };
+
+  //   const userSuccess = await dispatch(signIn(userData));
+  //   if (userSuccess) {
+  //     setLoading(false);
+  //     // Check if there's an intended destination to redirect to
+  //     setTimeout(() => {
+  //       checkAndHandlePostLoginRedirect();
+  //     }, 100); // Small delay to ensure token is stored
+  //     return;
+  //   }
+
+  //   const adminSuccess = await dispatch(adminLogin(userData));
+  //   setLoading(false);
+  //   if (adminSuccess) {
+  //     navigate("/adminDashboard");
+  //   }
+  // };
+
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    const userData = { email, password };
+  e.preventDefault();
+  setLoading(true);
+  const userData = { email, password };
 
-    const userSuccess = await dispatch(signIn(userData));
-    if (userSuccess) {
-      setLoading(false);
-      // Check if there's an intended destination to redirect to
-      setTimeout(() => {
-        checkAndHandlePostLoginRedirect();
-      }, 100); // Small delay to ensure token is stored
-      return;
-    }
-
-    const adminSuccess = await dispatch(adminLogin(userData));
+  const userSuccess = await dispatch(signIn(userData));
+  if (userSuccess) {
     setLoading(false);
-    if (adminSuccess) {
-      navigate("/adminDashboard");
-    }
-  };
+    setTimeout(() => {
+      // Run existing post-login redirect
+      checkAndHandlePostLoginRedirect();
+
+      // ✅ Fallback: if no redirect path, go to profile
+      const intendedDestination = localStorage.getItem("intendedDestination");
+      if (!intendedDestination) {
+        navigate("/user/profile");
+      }
+    }, 100);
+    return;
+  }
+
+  const adminSuccess = await dispatch(adminLogin(userData));
+  setLoading(false);
+  if (adminSuccess) {
+    navigate("/adminDashboard");
+  }
+};
+
 
   const handleGoogleSignup = () => {
     window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google`;

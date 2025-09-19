@@ -26,6 +26,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import Papa from "papaparse";
 
 export const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -39,6 +40,7 @@ export const Orders = () => {
   const [trackingInput, setTrackingInput] = useState("");
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [viewingBankDetails, setViewingBankDetails] = useState(null);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -611,6 +613,68 @@ export const Orders = () => {
     setViewingBankDetails(request);
   };
 
+  const exportOrdersToCSV = () => {
+    if (!orders || orders.length === 0) {
+      toast.error("No orders to export");
+      return;
+    }
+
+    const rows = orders.map((order) => {
+      const shipping = order.shippingAddress || {};
+      const address = shipping.address || {};
+      const nameParts = (shipping.name || "").split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+
+      // base row with fixed headers
+      let row = {
+        OrderId: order._id,
+        "Payment Type": order.paymentMethod,
+        "COD Collectable Amount": order.totalAmount || "",
+        Tags: "", // not mapped
+        "First Name": firstName,
+        "Last Name": lastName,
+        "Address 1": address.street || shipping.street || "",
+        "Address 2": address.street || shipping.street || "",
+        Phone: shipping.phoneNumber || "",
+        "Alternate phone":
+          address.alternatePhone || shipping.alternatePhone || "",
+        City: address.city || shipping.city || "",
+        State: address.state || shipping.state || "",
+        Pincode: address.zipCode || shipping.zipCode || "",
+        "Weight(gm)": order.items[0]?.packageWeight || "",
+        "Length(cm)": order.items[0]?.packageLength || "",
+        "Height(cm)": order.items[0]?.packageHeight || "",
+        "Breadth(cm)": order.items[0]?.packageBreadth || "",
+        "Shipping Charges": "",
+        "COD Charges": "",
+        Discount: order.appliedCoupon?.discountPercentage || "",
+      };
+
+      // now expand product/item details dynamically
+      order.items.forEach((item, idx) => {
+        const i = idx + 1;
+        row[`SKU(${i})`] = item.sku;
+        row[`Product(${i})`] = item.name ? item.name.substring(0, 3) : "";
+        row[`Quantity(${i})`] = item.quantity;
+        row[`Per Product Price(${i})`] = item.price;
+        row[`Total Price(${i})`] = item.price * item.quantity;
+      });
+
+      return row;
+    });
+
+    const csv = Papa.unparse(rows);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `orders_samples_${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
+    link.click();
+    toast.success("Orders exported successfully!");
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 min-h-screen">
       {viewingBankDetails && (
@@ -673,6 +737,13 @@ export const Orders = () => {
             }`}
           >
             {showReturns ? "Hide Returns" : "View Returns"}
+          </button>
+
+          <button
+            onClick={() => setShowExportModal(true)}
+            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
+            Export Orders
           </button>
         </div>
       </div>
@@ -1425,6 +1496,37 @@ export const Orders = () => {
             </div>
           )}
         </>
+      )}
+
+      {/* // confirmation modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-sm w-full">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Confirm Export
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Do you want to export all orders in CSV format?
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  exportOrdersToCSV();
+                  setShowExportModal(false);
+                }}
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
