@@ -628,7 +628,7 @@ export const Orders = () => {
 
       // base row with fixed headers
       let row = {
-        OrderId: order._id,
+        OrderId: order.orderNumber,
         "Payment Type": order.paymentMethod,
         "COD Collectable Amount": order.totalAmount || "",
         Tags: "", // not mapped
@@ -655,7 +655,10 @@ export const Orders = () => {
       order.items.forEach((item, idx) => {
         const i = idx + 1;
         row[`SKU(${i})`] = item.sku;
-        row[`Product(${i})`] = item.name ? item.name.substring(0, 3) : "";
+        // row[`Product(${i})`] = item.name ? item.name.substring(0, 3) : "";
+        row[`Product(${i})`] = item.name
+          ? item.name.split(" ").slice(0, 7).join(" ")
+          : "";
         row[`Quantity(${i})`] = item.quantity;
         row[`Per Product Price(${i})`] = item.price;
         row[`Total Price(${i})`] = item.price * item.quantity;

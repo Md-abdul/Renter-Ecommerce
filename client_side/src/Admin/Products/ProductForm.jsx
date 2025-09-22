@@ -332,6 +332,12 @@ const ProductForm = ({
                     required
                     min="0"
                     step="0.01"
+                    onWheel={(e) => e.target.blur()} 
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                        e.preventDefault(); // disable arrow key change
+                      }
+                    }}
                   />
                 </div>
                 <div>
@@ -346,6 +352,12 @@ const ProductForm = ({
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
                     min="0"
                     max="100"
+                    onWheel={(e) => e.target.blur()} 
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                        e.preventDefault(); // disable arrow key change
+                      }
+                    }}
                   />
                 </div>
 
@@ -396,6 +408,12 @@ const ProductForm = ({
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
                     min="1"
                     required
+                    onWheel={(e) => e.target.blur()} 
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                        e.preventDefault(); // disable arrow key change
+                      }
+                    }}
                   />
                 </div>
                 <div>
@@ -410,6 +428,12 @@ const ProductForm = ({
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
                     min="1"
                     required
+                    onWheel={(e) => e.target.blur()} 
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                        e.preventDefault(); // disable arrow key change
+                      }
+                    }}
                   />
                 </div>
                 <div>
@@ -424,6 +448,12 @@ const ProductForm = ({
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
                     min="1"
                     required
+                    onWheel={(e) => e.target.blur()} 
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                        e.preventDefault(); // disable arrow key change
+                      }
+                    }}
                   />
                 </div>
                 <div>
@@ -438,6 +468,12 @@ const ProductForm = ({
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
                     min="1"
                     required
+                    onWheel={(e) => e.target.blur()} 
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                        e.preventDefault(); // disable arrow key change
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -539,6 +575,12 @@ const ProductForm = ({
                           }
                           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
                           step="0.01"
+                          onWheel={(e) => e.target.blur()} 
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                        e.preventDefault(); // disable arrow key change
+                      }
+                    }}
                         />
                       </div>
                     </div>
@@ -682,6 +724,12 @@ const ProductForm = ({
                                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
                                 step="0.01"
                                 onWheel={handleNumberInput}
+                                // onWheel={(e) => e.target.blur()} 
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                        e.preventDefault(); // disable arrow key change
+                      }
+                    }}
                               />
                             </div>
                             <div>
@@ -703,6 +751,12 @@ const ProductForm = ({
                                 required
                                 min="0"
                                 onWheel={handleNumberInput}
+                                // onWheel={(e) => e.target.blur()} 
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                        e.preventDefault(); // disable arrow key change
+                      }
+                    }}
                               />
                             </div>
                           </div>

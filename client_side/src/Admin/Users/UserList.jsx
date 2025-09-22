@@ -14,6 +14,8 @@ const UserList = () => {
   // New state for export modal
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [exportFormat, setExportFormat] = useState("excel");
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 10;
 
   // Form state
   const [formData, setFormData] = useState({
@@ -66,6 +68,12 @@ const UserList = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -250,8 +258,8 @@ const UserList = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => (
+                {currentUsers.length > 0 ? (
+                  currentUsers.map((user) => (
                     <tr
                       key={user._id}
                       className="hover:bg-gray-50 transition-colors duration-150"
@@ -409,6 +417,49 @@ const UserList = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2 my-6">
+          {/* Previous Button */}
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 rounded-md text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 disabled:opacity-50 cursor-pointer"
+          >
+            Previous
+          </button>
+
+          {/* Page Numbers */}
+          {[...Array(totalPages)].map((_, idx) => {
+            const page = idx + 1;
+            return (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1 rounded-md text-sm font-medium ${
+                  currentPage === page
+                    ? "bg-yellow-400 text-black"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {page}
+              </button>
+            );
+          })}
+
+          {/* Next Button */}
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 rounded-md text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 disabled:opacity-50 cursor-pointer"
+          >
+            Next
+          </button>
         </div>
       )}
 
