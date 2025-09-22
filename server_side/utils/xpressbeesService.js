@@ -46,6 +46,18 @@ const name = order.shippingAddress?.name?.trim();
     throw new Error("Incomplete address. AWB cannot be generated.");
   }
 
+    // ✅ Aggregate package dimensions/weight dynamically
+  const totalWeight = order.items.reduce(
+    (sum, item) => sum + (item.packageWeight || 300) * item.quantity,
+    0
+  );
+
+  const maxLength = Math.max(...order.items.map(i => i.packageLength || 10));
+  const maxBreadth = Math.max(...order.items.map(i => i.packageBreadth || 10));
+  const maxHeight = order.items.reduce(
+    (sum, i) => sum + (i.packageHeight || 10) * i.quantity,
+    0
+  );
   const payload = {
     order_number: order.orderNumber || "ORDER" + Date.now(),
     payment_type: order.paymentMethod.toLowerCase(), // 'cod' or 'prepaid'
@@ -53,10 +65,10 @@ const name = order.shippingAddress?.name?.trim();
     cod_charges: order.paymentMethod.toLowerCase() === "cod" ? 40 : 0,
     discount: 0,
     order_amount: order.totalAmount,
-    package_weight: 300,
-    package_length: 10,
-    package_breadth: 10,
-    package_height: 10,
+    package_weight: totalWeight,
+    package_length: maxLength,
+    package_breadth: maxBreadth,
+    package_height: maxHeight,
     request_auto_pickup: "yes",
 
     consignee: {
