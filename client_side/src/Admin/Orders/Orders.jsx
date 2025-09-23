@@ -628,7 +628,8 @@ export const Orders = () => {
 
       // base row with fixed headers
       let row = {
-        OrderId: order.orderNumber,
+        // OrderId: order.orderNumber,
+        OrderId: String(order.orderNumber).padStart(4, "0"),
         "Payment Type": order.paymentMethod,
         "COD Collectable Amount": order.totalAmount || "",
         Tags: "", // not mapped
