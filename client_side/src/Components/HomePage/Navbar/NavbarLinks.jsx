@@ -17,12 +17,12 @@ const navdata = () => {
           link: "/womens",
           icon: "fa fa-womens"
         },
-        {
-          id: "kids",
-          label: "Kids",
-          link: "/kids",
-          icon: "fa fa-kids"
-        },
+        // {
+        //   id: "kids",
+        //   label: "Kids",
+        //   link: "/kids",
+        //   icon: "fa fa-kids"
+        // },
         
         // {
         //   id: "storeLocator",

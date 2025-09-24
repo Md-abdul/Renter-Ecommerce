@@ -6,19 +6,13 @@ import {
   FaLinkedin,
 } from "react-icons/fa";
 import backgroundImage from "../../../assets/wave.png";
-import logo from "../../../assets/ranter-website-logo.png"
+// import logo from "../../../assets/ranter-website-logo.png"
 
 const Footer = () => {
   return (
     <div
       className="relative bg-yellow-400 lg:bg-transparent text-black py-20 px-6 -mb-20"
-      style={
-        {
-          // Remove backgroundImage from inline style and handle it via CSS
-          // border: "2px solid red",/
-          // marginTop:"-10px"
-        }
-      }
+      
     >
       {/* Add a div for the background that will be hidden on small screens */}
       <div
@@ -28,7 +22,7 @@ const Footer = () => {
         }}
       ></div>
 
-      <div className="max-w-7xl mx-auto flex flex-wrap justify-between gap-8 -mt-10 sm:mt-30">
+      <div className="max-w-7xl mx-auto flex flex-wrap justify-between gap-8 -mt-10 sm:mt-80">
         
         {/* Account Section */}
         <div className="w-full sm:w-auto">
@@ -119,9 +113,6 @@ const Footer = () => {
         {/* Support Section */}
         <div className="w-full sm:w-auto">
           <h4 className="mb-3 text-lg font-semibold">Support</h4>
-          {/* <p className="text-gray-800">
-            111 Bijoy Sarani, Mumbai, DH 1515, India
-          </p> */}
           <p className="text-gray-800">
             shop 10 Ground Floor Ghansoli   
           </p>
@@ -135,7 +126,7 @@ const Footer = () => {
             400701, India
           </p>
           <p className="text-gray-800">Email: info.ranter@gmail.com</p>
-          <p className="text-gray-800">Phone: +91 9029297732</p>
+          <p className="text-gray-800">Phone: +91 8779811198</p>
         </div>
 
         {/* Exclusive Section */}
@@ -143,18 +134,83 @@ const Footer = () => {
           <h4 className="mb-3 text-lg font-semibold">Exclusive</h4>
           <p className="text-gray-800">Subscribe</p>
           <p className="text-gray-800">Get 10% off your first order</p>
-          {/* <div className="flex mt-2">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-4 py-2 border border-gray-400 rounded-l-md focus:outline-none"
-            />
-            <button className="px-4 py-2 bg-black text-white rounded-r-md hover:bg-gray-900 transition">
-              &#x27A4;
-            </button>
-          </div> */}
         </div>
       </div>
+
+      {/* Shipping Policy Section */}
+      <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-black">
+        <h4 className="mb-4 text-lg font-semibold text-center">📦 Shipping Policy</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+          
+          {/* Shipping Rates & Times */}
+          <div className="space-y-4">
+            <div>
+              <h5 className="font-semibold mb-2 flex items-center">
+                <span className="w-2 h-2 bg-black rounded-full mr-2"></span>
+                Shipping Rates
+              </h5>
+              <ul className="text-gray-700 space-y-1 ml-4">
+                <li>• Rates calculated at checkout based on weight & location</li>
+                <li>• Free shipping offers available during promotions</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h5 className="font-semibold mb-2 flex items-center">
+                <span className="w-2 h-2 bg-black rounded-full mr-2"></span>
+                Shipping Times
+              </h5>
+              <ul className="text-gray-700 space-y-1 ml-4">
+                <li>• Processing: 1-2 business days</li>
+                <li>• Delivery: 4-7 business days within India</li>
+                <li>• Delays notified promptly</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* International Shipping & Order Tracking */}
+          <div className="space-y-4">
+            <div>
+              <h5 className="font-semibold mb-2 flex items-center">
+                <span className="w-2 h-2 bg-black rounded-full mr-2"></span>
+                International Shipping
+              </h5>
+              <p className="text-gray-700 ml-4">
+                • Currently we only ship within India
+              </p>
+            </div>
+            
+            <div>
+              <h5 className="font-semibold mb-2 flex items-center">
+                <span className="w-2 h-2 bg-black rounded-full mr-2"></span>
+                Order Tracking
+              </h5>
+              <ul className="text-gray-700 space-y-1 ml-4">
+                <li>• Tracking number sent via email/SMS</li>
+                <li>• Online status tracking available 24/7</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Additional Info */}
+          <div className="space-y-4">
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <h5 className="font-semibold mb-2 text-amber-800">💡 Important Note</h5>
+              <p className="text-amber-700 text-xs">
+                All orders are processed within India only. For any shipping inquiries, 
+                contact our support team at info.ranter@gmail.com
+              </p>
+            </div>
+            
+            <div className="text-xs text-gray-600">
+              <p>📞 Need help with shipping? Call +91 8779811198</p>
+              <p>⏰ Support available: Mon-Sat, 10AM-7PM</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Copyright & Social Links */}
       <div className="max-w-7xl mx-auto mt-8 flex flex-col sm:flex-row justify-between items-center px-6 lg:-mb-2.5">
         <p className="text-gray-700 text-sm">
           &copy; Copyright Ranter Store 2025. All rights reserved
