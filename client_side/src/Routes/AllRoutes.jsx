@@ -21,6 +21,7 @@ import PrivacyPolicy from "../Pages/ExtraPages/PrivacyPolicy.jsx";
 import Return from "../Pages/ExtraPages/Return.jsx";
 import ForgotPasswordPage from "../Pages/ForgotPasswordPage.jsx";
 import StoreLocator_Admin from "../Admin/SoldProductData/StoreLocator_Admin.jsx";
+import ShippingPolicy from "../Pages/ExtraPages/ShippingPolicy.jsx";
 // import PagesAccess from "../Admin/SoldProductData/PagesAccess.jsx";
 
 const AllRoutes = () => {
@@ -53,6 +54,7 @@ const AllRoutes = () => {
       <Route path="/term-of-uses" element={<TermOfUses />} />
       <Route path="/term-of-return" element={<Return />} />
       <Route path="/term-of-privacy" element={<PrivacyPolicy />} />
+      <Route path="/shipping-policy" element={<ShippingPolicy/>}/>
 
       {/* User Profile Section with Nested Routes */}
       <Route
