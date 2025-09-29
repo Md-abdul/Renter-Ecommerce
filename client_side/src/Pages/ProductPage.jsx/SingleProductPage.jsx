@@ -27,26 +27,83 @@ const SingleProductPage = () => {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const MAX_CART_TOTAL = 40000;
 
-  useEffect(() => {
-    const fetchRelatedProducts = async () => {
-      try {
-        const response = await fetch(
-          "https://renter-ecommerce.vercel.app/api/products",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
+  // useEffect(() => {
+  //   const fetchRelatedProducts = async () => {
+  //     try {
+  //       const response = await fetch(
+  //         "https://renter-ecommerce.vercel.app/api/products",
+  //         {
+  //           method: "GET",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //           },
+  //         }
+  //       );
+  //       const data = await response.json();
+  //       setRelatedProducts(data);
+  //     } catch (error) {
+  //       console.error("Error fetching related products:", error);
+  //     }
+  //   };
+  //   fetchRelatedProducts();
+  // }, []);
+
+  // Update the fetchRelatedProducts function inside the first useEffect
+useEffect(() => {
+  const fetchRelatedProducts = async () => {
+    try {
+      const response = await fetch(
+        "https://renter-ecommerce.vercel.app/api/products",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+      
+      // Filter products based on current product's category
+      if (product && product.category) {
+        const filteredProducts = data.filter(
+          (item) => item.category === product.category && item._id !== product._id
         );
-        const data = await response.json();
+        setRelatedProducts(filteredProducts);
+      } else {
         setRelatedProducts(data);
-      } catch (error) {
-        console.error("Error fetching related products:", error);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching related products:", error);
+    }
+  };
+
+  // Fetch related products only when product data is available
+  if (product) {
     fetchRelatedProducts();
-  }, []);
+  }
+}, [product]); // Add product as dependency
+
+  // useEffect(() => {
+  //   const fetchProduct = async () => {
+  //     try {
+  //       const response = await fetch(
+  //         `https://renter-ecommerce.vercel.app/api/products/${_id}`
+  //       );
+  //       const data = await response.json();
+  //       if (data) {
+  //         setProduct(data);
+  //         if (data.colors && data.colors.length > 0) {
+  //           setSelectedColor(data.colors[0]);
+  //           setSelectedImage(data.colors[0].images.main);
+  //         }
+  //       }
+  //       setLoading(false);
+  //     } catch (error) {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchProduct();
+  // }, [_id]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -691,7 +748,7 @@ const SingleProductPage = () => {
       </div>
 
       {/* Related Products Section */}
-      {relatedProducts.length > 0 && (
+      {/* {relatedProducts.length > 0 && (
         <div className="mt-16">
           <h3 className="text-2xl font-bold mb-8 text-center text-gray-800">
             Similar Products
@@ -700,7 +757,11 @@ const SingleProductPage = () => {
             {relatedProducts.slice(0, 4).map((product) => (
               <div
                 key={product._id}
-                onClick={() => navigate(`/products/${product._id}`)}
+                // onClick={() => navigate(`/product/${product._id}`)}
+                onClick={() => {
+            navigate(`/product/${product._id}`);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
                 className="bg-white rounded-lg overflow-hidden group border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
               >
                 <div className="relative w-full h-48 overflow-hidden">
@@ -755,7 +816,76 @@ const SingleProductPage = () => {
             ))}
           </div>
         </div>
-      )}
+      )} */}
+      {/* Similar Products Section */}
+{relatedProducts.length > 0 && (
+  <div className="mt-16">
+    <h3 className="text-2xl font-bold mb-8 text-center text-gray-800">
+      Similar Products
+    </h3>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+      {relatedProducts.slice(0, 4).map((product) => (
+        <div
+          key={product._id}
+          onClick={() => {
+            navigate(`/product/${product._id}`);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className="bg-white rounded-lg overflow-hidden group border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+        >
+          <div className="relative w-full h-48 overflow-hidden">
+            <img
+              src={
+                product.colors[0]?.images.main ||
+                "https://via.placeholder.com/300"
+              }
+              alt={product.title}
+              className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+            />
+            {product.discount > 0 && (
+              <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                {product.discount}% OFF
+              </div>
+            )}
+          </div>
+          <div className="p-4">
+            <h4 className="text-md font-semibold text-gray-800 mb-1 line-clamp-1">
+              {product.title}
+            </h4>
+            <div className="flex items-center mb-2">
+              <div className="flex items-center bg-yellow-50 px-1.5 py-0.5 rounded">
+                <Star
+                  className="text-yellow-500 fill-yellow-500 mr-1"
+                  size={12}
+                />
+                <span className="font-medium text-xs">
+                  {product.rating}
+                </span>
+              </div>
+              <span className="ml-2 text-gray-500 text-xs">
+                ({product.reviews})
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-bold text-gray-900">
+                ₹{product.basePrice}
+              </span>
+              {product.discount > 0 && (
+                <span className="text-sm text-gray-400 line-through">
+                  ₹
+                  {(
+                    product.basePrice +
+                    (product.colors[0]?.sizes[0]?.priceAdjustment || 0)
+                  ).toFixed(2)}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
     </div>
   );
 };

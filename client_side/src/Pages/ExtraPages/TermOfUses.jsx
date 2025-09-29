@@ -246,6 +246,132 @@
 
 // export default TermOfUses;
 
+// ============================================
+
+// import React from "react";
+
+// const TermOfUses = () => {
+//   return (
+//     <div className="min-h-screen bg-gray-50">
+//       <header className="bg-white shadow-sm">
+//         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+//           <h1 className="text-3xl font-semibold text-gray-900">Terms and Conditions</h1>
+//         </div>
+//       </header>
+
+//       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+//         <div className="flex flex-col md:flex-row gap-8">
+//           {/* Sidebar Navigation */}
+//           <div className="w-full md:w-64 flex-shrink-0">
+//             <nav className="sticky top-8">
+//               <ul className="space-y-2">
+//                 <li>
+//                   <a href="#acceptance-terms" className="w-full text-left px-4 py-2 rounded-lg transition-all duration-200 cursor-pointer text-gray-700 hover:bg-gray-100 block">
+//                     1. Acceptance of Terms
+//                   </a>
+//                 </li>
+//                 <li>
+//                   <a href="#user-conduct" className="w-full text-left px-4 py-2 rounded-lg transition-all duration-200 cursor-pointer text-gray-700 hover:bg-gray-100 block">
+//                     2. User Conduct
+//                   </a>
+//                 </li>
+//                 <li>
+//                   <a href="#intellectual-property" className="w-full text-left px-4 py-2 rounded-lg transition-all duration-200 cursor-pointer text-gray-700 hover:bg-gray-100 block">
+//                     3. Intellectual Property
+//                   </a>
+//                 </li>
+//                 <li>
+//                   <a href="#limitation-liability" className="w-full text-left px-4 py-2 rounded-lg transition-all duration-200 cursor-pointer text-gray-700 hover:bg-gray-100 block">
+//                     4. Limitation of Liability
+//                   </a>
+//                 </li>
+//                 <li>
+//                   <a href="#indemnification" className="w-full text-left px-4 py-2 rounded-lg transition-all duration-200 cursor-pointer text-gray-700 hover:bg-gray-100 block">
+//                     5. Indemnification
+//                   </a>
+//                 </li>
+//                 <li>
+//                   <a href="#governing-law" className="w-full text-left px-4 py-2 rounded-lg transition-all duration-200 cursor-pointer text-gray-700 hover:bg-gray-100 block">
+//                     6. Governing Law
+//                   </a>
+//                 </li>
+//               </ul>
+//             </nav>
+//           </div>
+
+//           {/* Content Area */}
+//           <div className="flex-1 bg-white rounded-xl shadow-sm p-6 md:p-8">
+//             <div className="space-y-8">
+//               {/* Section 1 */}
+//               <section id="acceptance-terms" className="scroll-mt-20">
+//                 <h2 className="text-2xl font-bold mb-4">1. Acceptance of Terms</h2>
+//                 <p className="mb-4">
+//                   By accessing or using [Your Company Name]'s website, you agree to be bound by these Terms
+//                   and Conditions.
+//                 </p>
+//               </section>
+
+//               {/* Section 2 */}
+//               <section id="user-conduct" className="scroll-mt-20">
+//                 <h2 className="text-2xl font-bold mb-4">2. User Conduct</h2>
+//                 <p className="mb-4">
+//                   You agree not to engage in any activity that disrupts or interferes with the functioning of the
+//                   website or its services.
+//                 </p>
+//               </section>
+
+//               {/* Section 3 */}
+//               <section id="intellectual-property" className="scroll-mt-20">
+//                 <h2 className="text-2xl font-bold mb-4">3. Intellectual Property</h2>
+//                 <p className="mb-4">
+//                   All content and materials available on the website are protected by intellectual property laws.
+//                 </p>
+//               </section>
+
+//               {/* Section 4 */}
+//               <section id="limitation-liability" className="scroll-mt-20">
+//                 <h2 className="text-2xl font-bold mb-4">4. Limitation of Liability</h2>
+//                 <p className="mb-4">
+//                   [Your Company Name] shall not be liable for any indirect, incidental, special, consequential, or
+//                   punitive damages arising out of your access to or use of the website.
+//                 </p>
+//               </section>
+
+//               {/* Section 5 */}
+//               <section id="indemnification" className="scroll-mt-20">
+//                 <h2 className="text-2xl font-bold mb-4">5. Indemnification</h2>
+//                 <p className="mb-4">
+//                   You agree to indemnify and hold [Your Company Name] harmless from any claims, losses,
+//                   liabilities, damages, costs, and expenses arising out of or relating to your use of the website.
+//                 </p>
+//               </section>
+
+//               {/* Section 6 */}
+//               <section id="governing-law" className="scroll-mt-20">
+//                 <h2 className="text-2xl font-bold mb-4">6. Governing Law</h2>
+//                 <p className="mb-4">
+//                   These Terms and Conditions shall be governed by and construed in accordance with the laws of
+//                   [Your Jurisdiction].
+//                 </p>
+//               </section>
+//             </div>
+//           </div>
+//         </div>
+//       </main>
+
+//       <footer className="bg-white border-t border-gray-200 mt-12">
+//         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+//           <p className="text-center text-gray-500 text-sm">
+//             Last updated: May 14, 2025
+//           </p>
+//         </div>
+//       </footer>
+//     </div>
+//   );
+// };
+
+// export default TermOfUses;
+
 import React from "react";
 
 const TermOfUses = () => {
@@ -304,7 +430,7 @@ const TermOfUses = () => {
               <section id="acceptance-terms" className="scroll-mt-20">
                 <h2 className="text-2xl font-bold mb-4">1. Acceptance of Terms</h2>
                 <p className="mb-4">
-                  By accessing or using [Your Company Name]'s website, you agree to be bound by these Terms
+                  By accessing or using DEN JEANS's website, you agree to be bound by these Terms
                   and Conditions.
                 </p>
               </section>
@@ -330,7 +456,7 @@ const TermOfUses = () => {
               <section id="limitation-liability" className="scroll-mt-20">
                 <h2 className="text-2xl font-bold mb-4">4. Limitation of Liability</h2>
                 <p className="mb-4">
-                  [Your Company Name] shall not be liable for any indirect, incidental, special, consequential, or
+                  DEN JEANS shall not be liable for any indirect, incidental, special, consequential, or
                   punitive damages arising out of your access to or use of the website.
                 </p>
               </section>
@@ -339,7 +465,7 @@ const TermOfUses = () => {
               <section id="indemnification" className="scroll-mt-20">
                 <h2 className="text-2xl font-bold mb-4">5. Indemnification</h2>
                 <p className="mb-4">
-                  You agree to indemnify and hold [Your Company Name] harmless from any claims, losses,
+                  You agree to indemnify and hold DEN JEANS harmless from any claims, losses,
                   liabilities, damages, costs, and expenses arising out of or relating to your use of the website.
                 </p>
               </section>
@@ -349,7 +475,7 @@ const TermOfUses = () => {
                 <h2 className="text-2xl font-bold mb-4">6. Governing Law</h2>
                 <p className="mb-4">
                   These Terms and Conditions shall be governed by and construed in accordance with the laws of
-                  [Your Jurisdiction].
+                  India.
                 </p>
               </section>
             </div>

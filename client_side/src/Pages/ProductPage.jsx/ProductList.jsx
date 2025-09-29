@@ -76,6 +76,7 @@ const ProductList = ({ category }) => {
   useEffect(() => {
     const allProducts = filteredProducts(category);
     let foundMaxPrice = 0;
+
     allProducts.forEach((product) => {
       if (product.sizes && product.sizes.length > 0) {
         product.sizes.forEach((size) => {
@@ -91,14 +92,15 @@ const ProductList = ({ category }) => {
           foundMaxPrice = product.basePrice;
       }
     });
-    // Round up to nearest 100 for slider
+
+    // Round up to nearest 100
     foundMaxPrice = Math.ceil(foundMaxPrice / 100) * 100;
     if (foundMaxPrice < 1000) foundMaxPrice = 1000;
+
     setMaxPrice(foundMaxPrice);
-    // If current priceRange max is less than found max, update it
-    if (priceRange[1] > foundMaxPrice || priceRange[1] === 1000) {
-      setPriceRange([0, foundMaxPrice]);
-    }
+
+    // 👇 Always reset the range when category changes
+    setPriceRange([0, foundMaxPrice]);
   }, [filteredProducts, category]);
 
   const calculateDisplayPrice = (product) => {
