@@ -9,6 +9,7 @@ import { Orders } from "./Orders/Orders";
 import SoldProduct from "./SoldProductData/SoldProduct";
 import Coupons from "./SoldProductData/Coupons";
 import StoreLocator_Admin from "./SoldProductData/StoreLocator_Admin";
+import PaymentTransactions from "./PaymentTransactions/PaymentTransactions";
 // import PagesAccess from "./SoldProductData/PagesAccess";
 
 const AdminDashboard = () => {
@@ -49,6 +50,7 @@ const AdminDashboard = () => {
           {activeTab === "billingrecords" && <SoldProduct />}
           {activeTab === "coupon" && <Coupons />}
           {activeTab === "storelocator_admin" && <StoreLocator_Admin />}
+          {activeTab === "paymenttransactions" && <PaymentTransactions />}
           {/* {activeTab === "pageaccess" && <PagesAccess />} */}
         </main>
       </div>

@@ -2,11 +2,13 @@ import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const PaymentStatus = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { verifyPhonePePayment } = useCart();
+  const { verifyPhonePePayment, fetchCart } = useCart();
+  const API_BASE_URL = "https://renter-ecommerce.vercel.app/api";
 
   useEffect(() => {
     const handlePaymentStatus = async () => {
@@ -22,7 +24,7 @@ const PaymentStatus = () => {
           return;
         }
 
-        if (code === "PAYMENT_SUCCESS") {
+        if (code === "PAYMENT_SUCCESS" || code === "COMPLETED") {
           // First verify the payment
           await verifyPhonePePayment(merchantTransactionId, orderId);
 
@@ -40,7 +42,8 @@ const PaymentStatus = () => {
           // Clear the pending order ID
           localStorage.removeItem("pendingOrderId");
           await fetchCart(); // Refresh cart
-          navigate("/orders");
+          toast.success("Payment successful!");
+          navigate("/order");
         } else {
           toast.error("Payment failed. Please try again.");
           // Clear the pending order ID

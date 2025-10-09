@@ -173,7 +173,7 @@ const HomePage = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
       >
-        <div className="max-w-7xl mx-auto relative z-10" >
+        <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -253,7 +253,7 @@ const HomePage = () => {
             <div className="w-20 h-1 bg-gradient-to-r from-blue-500 to-teal-500 mx-auto mt-4"></div>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
             {[
               {
                 name: "Men's Fashion",
@@ -269,13 +269,13 @@ const HomePage = () => {
                 link: "/womens",
                 bgGradient: "",
               },
-              {
-                name: "Kids & Babies",
-                image:
-                  "https://littlestepsasia.s3.ap-southeast-1.amazonaws.com/wp-content/uploads/2024/01/08075312/Best-Kids-Clothing-Shops-And-Brands-In-Hong-Kong-scaled.jpg",
-                link: "/kids",
-                bgGradient: "",
-              },
+              // {
+              //   name: "Kids & Babies",
+              //   image:
+              //     "https://littlestepsasia.s3.ap-southeast-1.amazonaws.com/wp-content/uploads/2024/01/08075312/Best-Kids-Clothing-Shops-And-Brands-In-Hong-Kong-scaled.jpg",
+              //   link: "/kids",
+              //   bgGradient: "",
+              // },
             ].map((category, index) => (
               <motion.div
                 key={index}
@@ -475,13 +475,15 @@ const HomePage = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <motion.button
-              className="bg-white text-black px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
-              whileHover={{ scale: 1.05, backgroundColor: "#f0f0f0" }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Shop the Sale
-            </motion.button>
+            <Link to={"/womens"}>
+              <motion.button
+                className="bg-white text-black px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                whileHover={{ scale: 1.05, backgroundColor: "#f0f0f0" }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Shop the Sale
+              </motion.button>
+            </Link>
           </motion.div>
         </div>
       </motion.section>
@@ -514,7 +516,6 @@ const HomePage = () => {
               variants={slideInLeft}
             >
               <div
-              
                 className="absolute inset-0 bg-cover bg-center transition-all duration-700 group-hover:scale-105"
                 style={{
                   backgroundImage:
@@ -547,14 +548,17 @@ const HomePage = () => {
                     viewport={{ once: true }}
                     transition={{ delay: 0.5 }}
                   >
-                    
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="px-6 py-2 bg-white text-black rounded-full text-sm font-semibold"
-                      >
-                        Explore Collection
-                      </motion.button>
+                    <Link to="/mens"
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }><motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="px-6 py-2 bg-white text-black rounded-full text-sm font-semibold"
+                    >
+                      Explore Collection
+                    </motion.button>
+                    </Link>
                     
                   </motion.div>
                 </div>
@@ -601,7 +605,12 @@ const HomePage = () => {
                     viewport={{ once: true }}
                     transition={{ delay: 0.5 }}
                   >
-                   
+                    <Link
+                      to="/womens"
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }
+                    >
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -609,7 +618,7 @@ const HomePage = () => {
                       >
                         Explore Collection
                       </motion.button>
-                  
+                    </Link>
                   </motion.div>
                 </div>
               </div>

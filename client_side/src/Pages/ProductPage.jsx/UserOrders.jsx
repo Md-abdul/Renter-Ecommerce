@@ -633,9 +633,30 @@ const UserOrders = () => {
                               <p className="text-green-600 font-medium">
                                 {order.paymentMethod === "cod"
                                   ? "Pending"
-                                  : "Done"}
+                                  : order.paymentDetails?.paymentStatus ||
+                                    "Done"}
                               </p>
                             </div>
+                            {order.paymentMethod === "phonepe" &&
+                              order.paymentDetails?.transactionId && (
+                                <div>
+                                  <p className="font-medium">Transaction ID</p>
+                                  <p className="text-sm text-gray-600 font-mono">
+                                    {order.paymentDetails.transactionId}
+                                  </p>
+                                </div>
+                              )}
+                            {order.paymentMethod === "phonepe" &&
+                              order.paymentDetails?.merchantTransactionId && (
+                                <div>
+                                  <p className="font-medium">
+                                    Merchant Transaction ID
+                                  </p>
+                                  <p className="text-sm text-gray-600 font-mono">
+                                    {order.paymentDetails.merchantTransactionId}
+                                  </p>
+                                </div>
+                              )}
                             <div>
                               <p className="font-medium">Total Amount</p>
                               <p className="text-xl font-bold text-gray-900">

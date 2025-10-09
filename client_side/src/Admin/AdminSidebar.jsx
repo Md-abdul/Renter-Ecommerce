@@ -6,6 +6,7 @@ import {
   FiLogOut,
   FiChevronLeft,
   FiChevronRight,
+  FiDollarSign,
 } from "react-icons/fi";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -40,6 +41,11 @@ const AdminSidebar = ({
     { id: "products", icon: <FiShoppingBag />, label: "Products" },
     { id: "users", icon: <FiUsers />, label: "Users" },
     { id: "orders", icon: <BsBox />, label: "Orders" },
+    {
+      id: "paymenttransactions",
+      icon: <FiDollarSign />,
+      label: "Payment Transactions",
+    },
     { id: "billingrecords", icon: <GoDatabase />, label: "Billing Records" },
     { id: "coupon", icon: <VscGift />, label: "Coupons" },
     {
