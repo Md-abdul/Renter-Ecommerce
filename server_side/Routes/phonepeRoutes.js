@@ -1,323 +1,490 @@
-// // const express = require("express");
-// // const phonepeRoutes = express.Router();
-// // const axios = require("axios");
-// // const sha256 = require("sha256");
-// // const uniqid = require("uniqid");
-// // const { OrderModel } = require("../Modals/UserModal");
-// // const dotenv = require("dotenv");
+// Routes/phonepeRoutes.js
+const express = require("express");
+const router = express.Router();
+const axios = require("axios");
+const crypto = require("crypto");
+const { verifyToken } = require("../Middlewares/VerifyToken");
+const { UserModel, OrderModel } = require("../Modals/UserModal");
+const PaymentTransactionModel = require("../Modals/paymentModal");
 
-// // // UAT environment - Move these to .env later
-// // const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID || "PGTESTPAYUAT";
-// // const PHONE_PE_HOST_URL = process.env.PHONEPE_HOST_URL || "https://api-preprod.phonepe.com/apis/pg-sandbox";
-// // const SALT_INDEX = process.env.PHONEPE_SALT_INDEX || 1;
-// // const SALT_KEY = process.env.PHONEPE_SALT_KEY || "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
+// Production PhonePe configuration
+const PHONEPE_HOST =
+  process.env.NODE_ENV === "production"
+    ? "https://api.phonepe.com/apis/pg-sandbox" // Use production URL when ready
+    : "https://api-preprod.phonepe.com/apis/pg-sandbox";
 
-// // // Endpoint to initiate a payment
-// // phonepeRoutes.post("/initiate", async function (req, res) {
-// //   try {
-// //     const { amount, orderId, userId } = req.body;
+const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
+const SALT_KEY = process.env.PHONEPE_SALT_KEY;
+const SALT_INDEX = process.env.PHONEPE_SALT_INDEX || "1";
 
-// //     if (!amount || !orderId || !userId) {
-// //       return res.status(400).json({ error: "Missing required fields" });
-// //     }
+/**
+ * ✅ Utility to build checksum (X-VERIFY)
+ * Formula:
+ *   SHA256( base64EncodedPayload + "/pg/v1/pay" + SALT_KEY ) + "###" + SALT_INDEX
+ */
+function buildPhonePeChecksum(encodedReq, uri = "/pg/v1/pay") {
+  const payload = encodedReq + uri + SALT_KEY;
+  const sha = crypto.createHash("sha256").update(payload).digest("hex");
+  return `${sha}###${SALT_INDEX}`;
+}
 
-// //     // Generate a unique merchant transaction ID for each transaction
-// //     let merchantTransactionId = uniqid();
+/**
+ * ✅ Utility to verify PhonePe response checksum
+ */
+function verifyPhonePeChecksum(
+  encodedResponse,
+  checksum,
+  uri = "/pg/v1/status"
+) {
+  const payload = encodedResponse + uri + SALT_KEY;
+  const sha = crypto.createHash("sha256").update(payload).digest("hex");
+  const expectedChecksum = `${sha}###${SALT_INDEX}`;
+  return expectedChecksum === checksum;
+}
 
-// //     const payload = {
-// //       merchantId: MERCHANT_ID,
-// //       merchantTransactionId: merchantTransactionId,
-// //       merchantUserId: userId,
-// //       amount: amount * 100, // converting to paise
-// //       redirectUrl: `${process.env.BACKEND_URL}/api/payments/validate/${merchantTransactionId}`,
-// //       redirectMode: "POST",
-// //       mobileNumber: "9999999999", // You can get this from user profile
-// //       paymentInstrument: {
-// //         type: "PAY_PAGE",
-// //       },
-// //     };
+/**
+ * 📌 Create a PhonePe order and return the redirect payment URL
+ * POST /api/phonepe/createOrder
+ * body: { shippingAddress, couponCode }
+ */
+router.post("/createOrder", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { shippingAddress, couponCode } = req.body;
 
-// //     // make base64 encoded payload
-// //     const base64EncodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64");
+    // Validate required fields
+    if (
+      !shippingAddress ||
+      !shippingAddress.name ||
+      !shippingAddress.address ||
+      !shippingAddress.address.street ||
+      !shippingAddress.address.city ||
+      !shippingAddress.address.zipCode ||
+      !shippingAddress.phoneNumber
+    ) {
+      return res.status(400).json({
+        message: "Missing required shipping information",
+      });
+    }
 
-// //     // Generate X-VERIFY header
-// //     const string = base64EncodedPayload + "/pg/v1/pay" + SALT_KEY;
-// //     const sha256_val = sha256(string);
-// //     const xVerifyChecksum = sha256_val + "###" + SALT_INDEX;
+    const user = await UserModel.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-// //     const response = await axios.post(
-// //       `${PHONE_PE_HOST_URL}/pg/v1/pay`,
-// //       { request: base64EncodedPayload },
-// //       {
-// //         headers: {
-// //           "Content-Type": "application/json",
-// //           "X-VERIFY": xVerifyChecksum,
-// //           accept: "application/json",
-// //         },
-// //       }
-// //     );
+    if (user.cart.size === 0) {
+      return res.status(400).json({ message: "Cart is empty" });
+    }
 
-// //     // Update order with payment details
-// //     await OrderModel.findOneAndUpdate(
-// //       { _id: orderId },
-// //       {
-// //         "paymentDetails.merchantTransactionId": merchantTransactionId,
-// //         "paymentDetails.paymentStatus": "INITIATED",
-// //       }
-// //     );
+    // Convert cart items to array
+    const items = Array.from(user.cart.values()).map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      price: item.price,
+      name: item.name,
+      image: item.image,
+      size: item.size,
+      color: item.color,
+      sku: item.sku,
+      packageWeight: item.packageWeight,
+      packageLength: item.packageLength,
+      packageBreadth: item.packageBreadth,
+      packageHeight: item.packageHeight,
+    }));
 
-// //     res.json({
-// //       success: true,
-// //       paymentUrl: response.data.data.instrumentResponse.redirectInfo.url,
-// //     });
-// //   } catch (error) {
-// //     console.error("Payment initiation error:", error);
-// //     res.status(500).json({ error: "Payment initiation failed" });
-// //   }
-// // });
+    // Calculate total amount
+    let totalAmount = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
 
-// // // Endpoint to validate payment
-// // phonepeRoutes.post("/validate/:merchantTransactionId", async function (req, res) {
-// //   try {
-// //     const { merchantTransactionId } = req.params;
+    // Apply coupon if provided
+    let appliedCoupon = null;
+    let discountAmount = 0;
 
-// //     if (!merchantTransactionId) {
-// //       return res.status(400).json({ error: "Missing merchant transaction ID" });
-// //     }
+    if (couponCode) {
+      const CouponModel = require("../Modals/coupanModal");
+      const coupon = await CouponModel.findOne({
+        couponCode: couponCode.toUpperCase(),
+        isActive: true,
+        expiryDate: { $gt: new Date() },
+      });
 
-// //     const statusUrl = `${PHONE_PE_HOST_URL}/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
+      if (coupon) {
+        if (totalAmount >= coupon.minimumPurchaseAmount) {
+          discountAmount = (totalAmount * coupon.discountPercentage) / 100;
+          const finalDiscount = Math.min(
+            discountAmount,
+            coupon.maxDiscountAmount
+          );
+          totalAmount -= finalDiscount;
+          appliedCoupon = coupon;
+          coupon.usedCount += 1;
+          await coupon.save();
+        }
+      }
+    }
 
-// //     // Generate X-VERIFY header
-// //     const string = `/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}` + SALT_KEY;
-// //     const sha256_val = sha256(string);
-// //     const xVerifyChecksum = sha256_val + "###" + SALT_INDEX;
+    // Create order with pending status
+    const order = new OrderModel({
+      userId,
+      items,
+      totalAmount,
+      shippingAddress: {
+        name: shippingAddress.name,
+        address: {
+          street: shippingAddress.address.street || "",
+          city: shippingAddress.address.city || "",
+          zipCode: shippingAddress.address.zipCode || "",
+          state: shippingAddress.address.state || "",
+          alternatePhone: shippingAddress.address.alternatePhone || "",
+          addressType: shippingAddress.address.addressType || "home",
+        },
+        phoneNumber: shippingAddress.phoneNumber || "",
+      },
+      paymentMethod: "phonepe",
+      status: "pending",
+      orderNumber: await getNextOrderNumber(),
+      appliedCoupon: appliedCoupon
+        ? {
+            couponCode: appliedCoupon.couponCode,
+            discountPercentage: appliedCoupon.discountPercentage,
+            discountAmount: discountAmount,
+          }
+        : null,
+    });
 
-// //     const response = await axios.get(statusUrl, {
-// //       headers: {
-// //         "Content-Type": "application/json",
-// //         "X-VERIFY": xVerifyChecksum,
-// //         "X-MERCHANT-ID": merchantTransactionId,
-// //         accept: "application/json",
-// //       },
-// //     });
+    await order.save();
 
-// //     const paymentData = response.data;
+    // Generate unique merchant transaction ID
+    const merchantTransactionId = `ORD_${order._id}_${Date.now()}`;
 
-// //     // Update order status based on payment status
-// //     if (paymentData.code === "PAYMENT_SUCCESS") {
-// //       const order = await OrderModel.findOneAndUpdate(
-// //         { "paymentDetails.merchantTransactionId": merchantTransactionId },
-// //         {
-// //           "paymentDetails.paymentStatus": "COMPLETED",
-// //           "paymentDetails.transactionId": paymentData.transactionId,
-// //           "paymentDetails.verificationResponse": paymentData,
-// //           status: "processing", // Update order status to processing
-// //         },
-// //         { new: true }
-// //       );
+    // Convert amount to paise
+    const amountPaise = Math.round(Number(totalAmount) * 100);
 
-// //       return res.json({
-// //         success: true,
-// //         order,
-// //         paymentStatus: "COMPLETED",
-// //       });
-// //     } else {
-// //       await OrderModel.findOneAndUpdate(
-// //         { "paymentDetails.merchantTransactionId": merchantTransactionId },
-// //         {
-// //           "paymentDetails.paymentStatus": "FAILED",
-// //           "paymentDetails.verificationResponse": paymentData,
-// //         }
-// //       );
+    // Create redirect URL
+    const redirectUrl = `${
+      process.env.FRONTEND_URL || "http://localhost:3000"
+    }/phonepe-callback?merchantTransactionId=${merchantTransactionId}`;
 
-// //       return res.json({
-// //         success: false,
-// //         paymentStatus: "FAILED",
-// //         message: paymentData.message || "Payment failed",
-// //       });
-// //     }
-// //   } catch (error) {
-// //     console.error("Payment validation error:", error);
-// //     res.status(500).json({ error: "Payment validation failed" });
-// //   }
-// // });
+    // ✅ Payment payload
+    const requestBody = {
+      merchantId: MERCHANT_ID,
+      merchantTransactionId: merchantTransactionId,
+      amount: amountPaise,
+      redirectUrl,
+      redirectMode: "POST",
+      merchantUserId: userId.toString(),
+      paymentInstrument: {
+        type: "PAY_PAGE",
+      },
+    };
 
-// // module.exports = phonepeRoutes;
+    // Base64 encode the payload
+    const requestStr = JSON.stringify(requestBody);
+    const encodedReq = Buffer.from(requestStr).toString("base64");
 
-// const express = require("express");
-// const phonepeRoutes = express.Router();
-// const axios = require("axios");
-// const sha256 = require("sha256");
-// const uniqid = require("uniqid");
-// const { OrderModel } = require("../Modals/UserModal");
+    // Build checksum
+    const checksum = buildPhonePeChecksum(encodedReq);
 
-// // PhonePe configuration
-// const PHONEPE_MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID || "PGTESTPAYUAT";
-// const PHONE_PE_HOST_URL =
-//   process.env.PHONEPE_HOST_URL ||
-//   "https://api-preprod.phonepe.com/apis/pg-sandbox";
-// const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || 1;
-// const PHONEPE_SALT_KEY =
-//   process.env.PHONEPE_SALT_KEY || "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
+    const phonepeUrl = `${PHONEPE_HOST}/pg/v1/pay`;
 
-// // Initiate PhonePe payment
-// phonepeRoutes.post("/initiate", async (req, res) => {
-//   try {
-//     const { orderId, amount, userId } = req.body;
+    // Call PhonePe API
+    const resp = await axios.post(
+      phonepeUrl,
+      { request: encodedReq },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "X-VERIFY": checksum,
+          accept: "application/json",
+        },
+        timeout: 15000,
+      }
+    );
 
-//     if (!orderId || !amount || !userId) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Order ID, amount and user ID are required",
-//       });
-//     }
+    const data = resp.data;
+    if (!data || !data.success) {
+      console.error("PhonePe createOrder error:", data);
+      // Delete the order if payment initiation fails
+      await OrderModel.findByIdAndDelete(order._id);
+      return res
+        .status(500)
+        .json({ message: "PhonePe returned error", phonepe: data });
+    }
 
-//     // Generate a unique merchant transaction ID
-//     const merchantTransactionId = uniqid();
+    // Extract redirect URL
+    const redirectInfo = data?.data?.instrumentResponse?.redirectInfo;
+    const paymentUrl =
+      redirectInfo?.url || data?.data?.redirectInfo?.url || null;
 
-//     // Create payload for PhonePe
-//     const payload = {
-//       merchantId: PHONEPE_MERCHANT_ID,
-//       merchantTransactionId,
-//       merchantUserId: userId,
-//       amount: amount * 100, // Convert to paise
-//       redirectUrl: `${process.env.BACKEND_URL}/api/phonepe/validate/${merchantTransactionId}`,
-//       redirectMode: "POST",
-//       paymentInstrument: {
-//         type: "PAY_PAGE",
-//       },
-//     };
+    if (!paymentUrl) {
+      // Delete the order if no payment URL
+      await OrderModel.findByIdAndDelete(order._id);
+      return res.status(500).json({
+        message: "Could not find redirect URL in PhonePe response",
+        phonepe: data,
+      });
+    }
 
-//     // Base64 encode the payload
-//     const base64Payload = Buffer.from(JSON.stringify(payload)).toString(
-//       "base64"
-//     );
+    // Create payment transaction record
+    const paymentTransaction = new PaymentTransactionModel({
+      orderId: order._id,
+      userId: userId,
+      merchantTransactionId: merchantTransactionId,
+      amount: totalAmount,
+      paymentStatus: "INITIATED",
+      phonepeResponse: data,
+      userDetails: {
+        name: user.name,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+      },
+      productDetails: items.map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        color: item.color,
+        size: item.size,
+      })),
+    });
 
-//     // Generate X-VERIFY header
-//     const string = base64Payload + "/pg/v1/pay" + PHONEPE_SALT_KEY;
-//     const sha256Hash = sha256(string);
-//     const xVerifyHeader = sha256Hash + "###" + PHONEPE_SALT_INDEX;
+    await paymentTransaction.save();
 
-//     // Call PhonePe API
-//     const response = await axios.post(
-//       `${PHONE_PE_HOST_URL}/pg/v1/pay`,
-//       { request: base64Payload },
-//       {
-//         headers: {
-//           "Content-Type": "application/json",
-//           "X-VERIFY": xVerifyHeader,
-//           accept: "application/json",
-//         },
-//       }
-//     );
+    return res.json({
+      paymentUrl,
+      orderId: order._id,
+      merchantTransactionId: merchantTransactionId,
+      amount: totalAmount,
+      raw: data,
+    });
+  } catch (err) {
+    console.error(
+      "PhonePe createOrder error:",
+      err?.response?.data || err.message || err
+    );
+    return res.status(500).json({
+      message: "Server error creating PhonePe order",
+      error: err?.response?.data || err.message,
+    });
+  }
+});
 
-//     // Update order with payment details
-//     await OrderModel.findByIdAndUpdate(orderId, {
-//       "paymentDetails.merchantTransactionId": merchantTransactionId,
-//       "paymentDetails.paymentStatus": "INITIATED",
-//       "paymentDetails.initiatedAt": new Date(),
-//       "paymentDetails.paymentUrl":
-//         response.data.data.instrumentResponse.redirectInfo.url,
-//     });
+// Helper function to generate order number
+const getNextOrderNumber = async () => {
+  try {
+    const { CounterModel } = require("../Modals/UserModal");
+    const counter = await CounterModel.findByIdAndUpdate(
+      "orderNumber",
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    return `${String(counter.seq).padStart(4, "0")}`;
+  } catch (error) {
+    console.error("Error generating order number:", error);
+    throw new Error("Failed to generate order number");
+  }
+};
 
-//     res.json({
-//       success: true,
-//       data: response.data,
-//       message: "Payment initiated successfully",
-//     });
-//   } catch (error) {
-//     console.error("Payment initiation error:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: error.response?.data?.message || "Failed to initiate payment",
-//     });
-//   }
-// });
+/**
+ * 📌 Payment verification endpoint
+ * POST /api/phonepe/verify
+ */
+router.post("/verify", async (req, res) => {
+  try {
+    const { merchantTransactionId } = req.body;
 
-// // Validate PhonePe payment
-// phonepeRoutes.post("/validate/:merchantTransactionId", async (req, res) => {
-//   try {
-//     const { merchantTransactionId } = req.params;
+    if (!merchantTransactionId) {
+      return res
+        .status(400)
+        .json({ message: "merchantTransactionId is required" });
+    }
 
-//     if (!merchantTransactionId) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Merchant transaction ID is required",
-//       });
-//     }
+    // Find payment transaction
+    const paymentTransaction = await PaymentTransactionModel.findOne({
+      merchantTransactionId: merchantTransactionId,
+    }).populate("orderId");
 
-//     // Generate X-VERIFY header for status check
-//     const statusString =
-//       `/pg/v1/status/${PHONEPE_MERCHANT_ID}/${merchantTransactionId}` +
-//       PHONEPE_SALT_KEY;
-//     const statusHash = sha256(statusString);
-//     const xVerifyHeader = statusHash + "###" + PHONEPE_SALT_INDEX;
+    if (!paymentTransaction) {
+      return res.status(404).json({ message: "Payment transaction not found" });
+    }
 
-//     // Check payment status with PhonePe
-//     const statusResponse = await axios.get(
-//       `${PHONE_PE_HOST_URL}/pg/v1/status/${PHONEPE_MERCHANT_ID}/${merchantTransactionId}`,
-//       {
-//         headers: {
-//           "Content-Type": "application/json",
-//           "X-VERIFY": xVerifyHeader,
-//           accept: "application/json",
-//         },
-//       }
-//     );
+    // Verify payment with PhonePe
+    const requestBody = {
+      merchantId: MERCHANT_ID,
+      merchantTransactionId: merchantTransactionId,
+    };
 
-//     const paymentData = statusResponse.data;
+    const requestStr = JSON.stringify(requestBody);
+    const encodedReq = Buffer.from(requestStr).toString("base64");
+    const checksum = buildPhonePeChecksum(encodedReq, "/pg/v1/status");
 
-//     // Find and update the order based on payment status
-//     const order = await OrderModel.findOneAndUpdate(
-//       { "paymentDetails.merchantTransactionId": merchantTransactionId },
-//       {
-//         "paymentDetails.paymentStatus":
-//           paymentData.code === "PAYMENT_SUCCESS" ? "COMPLETED" : "FAILED",
-//         "paymentDetails.transactionId": paymentData.transactionId,
-//         "paymentDetails.verificationResponse": paymentData,
-//         status:
-//           paymentData.code === "PAYMENT_SUCCESS" ? "processing" : "pending",
-//         updatedAt: new Date(),
-//       },
-//       { new: true }
-//     );
+    const phonepeUrl = `${PHONEPE_HOST}/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
 
-//     if (!order) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Order not found",
-//       });
-//     }
+    const resp = await axios.get(phonepeUrl, {
+      headers: {
+        "Content-Type": "application/json",
+        "X-VERIFY": checksum,
+        "X-MERCHANT-ID": MERCHANT_ID,
+        accept: "application/json",
+      },
+      timeout: 15000,
+    });
 
-//     if (paymentData.code === "PAYMENT_SUCCESS") {
-//       // Redirect to success page on frontend
-//       return res.redirect(
-//         `${process.env.FRONTEND_URL}/orders?payment=success&orderId=${order._id}`
-//       );
-//     } else {
-//       // Redirect to failure page on frontend
-//       return res.redirect(
-//         `${process.env.FRONTEND_URL}/checkout?payment=failed&orderId=${order._id}`
-//       );
-//     }
-//   } catch (error) {
-//     console.error("Payment validation error:", error);
-//     // Redirect to error page on frontend
-//     return res.redirect(`${process.env.FRONTEND_URL}/checkout?payment=error`);
-//   }
-// });
+    const data = resp.data;
 
-// module.exports = phonepeRoutes;
+    if (!data || !data.success) {
+      return res.status(500).json({
+        message: "PhonePe verification failed",
+        phonepe: data,
+      });
+    }
 
+    // Verify checksum
+    const responseChecksum = resp.headers["x-verify"];
+    const encodedResponse = Buffer.from(JSON.stringify(data.data)).toString(
+      "base64"
+    );
 
+    if (!verifyPhonePeChecksum(encodedResponse, responseChecksum)) {
+      return res.status(400).json({ message: "Checksum verification failed" });
+    }
 
+    const paymentInfo = data.data;
+    const isPaymentSuccessful = paymentInfo.state === "COMPLETED";
 
+    // Update payment transaction
+    paymentTransaction.paymentStatus = isPaymentSuccessful
+      ? "COMPLETED"
+      : "FAILED";
+    paymentTransaction.phonepeTransactionId = paymentInfo.transactionId;
+    paymentTransaction.verificationResponse = data;
+    paymentTransaction.completedAt = new Date();
+    await paymentTransaction.save();
 
-const { newPayment, checkStatus } = require('../Services/phonepeService');
-const express = require('express');
-const phonepeRoutes = express.Router();
+    if (isPaymentSuccessful) {
+      // Update order status
+      const order = paymentTransaction.orderId;
+      if (order) {
+        order.status = "processing";
+        order.paymentDetails = {
+          merchantTransactionId: merchantTransactionId,
+          paymentStatus: "COMPLETED",
+          transactionId: paymentInfo.transactionId,
+          verificationResponse: data,
+        };
+        await order.save();
 
-phonepeRoutes.post('/payment', newPayment);
-phonepeRoutes.post('/validate/:merchantTransactionId', checkStatus);
+        // Clear user's cart
+        const user = await UserModel.findById(paymentTransaction.userId);
+        if (user) {
+          user.cart = new Map();
+          await user.save();
+        }
 
-module.exports = phonepeRoutes;
+        // Send order confirmation email
+        try {
+          const {
+            sendOrderConfirmationEmail,
+          } = require("../utils/orderProdctService");
+          await sendOrderConfirmationEmail(order._id);
+        } catch (emailError) {
+          console.error("Email sending failed:", emailError);
+        }
+      }
+    } else {
+      // Payment failed - delete the order
+      if (paymentTransaction.orderId) {
+        await OrderModel.findByIdAndDelete(paymentTransaction.orderId._id);
+      }
+    }
+
+    return res.json({
+      success: isPaymentSuccessful,
+      paymentStatus: paymentTransaction.paymentStatus,
+      orderId: paymentTransaction.orderId?._id,
+      transactionId: paymentInfo.transactionId,
+      data: paymentInfo,
+    });
+  } catch (err) {
+    console.error(
+      "Payment verification error:",
+      err?.response?.data || err.message
+    );
+    return res.status(500).json({
+      message: "Server error during payment verification",
+      error: err?.response?.data || err.message,
+    });
+  }
+});
+
+/**
+ * 📌 Callback endpoint to handle PhonePe redirect response
+ * POST /api/phonepe/callback
+ */
+router.post("/callback", async (req, res) => {
+  try {
+    console.log("📥 PhonePe redirect callback received:", req.body);
+
+    const { merchantTransactionId, code, message } = req.body;
+
+    if (!merchantTransactionId) {
+      return res
+        .status(400)
+        .json({ message: "merchantTransactionId is required" });
+    }
+
+    // Find payment transaction
+    const paymentTransaction = await PaymentTransactionModel.findOne({
+      merchantTransactionId: merchantTransactionId,
+    });
+
+    if (!paymentTransaction) {
+      return res.status(404).json({ message: "Payment transaction not found" });
+    }
+
+    // Update payment status based on callback
+    if (code === "PAYMENT_SUCCESS") {
+      paymentTransaction.paymentStatus = "COMPLETED";
+    } else {
+      paymentTransaction.paymentStatus = "FAILED";
+    }
+
+    paymentTransaction.metadata = {
+      callbackCode: code,
+      callbackMessage: message,
+      callbackReceivedAt: new Date(),
+    };
+
+    await paymentTransaction.save();
+
+    return res.json({
+      received: true,
+      status: paymentTransaction.paymentStatus,
+    });
+  } catch (err) {
+    console.error("callback error", err);
+    return res.status(500).json({ received: false, error: err.message });
+  }
+});
+
+/**
+ * 📌 Get payment transactions (Admin)
+ * GET /api/phonepe/transactions
+ */
+router.get("/transactions", verifyToken, async (req, res) => {
+  try {
+    // Check if user is admin (you can implement your admin check here)
+    const transactions = await PaymentTransactionModel.find()
+      .populate("orderId", "orderNumber status totalAmount")
+      .populate("userId", "name email phoneNumber")
+      .sort({ createdAt: -1 })
+      .limit(100);
+
+    res.json(transactions);
+  } catch (err) {
+    console.error("Error fetching transactions:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+module.exports = { phonepeRoutes: router };

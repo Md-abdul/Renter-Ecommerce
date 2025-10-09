@@ -9,12 +9,12 @@ const { adminRoutes } = require("./Routes/adminRoutes");
 const { CartRoutes } = require("./Routes/cartRoutes");
 const { orderRoutes } = require("./Routes/orderRoutes");
 const { couponRoutes } = require("./Routes/couponRoutes");
-const { PaymentRoutes } = require("./Routes/paymentRoutes");
 const router = require("./Routes/googleSignup");
-const phonepeRoutes = require("./Routes/phonepeRoutes"); // Add this line
 const contactRoutes = require("./Routes/ContactRoutes");
 const storeRoutes = require("./Routes/storeRoutes");
 const couponExpiryCheck = require("./utils/couponCron");
+// near top of server.js add:
+const { phonepeRoutes } = require("./Routes/phonepeRoutes");
 
 const app = express();
 dotenv.config();
@@ -61,10 +61,9 @@ app.use("/api/cart", CartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/auth/google", router);
 app.use("/api/coupons", couponRoutes);
-app.use("/api/payments", PaymentRoutes);
-app.use("/api/phonepe", phonepeRoutes); // Add this line for PhonePe routes====
 app.use("/api/contact", contactRoutes); // Add this line for PhonePe routes====
 app.use("/api/stores", storeRoutes);
+app.use("/api/phonepe", phonepeRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;
