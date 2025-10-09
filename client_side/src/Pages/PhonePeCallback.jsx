@@ -46,7 +46,8 @@ const PhonePeCallback = () => {
       }
 
       const response = await axios.post(
-        "http://localhost:5000/api/phonepe/verify",
+        // "http://localhost:5000/api/phonepe/verify",
+        "https://renter-ecommerce.vercel.app/api/phonepe/verify",
         { merchantTransactionId },
         {
           headers: {

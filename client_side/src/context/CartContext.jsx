@@ -836,8 +836,8 @@ export const CartProvider = ({ children }) => {
   const navigate = useNavigate();
 
   // Use local backend for development
-  const API_BASE_URL = "http://localhost:5000/api";
-  // const API_BASE_URL = "https://renter-ecommerce.vercel.app/api";
+  // const API_BASE_URL = "http://localhost:5000/api";
+  const API_BASE_URL = "https://renter-ecommerce.vercel.app/api";
 
   const getTotalPrice = () => {
     const subtotal = cart.reduce((total, item) => {

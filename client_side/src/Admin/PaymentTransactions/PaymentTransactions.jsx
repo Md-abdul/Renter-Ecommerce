@@ -27,7 +27,8 @@ const PaymentTransactions = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        "http://localhost:5000/api/phonepe/transactions",
+        // "http://localhost:5000/api/phonepe/transactions",
+          "https://renter-ecommerce.vercel.app/api/phonepe/transactions",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
