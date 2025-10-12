@@ -20,7 +20,6 @@ const PHONEPE_HOST =
     ? "https://api.phonepe.com/apis/pg"
     : "https://api-preprod.phonepe.com/apis/pg-sandbox";
 
-
 const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
 const SALT_KEY = process.env.PHONEPE_SALT_KEY;
 const SALT_INDEX = process.env.PHONEPE_SALT_INDEX || "1";
@@ -30,7 +29,10 @@ const SALT_INDEX = process.env.PHONEPE_SALT_INDEX || "1";
  * Formula:
  *   SHA256( base64EncodedPayload + "/pg/v1/pay" + SALT_KEY ) + "###" + SALT_INDEX
  */
-function buildPhonePeChecksum(encodedReq, uri = "/pg/v1/pay") {
+// after deployment
+function buildPhonePeChecksum(encodedReq, uri = "/v1/pay") {
+  // local testing
+  // function buildPhonePeChecksum(encodedReq, uri = "/pg/v1/pay") {
   const payload = encodedReq + uri + SALT_KEY;
   const sha = crypto.createHash("sha256").update(payload).digest("hex");
   return `${sha}###${SALT_INDEX}`;
@@ -169,7 +171,9 @@ router.post("/createOrder", verifyToken, async (req, res) => {
 
     // Generate unique merchant transaction ID
     // const merchantTransactionId = `ORD_${order._id}_${Date.now()}`;
-    const merchantTransactionId = `ORD_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const merchantTransactionId = `ORD_${Date.now()}_${Math.floor(
+      Math.random() * 1000
+    )}`;
 
     // Convert amount to paise
     const amountPaise = Math.round(Number(totalAmount) * 100);
@@ -199,7 +203,11 @@ router.post("/createOrder", verifyToken, async (req, res) => {
     // Build checksum
     const checksum = buildPhonePeChecksum(encodedReq);
 
-    const phonepeUrl = `${PHONEPE_HOST}/pg/v1/pay`;
+    // local testing
+    // const phonepeUrl = `${PHONEPE_HOST}/pg/v1/pay`;
+
+    // after deployment
+    const phonepeUrl = `${PHONEPE_HOST}/v1/pay`;
 
     // Call PhonePe API
     const resp = await axios.post(
@@ -330,9 +338,14 @@ router.post("/verify", async (req, res) => {
 
     const requestStr = JSON.stringify(requestBody);
     const encodedReq = Buffer.from(requestStr).toString("base64");
-    const checksum = buildPhonePeChecksum(encodedReq, "/pg/v1/status");
-
-    const phonepeUrl = `${PHONEPE_HOST}/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
+    // local testing
+    // const checksum = buildPhonePeChecksum(encodedReq, "/pg/v1/status");
+    // after deployment
+    const checksum = buildPhonePeChecksum(encodedReq, "/v1/status");
+    // local testing
+    // const phonepeUrl = `${PHONEPE_HOST}/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
+    // after deployment
+    const phonepeUrl = `${PHONEPE_HOST}/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
 
     const resp = await axios.get(phonepeUrl, {
       headers: {
