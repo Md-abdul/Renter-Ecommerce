@@ -1,4 +1,6 @@
 // Routes/phonepeRoutes.js
+const dotenv = require("dotenv");
+dotenv.config();
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
@@ -7,11 +9,17 @@ const { verifyToken } = require("../Middlewares/VerifyToken");
 const { UserModel, OrderModel } = require("../Modals/UserModal");
 const PaymentTransactionModel = require("../Modals/paymentModal");
 
-// Production PhonePe configuration
+// // Production PhonePe configuration
+// const PHONEPE_HOST =
+//   process.env.NODE_ENV === "production"
+//     ? "https://api.phonepe.com/apis/pg-sandbox" // Use production URL when ready
+//     : "https://api-preprod.phonepe.com/apis/pg-sandbox";
+
 const PHONEPE_HOST =
   process.env.NODE_ENV === "production"
-    ? "https://api.phonepe.com/apis/pg-sandbox" // Use production URL when ready
+    ? "https://api.phonepe.com/apis/pg"
     : "https://api-preprod.phonepe.com/apis/pg-sandbox";
+
 
 const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
 const SALT_KEY = process.env.PHONEPE_SALT_KEY;
@@ -45,22 +53,27 @@ function verifyPhonePeChecksum(
 /**
  * 📌 Create a PhonePe order and return the redirect payment URL
  * POST /api/phonepe/createOrder
- * body: { shippingAddress, couponCode }
+ * body: { shippingDetails, couponCode }
  */
 router.post("/createOrder", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { shippingAddress, couponCode } = req.body;
+    const { shippingDetails, couponCode } = req.body;
+
+    console.log("PhonePe createOrder request body:", {
+      shippingDetails,
+      couponCode,
+    });
 
     // Validate required fields
     if (
-      !shippingAddress ||
-      !shippingAddress.name ||
-      !shippingAddress.address ||
-      !shippingAddress.address.street ||
-      !shippingAddress.address.city ||
-      !shippingAddress.address.zipCode ||
-      !shippingAddress.phoneNumber
+      !shippingDetails ||
+      !shippingDetails.name ||
+      !shippingDetails.address ||
+      !shippingDetails.address.street ||
+      !shippingDetails.address.city ||
+      !shippingDetails.address.zipCode ||
+      !shippingDetails.phoneNumber
     ) {
       return res.status(400).json({
         message: "Missing required shipping information",
@@ -129,16 +142,16 @@ router.post("/createOrder", verifyToken, async (req, res) => {
       items,
       totalAmount,
       shippingAddress: {
-        name: shippingAddress.name,
+        name: shippingDetails.name,
         address: {
-          street: shippingAddress.address.street || "",
-          city: shippingAddress.address.city || "",
-          zipCode: shippingAddress.address.zipCode || "",
-          state: shippingAddress.address.state || "",
-          alternatePhone: shippingAddress.address.alternatePhone || "",
-          addressType: shippingAddress.address.addressType || "home",
+          street: shippingDetails.address.street || "",
+          city: shippingDetails.address.city || "",
+          zipCode: shippingDetails.address.zipCode || "",
+          state: shippingDetails.address.state || "",
+          alternatePhone: shippingDetails.address.alternatePhone || "",
+          addressType: shippingDetails.address.addressType || "home",
         },
-        phoneNumber: shippingAddress.phoneNumber || "",
+        phoneNumber: shippingDetails.phoneNumber || "",
       },
       paymentMethod: "phonepe",
       status: "pending",
@@ -155,7 +168,8 @@ router.post("/createOrder", verifyToken, async (req, res) => {
     await order.save();
 
     // Generate unique merchant transaction ID
-    const merchantTransactionId = `ORD_${order._id}_${Date.now()}`;
+    // const merchantTransactionId = `ORD_${order._id}_${Date.now()}`;
+    const merchantTransactionId = `ORD_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
     // Convert amount to paise
     const amountPaise = Math.round(Number(totalAmount) * 100);
