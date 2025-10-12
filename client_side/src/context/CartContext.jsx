@@ -1132,21 +1132,20 @@ export const CartProvider = ({ children }) => {
   };
 
   const initiatePhonePePayment = async ({ shippingDetails, amount }) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please log in to complete payment");
+      navigate("/login");
+      return { success: false };
+    }
+
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Please login to pay");
-        navigate("/login");
-        return;
-      }
-
       setLoading(true);
-
-      const resp = await axios.post(
+      const response = await axios.post(
         `${API_BASE_URL}/phonepe/createOrder`,
         {
           shippingDetails,
-          couponCode: appliedCoupon?.couponCode,
+          couponCode: appliedCoupon?.couponCode || null,
         },
         {
           headers: {
@@ -1156,29 +1155,17 @@ export const CartProvider = ({ children }) => {
         }
       );
 
-      if (resp.data?.paymentUrl) {
-        // Store order details for callback handling
-        localStorage.setItem("pendingOrderId", resp.data.orderId);
-        localStorage.setItem(
-          "merchantTransactionId",
-          resp.data.merchantTransactionId
-        );
-
-        // Open PhonePe payment page in same tab so the redirect back works smoothly
-        window.location.href = resp.data.paymentUrl;
+      if (response.data.paymentUrl) {
+        window.location.href = response.data.paymentUrl;
+        return { success: true };
       } else {
-        toast.error(
-          "Could not start PhonePe payment. See console for details."
-        );
-        console.error("PhonePe createOrder response:", resp.data);
+        toast.error("Payment initiation failed. Please try again.");
+        return { success: false };
       }
-    } catch (err) {
-      console.error(
-        "initiatePhonePePayment error:",
-        err?.response?.data || err.message
-      );
-      toast.error("PhonePe payment initiation failed.");
-      throw err;
+    } catch (error) {
+      console.error("PhonePe initiation error:", error);
+      toast.error(error.response?.data?.message || "Payment initiation failed");
+      return { success: false };
     } finally {
       setLoading(false);
     }

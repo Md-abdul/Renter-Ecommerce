@@ -905,7 +905,7 @@ import {
 import Modal from "react-modal";
 import { toast } from "react-toastify";
 import axios from "axios";
-
+import { SiPhonepe } from "react-icons/si";
 // Payment card images
 const visaCard = "https://cdn-icons-png.flaticon.com/512/196/196578.png";
 const mastercard = "https://cdn-icons-png.flaticon.com/512/196/196561.png";
@@ -1588,11 +1588,12 @@ const CheckoutPage = () => {
                       className="h-5 w-5 text-yellow-600 focus:ring-yellow-500 border-gray-300"
                       required
                     />
-                    <img
+                    {/* <img
                       src="https://upload.wikimedia.org/wikipedia/commons/5/56/PhonePe_Logo.png"
                       alt="PhonePe"
                       className="h-8 ml-2"
-                    />
+                    /> */}
+                    <SiPhonepe/>
                     <div className="ml-3">
                       <div className="font-medium">PhonePe</div>
                       <div className="text-sm text-gray-500">
