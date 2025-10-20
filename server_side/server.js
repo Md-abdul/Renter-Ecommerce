@@ -26,16 +26,21 @@ couponExpiryCheck.start();
 // CORS configuration
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://www.ranterstore.in", // ✅ actual frontend
+  "https://www.ranterstore.in", //  actual frontend
   "https://ranterstore.in", // optional (non-www in case)
+  "https://renter-ecommerce.vercel.app"
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
+      // if (!origin || allowedOrigins.includes(origin)) {
+      //   callback(null, true);
+      // }
+      if (!origin || origin === "null" || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        }
+       else {
         callback(new Error("CORS not allowed from this origin: " + origin));
       }
     },

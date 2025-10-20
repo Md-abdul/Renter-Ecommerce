@@ -10,19 +10,19 @@ const { UserModel, OrderModel } = require("../Modals/UserModal");
 const PaymentTransactionModel = require("../Modals/paymentModal");
 
 // // Production PhonePe configuration
-// const PHONEPE_HOST =
-//   process.env.NODE_ENV === "production"
-//     ? "https://api.phonepe.com/apis/pg-sandbox" // Use production URL when ready
-//     : "https://api-preprod.phonepe.com/apis/pg-sandbox";
-
 const PHONEPE_HOST =
   process.env.NODE_ENV === "production"
-    ? "https://api.phonepe.com/apis/pg"
+    ? "https://api.phonepe.com/apis/pg" // Use production URL when ready
     : "https://api-preprod.phonepe.com/apis/pg-sandbox";
 
-const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
-const SALT_KEY = process.env.PHONEPE_SALT_KEY;
-const SALT_INDEX = process.env.PHONEPE_SALT_INDEX || "1";
+// const PHONEPE_HOST =
+//   process.env.NODE_ENV === "production"
+//     ? "https://api.phonepe.com/apis/pg"
+//     : "https://api-preprod.phonepe.com/apis/pg-sandbox";
+
+  const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
+  const SALT_KEY = process.env.PHONEPE_SALT_KEY;
+  const SALT_INDEX = process.env.PHONEPE_SALT_INDEX || "1";
 
 /**
  * ✅ Utility to build checksum (X-VERIFY)
@@ -31,8 +31,8 @@ const SALT_INDEX = process.env.PHONEPE_SALT_INDEX || "1";
  */
 // after deployment
 function buildPhonePeChecksum(encodedReq, uri = "/v1/pay") {
-  // local testing
-  // function buildPhonePeChecksum(encodedReq, uri = "/pg/v1/pay") {
+// local testing
+// function buildPhonePeChecksum(encodedReq, uri = "/pg/v1/pay") {
   const payload = encodedReq + uri + SALT_KEY;
   const sha = crypto.createHash("sha256").update(payload).digest("hex");
   return `${sha}###${SALT_INDEX}`;
@@ -40,7 +40,7 @@ function buildPhonePeChecksum(encodedReq, uri = "/v1/pay") {
 
 /**
  * ✅ Utility to verify PhonePe response checksum
- */
+*/
 function verifyPhonePeChecksum(
   encodedResponse,
   checksum,
@@ -180,10 +180,25 @@ router.post("/createOrder", verifyToken, async (req, res) => {
 
     // Create redirect URL
     const redirectUrl = `${
-      process.env.FRONTEND_URL || "http://localhost:3000"
-    }/phonepe-callback?merchantTransactionId=${merchantTransactionId}`;
+      process.env.FRONTEND_URL || "http://localhost:5173"
+    }/api/phonepe/frontend-callback?merchantTransactionId=${merchantTransactionId}`;
+
+    // const redirectUrl = `${
+    //   process.env.BACKEND_URL || "http://localhost:5000"
+    // }/api/phonepe/frontend-callback?merchantTransactionId=${merchantTransactionId}`;
 
     // ✅ Payment payload
+    // const requestBody = {
+    //   merchantId: MERCHANT_ID,
+    //   merchantTransactionId: merchantTransactionId,
+    //   amount: amountPaise,
+    //   redirectUrl,
+    //   redirectMode: "POST",
+    //   merchantUserId: userId.toString(),
+    //   paymentInstrument: {
+    //     type: "PAY_PAGE",
+    //   },
+    // };
     const requestBody = {
       merchantId: MERCHANT_ID,
       merchantTransactionId: merchantTransactionId,
@@ -194,6 +209,7 @@ router.post("/createOrder", verifyToken, async (req, res) => {
       paymentInstrument: {
         type: "PAY_PAGE",
       },
+      validityTime: "600000", //10 minutes validity
     };
 
     // Base64 encode the payload
@@ -307,10 +323,142 @@ const getNextOrderNumber = async () => {
   }
 };
 
-/**
- * 📌 Payment verification endpoint
- * POST /api/phonepe/verify
- */
+// router.post("/verify", async (req, res) => {
+//   try {
+//     const { merchantTransactionId } = req.body;
+
+//     if (!merchantTransactionId) {
+//       return res
+//         .status(400)
+//         .json({ message: "merchantTransactionId is required" });
+//     }
+
+//     // Find payment transaction
+//     const paymentTransaction = await PaymentTransactionModel.findOne({
+//       merchantTransactionId,
+//     }).populate("orderId");
+
+//     if (!paymentTransaction) {
+//       return res.status(404).json({ message: "Payment transaction not found" });
+//     }
+
+//     // ✅ Build proper URL & checksum for GET status
+//     const uri = `/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
+//     const phonepeUrl = `${PHONEPE_HOST}${uri}`;
+
+//     const payload = uri + SALT_KEY;
+//     const sha = crypto.createHash("sha256").update(payload).digest("hex");
+//     const checksum = `${sha}###${SALT_INDEX}`;
+
+//     // ✅ Request PhonePe status
+//     const resp = await axios.get(phonepeUrl, {
+//       headers: {
+//         "Content-Type": "application/json",
+//         "X-VERIFY": checksum,
+//         "X-MERCHANT-ID": MERCHANT_ID,
+//         accept: "application/json",
+//       },
+//       timeout: 15000,
+//     });
+
+//     const data = resp.data;
+
+//     if (!data || !data.success) {
+//       console.error("PhonePe verification failed:", data);
+//       return res.status(500).json({
+//         message: "PhonePe verification failed",
+//         phonepe: data,
+//       });
+//     }
+
+//     // ✅ Optional: Verify response checksum properly (recommended)
+//     const responseChecksum = resp.headers["x-verify"];
+//     if (responseChecksum) {
+//       const responseUri = `/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
+//       const expectedSha = crypto
+//         .createHash("sha256")
+//         .update(Buffer.from(JSON.stringify(data.data)).toString("base64") + responseUri + SALT_KEY)
+//         .digest("hex");
+//       const expectedChecksum = `${expectedSha}###${SALT_INDEX}`;
+
+//       if (expectedChecksum !== responseChecksum) {
+//         console.error("❌ Invalid checksum in PhonePe response");
+//         return res.status(400).json({ message: "Checksum verification failed" });
+//       }
+//     }
+
+//     const paymentInfo = data.data;
+//     const isPaymentSuccessful = paymentInfo.state === "COMPLETED";
+
+//     // ✅ Update payment transaction
+//     paymentTransaction.paymentStatus = isPaymentSuccessful
+//       ? "COMPLETED"
+//       : "FAILED";
+//     paymentTransaction.phonepeTransactionId = paymentInfo.transactionId;
+//     paymentTransaction.verificationResponse = data;
+//     paymentTransaction.completedAt = new Date();
+//     await paymentTransaction.save();
+
+//     // ✅ Update order accordingly
+//     const order = paymentTransaction.orderId;
+//     if (order) {
+//       if (isPaymentSuccessful) {
+//         order.status = "processing";
+//         order.paymentDetails = {
+//           merchantTransactionId,
+//           paymentStatus: "COMPLETED",
+//           transactionId: paymentInfo.transactionId,
+//           verificationResponse: data,
+//         };
+//         await order.save();
+
+//         // Clear user's cart
+//         const user = await UserModel.findById(paymentTransaction.userId);
+//         if (user) {
+//           user.cart = new Map();
+//           await user.save();
+//         }
+
+//         // Send confirmation email (non-blocking)
+//         try {
+//           const { sendOrderConfirmationEmail } = require("../utils/orderProdctService");
+//           await sendOrderConfirmationEmail(order._id);
+//         } catch (emailError) {
+//           console.error("Email sending failed:", emailError);
+//         }
+//       } else {
+//         order.status = "failed";
+//         await order.save();
+//       }
+//     }
+
+//     return res.json({
+//       success: isPaymentSuccessful,
+//       paymentStatus: paymentTransaction.paymentStatus,
+//       orderId: paymentTransaction.orderId?._id,
+//       transactionId: paymentInfo.transactionId,
+//       data: paymentInfo,
+//     });
+//   } catch (err) {
+//     console.error(
+//       "Payment verification error:",
+//       err?.response?.data || err.message
+//     );
+
+//     if (err?.response?.status === 401 || err?.response?.status === 403) {
+//       return res.status(401).json({
+//         message: "Unauthorized — invalid checksum or credentials",
+//         phonepe: err?.response?.data || {},
+//       });
+//     }
+
+//     return res.status(500).json({
+//       message: "Server error during payment verification",
+//       error: err?.response?.data || err.message,
+//     });
+//   }
+// });
+
 router.post("/verify", async (req, res) => {
   try {
     const { merchantTransactionId } = req.body;
@@ -323,30 +471,23 @@ router.post("/verify", async (req, res) => {
 
     // Find payment transaction
     const paymentTransaction = await PaymentTransactionModel.findOne({
-      merchantTransactionId: merchantTransactionId,
+      merchantTransactionId,
     }).populate("orderId");
 
     if (!paymentTransaction) {
       return res.status(404).json({ message: "Payment transaction not found" });
     }
 
-    // Verify payment with PhonePe
-    const requestBody = {
-      merchantId: MERCHANT_ID,
-      merchantTransactionId: merchantTransactionId,
-    };
+    // ✅ Build proper URL & checksum for GET status
+    // const uri = `/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
+    const uri = `/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
+    const phonepeUrl = `${PHONEPE_HOST}${uri}`;
 
-    const requestStr = JSON.stringify(requestBody);
-    const encodedReq = Buffer.from(requestStr).toString("base64");
-    // local testing
-    // const checksum = buildPhonePeChecksum(encodedReq, "/pg/v1/status");
-    // after deployment
-    const checksum = buildPhonePeChecksum(encodedReq, "/v1/status");
-    // local testing
-    // const phonepeUrl = `${PHONEPE_HOST}/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
-    // after deployment
-    const phonepeUrl = `${PHONEPE_HOST}/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
+    const payload = uri + SALT_KEY;
+    const sha = crypto.createHash("sha256").update(payload).digest("hex");
+    const checksum = `${sha}###${SALT_INDEX}`;
 
+    // ✅ Request PhonePe status
     const resp = await axios.get(phonepeUrl, {
       headers: {
         "Content-Type": "application/json",
@@ -360,26 +501,40 @@ router.post("/verify", async (req, res) => {
     const data = resp.data;
 
     if (!data || !data.success) {
+      console.error("PhonePe verification failed:", data);
       return res.status(500).json({
         message: "PhonePe verification failed",
         phonepe: data,
       });
     }
 
-    // Verify checksum
+    // ✅ Optional: Verify response checksum properly (recommended)
     const responseChecksum = resp.headers["x-verify"];
-    const encodedResponse = Buffer.from(JSON.stringify(data.data)).toString(
-      "base64"
-    );
+    if (responseChecksum) {
+      // const responseUri = `/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
+      const responseUri = `/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
+      const expectedSha = crypto
+        .createHash("sha256")
+        .update(
+          Buffer.from(JSON.stringify(data.data)).toString("base64") +
+            responseUri +
+            SALT_KEY
+        )
+        .digest("hex");
+      const expectedChecksum = `${expectedSha}###${SALT_INDEX}`;
 
-    if (!verifyPhonePeChecksum(encodedResponse, responseChecksum)) {
-      return res.status(400).json({ message: "Checksum verification failed" });
+      if (expectedChecksum !== responseChecksum) {
+        console.error("❌ Invalid checksum in PhonePe response");
+        return res
+          .status(400)
+          .json({ message: "Checksum verification failed" });
+      }
     }
 
     const paymentInfo = data.data;
     const isPaymentSuccessful = paymentInfo.state === "COMPLETED";
 
-    // Update payment transaction
+    // ✅ Update payment transaction
     paymentTransaction.paymentStatus = isPaymentSuccessful
       ? "COMPLETED"
       : "FAILED";
@@ -388,15 +543,22 @@ router.post("/verify", async (req, res) => {
     paymentTransaction.completedAt = new Date();
     await paymentTransaction.save();
 
-    if (isPaymentSuccessful) {
-      // Update order status
-      const order = paymentTransaction.orderId;
-      if (order) {
+    // ✅ Update order accordingly
+    const order = paymentTransaction.orderId;
+    if (order) {
+      if (isPaymentSuccessful) {
+        // ✅ Extract actual payment method type (UPI, CARD, WALLET, etc.)
+        const paymentMethodUsed =
+          paymentInfo.paymentInstrument?.type || "PhonePe";
+
         order.status = "processing";
+        order.paymentMethod = paymentMethodUsed; // ✅ added line
+
         order.paymentDetails = {
-          merchantTransactionId: merchantTransactionId,
+          merchantTransactionId,
           paymentStatus: "COMPLETED",
           transactionId: paymentInfo.transactionId,
+          paymentInstrument: paymentInfo.paymentInstrument || {}, // ✅ keep full data
           verificationResponse: data,
         };
         await order.save();
@@ -408,7 +570,7 @@ router.post("/verify", async (req, res) => {
           await user.save();
         }
 
-        // Send order confirmation email
+        // Send confirmation email (non-blocking)
         try {
           const {
             sendOrderConfirmationEmail,
@@ -417,11 +579,9 @@ router.post("/verify", async (req, res) => {
         } catch (emailError) {
           console.error("Email sending failed:", emailError);
         }
-      }
-    } else {
-      // Payment failed - delete the order
-      if (paymentTransaction.orderId) {
-        await OrderModel.findByIdAndDelete(paymentTransaction.orderId._id);
+      } else {
+        order.status = "failed";
+        await order.save();
       }
     }
 
@@ -437,6 +597,14 @@ router.post("/verify", async (req, res) => {
       "Payment verification error:",
       err?.response?.data || err.message
     );
+
+    if (err?.response?.status === 401 || err?.response?.status === 403) {
+      return res.status(401).json({
+        message: "Unauthorized — invalid checksum or credentials",
+        phonepe: err?.response?.data || {},
+      });
+    }
+
     return res.status(500).json({
       message: "Server error during payment verification",
       error: err?.response?.data || err.message,
@@ -513,5 +681,32 @@ router.get("/transactions", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
+
+/**
+ * 📌 Route to safely redirect users from PhonePe to frontend (handles both GET & POST)
+ */
+const handleFrontendCallback = async (req, res) => {
+  try {
+    const merchantTransactionId =
+      req.query.merchantTransactionId || req.body.merchantTransactionId || null;
+
+    if (!merchantTransactionId) {
+      return res.status(400).send("Missing merchantTransactionId");
+    }
+
+    const frontendUrl = `${
+      process.env.FRONTEND_URL || "http://localhost:5173"
+    }/phonepe-callback?merchantTransactionId=${merchantTransactionId}`;
+
+    return res.redirect(frontendUrl);
+  } catch (error) {
+    console.error("Error redirecting from PhonePe callback:", error);
+    return res.status(500).send("Internal server error");
+  }
+};
+
+// Handle both GET and POST
+router.get("/frontend-callback", handleFrontendCallback);
+router.post("/frontend-callback", handleFrontendCallback);
 
 module.exports = { phonepeRoutes: router };
