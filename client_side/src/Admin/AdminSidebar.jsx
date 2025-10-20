@@ -8,6 +8,7 @@ import {
   FiChevronRight,
   FiDollarSign,
 } from "react-icons/fi";
+import { MdOutlineCurrencyRupee } from "react-icons/md";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { ADMIN_LOGOUT } from "../Redux/Users/actionType";
@@ -43,7 +44,7 @@ const AdminSidebar = ({
     { id: "orders", icon: <BsBox />, label: "Orders" },
     {
       id: "paymenttransactions",
-      icon: <FiDollarSign />,
+      icon: <MdOutlineCurrencyRupee />,
       label: "Payment Transactions",
     },
     { id: "billingrecords", icon: <GoDatabase />, label: "Billing Records" },

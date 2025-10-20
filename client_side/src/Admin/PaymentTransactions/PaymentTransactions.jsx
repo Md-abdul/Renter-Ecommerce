@@ -25,7 +25,7 @@ const PaymentTransactions = () => {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("adminToken");
       const response = await axios.get(
         // "http://localhost:5000/api/phonepe/transactions",
           "https://renter-ecommerce.vercel.app/api/phonepe/transactions",
@@ -531,3 +531,4 @@ const PaymentTransactions = () => {
 };
 
 export default PaymentTransactions;
+
