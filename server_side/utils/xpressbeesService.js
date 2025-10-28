@@ -30,30 +30,37 @@ const createShipment = async (order) => {
   const token = await getXpressbeesToken();
 
   // ✅ Safe extraction
-const address = order.shippingAddress?.address || {};
-const state = address?.state?.trim(); // ✅ FIXED: correctly get nested state
-const city = address?.city?.trim();
-const street = address?.street?.trim();
-const pincode = address?.zipCode?.trim();
-const phone = order.shippingAddress?.phoneNumber?.trim();
-const name = order.shippingAddress?.name?.trim();
+  const address = order.shippingAddress?.address || {};
+  const state = address?.state?.trim(); // ✅ FIXED: correctly get nested state
+  const city = address?.city?.trim();
+  const street = address?.street?.trim();
+  const pincode = address?.zipCode?.trim();
+  const phone = order.shippingAddress?.phoneNumber?.trim();
+  const name = order.shippingAddress?.name?.trim();
 
   // ✅ Validate required fields
   if (!state || !city || !street || !pincode || !phone || !name) {
     console.error("Missing required address fields:", {
-      state, city, street, pincode, phone, name,
+      state,
+      city,
+      street,
+      pincode,
+      phone,
+      name,
     });
     throw new Error("Incomplete address. AWB cannot be generated.");
   }
 
-    // ✅ Aggregate package dimensions/weight dynamically
+  // ✅ Aggregate package dimensions/weight dynamically
   const totalWeight = order.items.reduce(
     (sum, item) => sum + (item.packageWeight || 300) * item.quantity,
     0
   );
 
-  const maxLength = Math.max(...order.items.map(i => i.packageLength || 10));
-  const maxBreadth = Math.max(...order.items.map(i => i.packageBreadth || 10));
+  const maxLength = Math.max(...order.items.map((i) => i.packageLength || 10));
+  const maxBreadth = Math.max(
+    ...order.items.map((i) => i.packageBreadth || 10)
+  );
   const maxHeight = order.items.reduce(
     (sum, i) => sum + (i.packageHeight || 10) * i.quantity,
     0
@@ -126,7 +133,6 @@ const name = order.shippingAddress?.name?.trim();
     throw error;
   }
 };
-
 
 module.exports = {
   getXpressbeesToken,

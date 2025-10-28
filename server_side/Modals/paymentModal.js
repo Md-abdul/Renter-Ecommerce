@@ -6,7 +6,7 @@ const paymentTransactionSchema = new mongoose.Schema(
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "order",
-      required: true,
+      required: false,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -60,7 +60,23 @@ const paymentTransactionSchema = new mongoose.Schema(
       email: String,
       phoneNumber: String,
     },
-
+    // Fix: Add proper shippingDetails structure
+    shippingDetails: {
+      name: String,
+      address: {
+        street: String,
+        city: String,
+        zipCode: String,
+        state: String,
+        alternatePhone: String,
+        addressType: {
+          type: String,
+          enum: ["home", "work", "other"],
+          default: "home",
+        },
+      },
+      phoneNumber: String,
+    },
     productDetails: [
       {
         productId: {
@@ -72,6 +88,12 @@ const paymentTransactionSchema = new mongoose.Schema(
         price: Number,
         color: String,
         size: String,
+        image: String,
+        sku: String,
+        packageWeight: Number,
+        packageLength: Number,
+        packageBreadth: Number,
+        packageHeight: Number,
       },
     ],
 
@@ -109,4 +131,3 @@ const PaymentTransactionModel = mongoose.model(
 );
 
 module.exports = PaymentTransactionModel;
-

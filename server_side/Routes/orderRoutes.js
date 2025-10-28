@@ -138,7 +138,7 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
           }
         : null,
     });
-
+    await order.save();
     // Update product quantities
     for (const item of items) {
       try {
@@ -178,7 +178,7 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
     console.log('order is prepreaing')
     await order.save();
     console.log('order is done')
-
+    console.log('Generating AWB for order:', order.orderNumber);
     try {
       const shipmentRes = await createShipment(order);
       console.log("Xpressbees response:", shipmentRes); // For debugging
@@ -186,7 +186,9 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
       if (shipmentRes.status && shipmentRes.data?.awb_number) {
         order.awbNumber = shipmentRes.data.awb_number;
         order.shippingLabelUrl = shipmentRes.data.label || null;
+        order.status = "processing"; 
         await order.save();
+        console.log("AWB generated successfully:", order.awbNumber);
       } else {
         console.error("AWB generation failed:", shipmentRes);
       }
