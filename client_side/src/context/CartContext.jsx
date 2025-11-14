@@ -19,8 +19,8 @@ export const CartProvider = ({ children }) => {
   const navigate = useNavigate();
 
   // Use local backend for development
-  // const API_BASE_URL = "http://localhost:5000/api";
-  const API_BASE_URL = "https://renter-ecommerce.vercel.app/api";
+  const API_BASE_URL = "http://localhost:5000/api";
+  // const API_BASE_URL = "https://renter-ecommerce.vercel.app/api";
 
   const getTotalPrice = () => {
     const subtotal = cart.reduce((total, item) => {
@@ -338,8 +338,8 @@ export const CartProvider = ({ children }) => {
         }
       );
 
-      if (response.data.paymentUrl) {
-        window.location.href = response.data.paymentUrl;
+      if (response.data.redirectUrl) {
+        window.location.href = response.data.redirectUrl;
         return { success: true };
       } else {
         toast.error("Payment initiation failed. Please try again.");
@@ -353,6 +353,50 @@ export const CartProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
+  // In CartContext.jsx - Update the initiatePhonePePayment function
+// const initiatePhonePePayment = async ({ shippingDetails, amount }) => {
+//   const token = localStorage.getItem("token");
+//   if (!token) {
+//     toast.error("Please log in to complete payment");
+//     navigate("/login");
+//     return { success: false };
+//   }
+
+//   try {
+//     setLoading(true);
+//     const response = await axios.post(
+//       `${API_BASE_URL}/phonepe/createOrder`,
+//       {
+//         shippingDetails,
+//         couponCode: appliedCoupon?.couponCode || null,
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     );
+
+//     console.log("PhonePe response:", response.data); // Debug log
+
+//     if (response.data.success && response.data.paymentUrl) {
+//       // Redirect to PhonePe payment page
+//       window.location.href = response.data.paymentUrl;
+//       return { success: true };
+//     } else {
+//       toast.error("Payment initiation failed. Please try again.");
+//       return { success: false };
+//     }
+//   } catch (error) {
+//     console.error("PhonePe initiation error:", error);
+//     toast.error(error.response?.data?.message || "Payment initiation failed");
+//     return { success: false };
+//   } finally {
+//     setLoading(false);
+//   }
+// };
 
   const replaceCartWithItem = async (product, quantity = 1) => {
     try {
