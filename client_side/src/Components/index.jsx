@@ -6,7 +6,7 @@ import OfferSlider from "./HomePage/OfferSlider";
 import FAQComponent from "./HomePage/FAQComponent";
 import { motion, useAnimation, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import PhonePeRedirectButton from "../PhonePeRedirectButton";
+// import PhonePeRedirectButton from "../PhonePeRedirectButton";
 
 const HomePage = () => {
   const [timeLeft, setTimeLeft] = useState({
@@ -627,7 +627,7 @@ const HomePage = () => {
           </div>
         </div>
       </motion.section>
-<PhonePeRedirectButton/>
+{/* <PhonePeRedirectButton/> */}
       {/* FAQ Section */}
       <motion.section
         className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50"
