@@ -1,370 +1,3 @@
-// const dotenv = require("dotenv");
-// dotenv.config();
-// const express = require("express");
-// const router = express.Router();
-// const axios = require("axios");
-// const crypto = require("crypto");
-// const { verifyToken } = require("../Middlewares/VerifyToken");
-// const { UserModel, OrderModel, CounterModel } = require("../Modals/UserModal");
-// const PaymentTransactionModel = require("../Modals/paymentModal");
-// const ProductModal = require("../Modals/productModal");
-// const { sendOrderConfirmationEmail } = require("../utils/orderProdctService");
-
-// // ✅ PhonePe configuration - Dynamic for both environments
-// const PHONEPE_IDENTITY_HOST = process.env.NODE_ENV === "production" 
-//   ? "https://api.phonepe.com/apis/identity-manager"  // Production OAuth
-//   : "https://api-preprod.phonepe.com/apis/pg-sandbox"; // Sandbox OAuth
-
-// const PHONEPE_PG_HOST = process.env.NODE_ENV === "production"
-//   ? "https://api.phonepe.com/apis/pg"
-//   : "https://api-preprod.phonepe.com/apis/pg-sandbox";
-
-// // OAuth Credentials (for token generation)
-// const CLIENT_ID = process.env.PHONEPE_CLIENT_ID;
-// const CLIENT_SECRET = process.env.PHONEPE_CLIENT_SECRET;
-// const CLIENT_VERSION = process.env.PHONEPE_CLIENT_VERSION || "1";
-
-// // Payment API Credentials (different from OAuth credentials)
-// const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
-// const SALT_KEY = process.env.PHONEPE_SALT_KEY;
-// const SALT_INDEX = process.env.PHONEPE_SALT_INDEX || "1";
-
-// /**
-//  * ✅ Get OAuth Token from PhonePe - DYNAMIC ENDPOINTS
-//  */
-// async function getPhonePeAccessToken() {
-//   try {
-//     console.log("Getting PhonePe access token...");
-//     console.log("Environment:", process.env.NODE_ENV);
-//     console.log("OAuth Host:", PHONEPE_IDENTITY_HOST);
-
-//     // Dynamic OAuth endpoint based on environment
-//     const oauthEndpoint = process.env.NODE_ENV === "production" 
-//       ? "/v1/oauth/token"      // Production endpoint
-//       : "/v1/oauth/token";     // Sandbox endpoint (same path for sandbox)
-
-//     const oauthUrl = `${PHONEPE_IDENTITY_HOST}${oauthEndpoint}`;
-
-//     console.log("OAuth URL:", oauthUrl);
-
-//     const tokenResponse = await axios.post(
-//       oauthUrl,
-//       new URLSearchParams({
-//         client_id: CLIENT_ID,
-//         client_version: CLIENT_VERSION,
-//         client_secret: CLIENT_SECRET,
-//         grant_type: "client_credentials",
-//       }),
-//       {
-//         headers: {
-//           "Content-Type": "application/x-www-form-urlencoded",
-//         },
-//         timeout: 10000,
-//       }
-//     );
-
-//     const tokenData = tokenResponse.data;
-//     console.log("PhonePe token received successfully");
-
-//     return {
-//       accessToken: tokenData.access_token,
-//       encryptedAccessToken: tokenData.encrypted_access_token,
-//       expiresIn: tokenData.expires_in,
-//       tokenType: tokenData.token_type,
-//     };
-//   } catch (error) {
-//     console.error(
-//       "Error getting PhonePe access token:",
-//       error.response?.data || error.message
-//     );
-//     console.error("OAuth URL attempted:", `${PHONEPE_IDENTITY_HOST}/v1/oauth/token`);
-//     throw new Error(
-//       `Failed to get PhonePe access token: ${
-//         error.response?.data?.message || error.message
-//       }`
-//     );
-//   }
-// }
-
-// /**
-//  * ✅ Utility to build checksum (X-VERIFY) for Payment APIs
-//  * Uses SALT_KEY (different from CLIENT_SECRET)
-//  */
-// function buildPhonePeChecksum(encodedReq, endpoint = "pay") {
-//   const uri = process.env.NODE_ENV === "production"
-//     ? `/v1/${endpoint}`
-//     : `/pg/v1/${endpoint}`;
-
-//   const payload = encodedReq + uri + SALT_KEY;
-//   const sha = crypto.createHash("sha256").update(payload).digest("hex");
-//   return `${sha}###${SALT_INDEX}`;
-// }
-
-// /**
-//  * ✅ Utility to verify PhonePe response checksum
-//  */
-// function verifyPhonePeChecksum(encodedResponse, checksum, endpoint = "status") {
-//   const uri = process.env.NODE_ENV === "production"
-//     ? `/v1/${endpoint}`
-//     : `/pg/v1/${endpoint}`;
-
-//   const payload = encodedResponse + uri + SALT_KEY;
-//   const sha = crypto.createHash("sha256").update(payload).digest("hex");
-//   const expectedChecksum = `${sha}###${SALT_INDEX}`;
-//   return expectedChecksum === checksum;
-// }
-
-// const getNextOrderNumber = async () => {
-//   try {
-//     const { CounterModel } = require("../Modals/UserModal");
-//     const counter = await CounterModel.findByIdAndUpdate(
-//       "orderNumber",
-//       { $inc: { seq: 1 } },
-//       { new: true, upsert: true }
-//     );
-//     return `${String(counter.seq).padStart(4, "0")}`;
-//   } catch (error) {
-//     console.error("Error generating order number:", error);
-//     throw new Error("Failed to generate order number");
-//   }
-// };
-
-// // ✅ CREATE ORDER - Using proper credentials with debug info
-// router.post("/createOrder", verifyToken, async (req, res) => {
-//   try {
-//     // Debug environment info
-//     console.log("=== PHONEPE CONFIGURATION DEBUG ===");
-//     console.log("NODE_ENV:", process.env.NODE_ENV);
-//     console.log("OAuth Host:", PHONEPE_IDENTITY_HOST);
-//     console.log("PG Host:", PHONEPE_PG_HOST);
-//     console.log("BACKEND_URL:", process.env.BACKEND_URL);
-//     console.log("CLIENT_ID exists:", !!CLIENT_ID);
-//     console.log("MERCHANT_ID exists:", !!MERCHANT_ID);
-//     console.log("SALT_KEY exists:", !!SALT_KEY);
-//     console.log("===================================");
-
-//     const userId = req.user.userId;
-//     const { shippingDetails, couponCode } = req.body;
-
-//     console.log("PhonePe createOrder request body:", {
-//       shippingDetails,
-//       couponCode,
-//     });
-
-//     // Validate shipping details
-//     if (
-//       !shippingDetails ||
-//       !shippingDetails.name ||
-//       !shippingDetails.phoneNumber ||
-//       !shippingDetails.address ||
-//       !shippingDetails.address.street ||
-//       !shippingDetails.address.city ||
-//       !shippingDetails.address.zipCode
-//     ) {
-//       return res
-//         .status(400)
-//         .json({ message: "Missing required shipping information" });
-//     }
-
-//     const user = await UserModel.findById(userId);
-//     if (!user) return res.status(404).json({ message: "User not found" });
-
-//     const cartItems = Array.from(
-//       user.cart.values ? user.cart.values() : user.cart || []
-//     );
-//     if (!cartItems || cartItems.length === 0) {
-//       return res.status(400).json({ message: "Cart is empty" });
-//     }
-
-//     const items = [];
-//     for (const c of cartItems) {
-//       const productId = c.productId?._id || c.productId;
-//       const image = c.image || c.productId?.image || "";
-//       items.push({
-//         productId,
-//         name: c.name,
-//         quantity: c.quantity,
-//         price: c.price,
-//         color: c.color || null,
-//         size: c.size || null,
-//         image,
-//         sku: c.sku || null,
-//         packageWeight: c.packageWeight || null,
-//         packageLength: c.packageLength || null,
-//         packageBreadth: c.packageBreadth || null,
-//         packageHeight: c.packageHeight || null,
-//       });
-//     }
-
-//     let totalAmount = items.reduce(
-//       (sum, it) => sum + Number(it.price || 0) * Number(it.quantity || 0),
-//       0
-//     );
-
-//     let appliedCoupon = null;
-//     let discountAmount = 0;
-//     if (couponCode) {
-//       const CouponModel = require("../Modals/coupanModal");
-//       const coupon = await CouponModel.findOne({
-//         couponCode: couponCode.toUpperCase(),
-//         isActive: true,
-//         expiryDate: { $gt: new Date() },
-//       });
-//       if (coupon && totalAmount >= (coupon.minimumPurchaseAmount || 0)) {
-//         discountAmount = (totalAmount * (coupon.discountPercentage || 0)) / 100;
-//         const finalDiscount = Math.min(
-//           discountAmount,
-//           coupon.maxDiscountAmount || discountAmount
-//         );
-//         totalAmount -= finalDiscount;
-//         appliedCoupon = {
-//           couponCode: coupon.couponCode,
-//           discountPercentage: coupon.discountPercentage,
-//           discountAmount: finalDiscount,
-//         };
-//         coupon.usedCount = (coupon.usedCount || 0) + 1;
-//         await coupon
-//           .save()
-//           .catch((e) => console.warn("Coupon save failed:", e.message));
-//       }
-//     }
-
-//     const merchantTransactionId = `ORD_${Date.now()}_${Math.floor(
-//       Math.random() * 1000
-//     )}`;
-//     const amountPaise = Math.round(Number(totalAmount) * 100);
-
-//     const redirectUrl = `${
-//       process.env.BACKEND_URL || "http://localhost:5000"
-//     }/api/phonepe/frontend-callback?merchantTransactionId=${merchantTransactionId}`;
-
-//     const requestBody = {
-//       merchantId: MERCHANT_ID,
-//       merchantTransactionId,
-//       amount: amountPaise,
-//       redirectUrl,
-//       redirectMode: "POST",
-//       merchantUserId: userId.toString(),
-//       paymentInstrument: { type: "PAY_PAGE" },
-//       validityTime: "600000",
-//     };
-
-//     const requestStr = JSON.stringify(requestBody);
-//     const encodedReq = Buffer.from(requestStr).toString("base64");
-
-//     // Get OAuth token first
-//     const tokenData = await getPhonePeAccessToken();
-
-//     // Build checksum with SALT_KEY
-//     const checksum = buildPhonePeChecksum(encodedReq, "pay");
-
-//     // Dynamic endpoint based on environment
-//     const payEndpoint = process.env.NODE_ENV === "production" ? "/v1/pay" : "/pg/v1/pay";
-//     const phonepeUrl = `${PHONEPE_PG_HOST}${payEndpoint}`;
-
-//     console.log("PhonePe API Call Details:", {
-//       environment: process.env.NODE_ENV,
-//       oauthHost: PHONEPE_IDENTITY_HOST,
-//       pgHost: PHONEPE_PG_HOST,
-//       payEndpoint: payEndpoint,
-//       fullUrl: phonepeUrl,
-//       merchantId: MERCHANT_ID,
-//       amount: amountPaise,
-//       redirectUrl: redirectUrl,
-//       hasToken: !!tokenData.encryptedAccessToken,
-//     });
-
-//     const resp = await axios.post(
-//       phonepeUrl,
-//       { request: encodedReq },
-//       {
-//         headers: {
-//           "Content-Type": "application/json",
-//           "X-VERIFY": checksum,
-//           Authorization: `O-Bearer ${tokenData.encryptedAccessToken}`,
-//           accept: "application/json",
-//         },
-//         timeout: 15000,
-//       }
-//     );
-
-//     const data = resp.data;
-//     console.log("PhonePe Response:", data);
-
-//     if (!data || !data.success) {
-//       console.error("PhonePe createOrder error:", data);
-//       return res
-//         .status(500)
-//         .json({ message: "PhonePe returned error", phonepe: data });
-//     }
-
-//     const redirectInfo =
-//       data?.data?.instrumentResponse?.redirectInfo || data?.data?.redirectInfo;
-//     const paymentUrl = redirectInfo?.url || null;
-//     if (!paymentUrl) {
-//       return res.status(500).json({
-//         message: "Could not find redirect URL in PhonePe response",
-//         phonepe: data,
-//       });
-//     }
-
-//     const paymentTransaction = new PaymentTransactionModel({
-//       userId,
-//       merchantTransactionId,
-//       amount: totalAmount,
-//       paymentStatus: "INITIATED",
-//       phonepeResponse: data,
-//       userDetails: {
-//         name: user.name || "",
-//         email: user.email || "",
-//         phoneNumber: user.phoneNumber || "",
-//       },
-//       shippingDetails: {
-//         name: shippingDetails.name,
-//         address: {
-//           street: shippingDetails.address.street,
-//           city: shippingDetails.address.city,
-//           zipCode: shippingDetails.address.zipCode,
-//           state: shippingDetails.address.state || "",
-//           alternatePhone: shippingDetails.address.alternatePhone || "",
-//           addressType: shippingDetails.address.addressType || "home",
-//         },
-//         phoneNumber: shippingDetails.phoneNumber,
-//       },
-//       productDetails: items,
-//       appliedCoupon,
-//     });
-
-//     await paymentTransaction.save();
-
-//     return res.json({
-//       success: true,
-//       paymentUrl,
-//       merchantTransactionId,
-//       amount: totalAmount,
-//       raw: data,
-//     });
-//   } catch (err) {
-//     console.error(
-//       "PhonePe createOrder error:",
-//       err?.response?.data || err.message || err
-//     );
-    
-//     // Enhanced error logging
-//     console.error("Full error details:", {
-//       message: err.message,
-//       responseStatus: err.response?.status,
-//       responseData: err.response?.data,
-//       url: err.config?.url,
-//       headers: err.config?.headers
-//     });
-    
-//     return res.status(500).json({
-//       message: "Server error creating PhonePe order",
-//       error: err?.response?.data?.message || err.message,
-//     });
-//   }
-// });
 const dotenv = require("dotenv");
 dotenv.config();
 const express = require("express");
@@ -376,8 +9,6 @@ const { UserModel, OrderModel, CounterModel } = require("../Modals/UserModal");
 const PaymentTransactionModel = require("../Modals/paymentModal");
 const ProductModal = require("../Modals/productModal");
 const { sendOrderConfirmationEmail } = require("../utils/orderProdctService");
-
-
 
 // ✅ Dynamic PhonePe URLs
 const PHONEPE_AUTH_URL =
@@ -422,7 +53,10 @@ async function getPhonePeAccessToken() {
     console.log("✅ Access token received");
     return response.data.access_token;
   } catch (err) {
-    console.error("❌ Error getting PhonePe access token:", err.response?.data || err.message);
+    console.error(
+      "❌ Error getting PhonePe access token:",
+      err.response?.data || err.message
+    );
     throw new Error("Failed to get PhonePe access token");
   }
 }
@@ -455,15 +89,22 @@ router.post("/createOrder", verifyToken, async (req, res) => {
     const userId = req.user.userId;
     const { shippingDetails, couponCode } = req.body;
 
-    if (!shippingDetails || !shippingDetails.name || !shippingDetails.phoneNumber) {
-      return res.status(400).json({ message: "Missing required shipping information" });
+    if (
+      !shippingDetails ||
+      !shippingDetails.name ||
+      !shippingDetails.phoneNumber
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Missing required shipping information" });
     }
 
     const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const cartItems = Array.from(user.cart?.values?.() || user.cart || []);
-    if (!cartItems.length) return res.status(400).json({ message: "Cart is empty" });
+    if (!cartItems.length)
+      return res.status(400).json({ message: "Cart is empty" });
 
     // 🔹 Prepare product details
     const items = cartItems.map((c) => ({
@@ -512,7 +153,9 @@ router.post("/createOrder", verifyToken, async (req, res) => {
     }
 
     // 🔹 Generate order reference
-    const merchantOrderId = `ORD_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const merchantOrderId = `ORD_${Date.now()}_${Math.floor(
+      Math.random() * 1000
+    )}`;
     const amountInPaise = Math.round(totalAmount * 100);
 
     // 🔹 Get OAuth token
@@ -526,7 +169,9 @@ router.post("/createOrder", verifyToken, async (req, res) => {
         type: "PG_CHECKOUT",
         message: "Order Payment Initialization",
         merchantUrls: {
-          redirectUrl: `${process.env.BACKEND_URL || "http://localhost:5000"}/api/phonepe/frontend-callback?merchantOrderId=${merchantOrderId}`,
+          redirectUrl: `${
+            process.env.BACKEND_URL || "http://localhost:5000"
+          }/api/phonepe/frontend-callback?merchantOrderId=${merchantOrderId}`,
         },
       },
     };
@@ -534,20 +179,26 @@ router.post("/createOrder", verifyToken, async (req, res) => {
     console.log("📤 Sending Checkout Request to:", PHONEPE_CHECKOUT_URL);
 
     // 🔹 Call Checkout API
-    const phonePeResponse = await axios.post(PHONEPE_CHECKOUT_URL, paymentPayload, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `O-Bearer ${accessToken}`,
-      },
-      timeout: 15000,
-    });
+    const phonePeResponse = await axios.post(
+      PHONEPE_CHECKOUT_URL,
+      paymentPayload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `O-Bearer ${accessToken}`,
+        },
+        timeout: 15000,
+      }
+    );
 
     const responseData = phonePeResponse.data;
     console.log("📥 PhonePe Response:", responseData);
 
     const redirectUrl = responseData.redirectUrl;
     if (!redirectUrl) {
-      return res.status(500).json({ message: "Redirect URL missing from PhonePe response" });
+      return res
+        .status(500)
+        .json({ message: "Redirect URL missing from PhonePe response" });
     }
 
     // 🔹 Save transaction for reference
@@ -630,16 +281,17 @@ router.post("/verify", async (req, res) => {
     const tokenData = await getPhonePeAccessToken();
 
     // Dynamic endpoint based on environment
-    const statusEndpoint = process.env.NODE_ENV === "production"
-      ? `/v1/status/${MERCHANT_ID}/${merchantTransactionId}`
-      : `/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
+    const statusEndpoint =
+      process.env.NODE_ENV === "production"
+        ? `/v1/status/${MERCHANT_ID}/${merchantTransactionId}`
+        : `/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
 
     const phonepeUrl = `${PHONEPE_PG_HOST}${statusEndpoint}`;
 
     console.log("Verification API Call:", {
       environment: process.env.NODE_ENV,
       url: phonepeUrl,
-      merchantTransactionId: merchantTransactionId
+      merchantTransactionId: merchantTransactionId,
     });
 
     // Use SALT_KEY for checksum
@@ -875,19 +527,41 @@ router.get("/transactions", verifyToken, async (req, res) => {
 });
 
 // ✅ FRONTEND CALLBACK REDIRECT HANDLER (remains the same)
+// const handleFrontendCallback = async (req, res) => {
+//   try {
+//     const merchantTransactionId =
+//       req.query.merchantTransactionId || req.body.merchantTransactionId || null;
+
+//     if (!merchantTransactionId) {
+//       return res.status(400).send("Missing merchantTransactionId");
+//     }
+
+//     const frontendUrl = `${
+//       process.env.FRONTEND_URL || "http://localhost:5173"
+//     }/phonepe-callback?merchantTransactionId=${merchantTransactionId}`;
+
+//     return res.redirect(frontendUrl);
+//   } catch (error) {
+//     console.error("Error redirecting from PhonePe callback:", error);
+//     return res.status(500).send("Internal server error");
+//   }
+// };
+
 const handleFrontendCallback = async (req, res) => {
   try {
-    const merchantTransactionId =
-      req.query.merchantTransactionId || req.body.merchantTransactionId || null;
+    // FIX: Use merchantOrderId instead of merchantTransactionId
+    const merchantOrderId =
+      req.query.merchantOrderId || req.body.merchantOrderId || null;
 
-    if (!merchantTransactionId) {
-      return res.status(400).send("Missing merchantTransactionId");
+    if (!merchantOrderId) {
+      return res.status(400).send("Missing merchantOrderId");
     }
 
     const frontendUrl = `${
       process.env.FRONTEND_URL || "http://localhost:5173"
-    }/phonepe-callback?merchantTransactionId=${merchantTransactionId}`;
+    }/phonepe-callback?merchantTransactionId=${merchantOrderId}`;
 
+    console.log("🔀 Redirecting to frontend:", frontendUrl);
     return res.redirect(frontendUrl);
   } catch (error) {
     console.error("Error redirecting from PhonePe callback:", error);
