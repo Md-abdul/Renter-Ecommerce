@@ -630,7 +630,7 @@ const ProductList = ({ category }) => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 0.75 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 transition-opacity"
+                  className="fixed inset-0 transition-opacity z-40"
                   aria-hidden="true"
                   onClick={() => setIsFilterOpen(false)}
                 >
@@ -642,7 +642,9 @@ const ProductList = ({ category }) => {
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: 100, opacity: 0 }}
                   transition={{ type: "spring", damping: 25 }}
-                  className="inline-block align-bottom bg-white rounded-t-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+                  // className="inline-block align-bottom bg-white rounded-t-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+                  className="relative z-50 inline-block align-bottom bg-white rounded-t-2xl text-left overflow-hidden shadow-xl 
+           transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
                 >
                   <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div className="flex justify-between items-center mb-4">
@@ -722,25 +724,29 @@ const ProductList = ({ category }) => {
                             className="overflow-hidden"
                           >
                             <div className="grid grid-cols-5 gap-2">
-                              {availableColors.map((color) => (
+                              {availableColors.map((colorObj) => (
                                 <div
-                                  key={color}
+                                  key={colorObj.name}
                                   className="flex flex-col items-center"
                                 >
                                   <button
-                                    onClick={() => handleColorChange(color)}
+                                    onClick={() =>
+                                      handleColorChange(colorObj.name)
+                                    }
                                     className={`w-8 h-8 rounded-full border-2 ${
-                                      colorFilter.includes(color)
+                                      colorFilter.includes(
+                                        colorObj.name.toLowerCase()
+                                      )
                                         ? "border-yellow-500 scale-110"
                                         : "border-gray-200"
                                     } transition-all duration-200`}
                                     style={{
-                                      backgroundColor: color.toLowerCase(),
+                                      backgroundColor: colorObj.hexCode,
                                     }}
-                                    title={color}
+                                    title={colorObj.displayName}
                                   />
                                   <span className="text-xs mt-1 text-gray-600 truncate w-full text-center">
-                                    {color}
+                                    {colorObj.displayName}
                                   </span>
                                 </div>
                               ))}

@@ -25,6 +25,7 @@ const PhonePeCallback = () => {
 
     try {
       setVerificationStatus("verifying");
+      console.log("🔍 Starting payment verification for:", merchantTransactionId);
 
       const token = localStorage.getItem("token");
       if (!token) {
@@ -36,67 +37,86 @@ const PhonePeCallback = () => {
 
       const response = await axios.post(
         "https://renter-ecommerce.vercel.app/api/phonepe/verify",
-        // "http://localhost:5000/api/phonepe/verify",
         { merchantTransactionId },
         {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
+          timeout: 30000, // Increased timeout for verification
         }
       );
+
+      console.log("✅ Verification API Response:", response.data);
 
       if (response.data.success) {
         setVerificationStatus("success");
         setVerificationResult(response.data);
 
-        // Clear stored payment data
+        // Clear any stored payment data
         localStorage.removeItem("pendingOrderId");
         localStorage.removeItem("merchantTransactionId");
 
-        toast.success("Payment successful! Your order is being processed.");
+        toast.success("🎉 Payment successful! Your order has been placed.");
 
         // Redirect to orders page after 3 seconds
         setTimeout(() => {
-          navigate("/order"); // Changed from "/orders" to "/order" to match your route
+          navigate("/order"); 
         }, 3000);
       } else {
         setVerificationStatus("failed");
         setVerificationResult(response.data);
-        toast.error("Payment verification failed");
+        toast.error(response.data.message || "Payment verification failed");
       }
     } catch (error) {
-      console.error("Payment verification error:", error);
+      console.error("❌ Payment verification error:", error);
       setVerificationStatus("failed");
       
+      // More specific error handling
       if (error.response?.status === 401) {
         toast.error("Session expired. Please login again.");
         navigate("/login");
+      } else if (error.response?.status === 404) {
+        toast.error("Transaction not found. Please contact support.");
+      } else if (error.code === 'ECONNABORTED') {
+        toast.error("Verification timeout. Please check your order status in a few minutes.");
       } else {
-        toast.error("Payment verification failed. Please contact support.");
+        const errorMessage = error.response?.data?.message || "Payment verification failed. Please contact support.";
+        toast.error(errorMessage);
       }
     }
   };
 
   useEffect(() => {
-    const obj = {};
-    for (const [k, v] of new URLSearchParams(window.location.search)) {
-      obj[k] = v;
+    // Extract all URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramsObj = {};
+    for (const [key, value] of urlParams) {
+      paramsObj[key] = value;
     }
-    setParams(obj);
+    setParams(paramsObj);
 
-    // Verify payment with backend
-    if (obj.merchantTransactionId) {
-      verifyPayment(obj.merchantTransactionId);
+    console.log("📋 URL Parameters:", paramsObj);
+
+    // ✅ FIX: Try multiple possible parameter names
+    const merchantTransactionId = 
+      paramsObj.merchantTransactionId || 
+      paramsObj.merchantOrderId || 
+      paramsObj.transactionId;
+
+    if (merchantTransactionId) {
+      console.log("🔍 Found transaction ID:", merchantTransactionId);
+      verifyPayment(merchantTransactionId);
     } else {
+      console.error("❌ No transaction ID found in URL");
       setVerificationStatus("failed");
-      toast.error("No transaction ID found in URL");
+      toast.error("No transaction ID found in URL parameters");
     }
   }, []);
 
   const handleContinue = () => {
     if (verificationStatus === "success") {
-      navigate("/order"); // Changed from "/orders" to "/order"
+      navigate("/order");
     } else {
       navigate("/checkout");
     }
@@ -126,15 +146,13 @@ const PhonePeCallback = () => {
       case "success":
         return {
           title: "Payment Successful!",
-          message:
-            "Your payment has been verified and your order is being processed.",
+          message: "Your payment has been verified and your order is being processed.",
           color: "text-green-600",
         };
       case "failed":
         return {
           title: "Payment Failed",
-          message:
-            "Your payment could not be verified. Please try again or contact support.",
+          message: "Your payment could not be verified. Please try again or contact support.",
           color: "text-red-600",
         };
       default:
@@ -173,23 +191,30 @@ const PhonePeCallback = () => {
               </p>
               <p>
                 <span className="font-medium">Status:</span>{" "}
-                {verificationResult.paymentStatus || "N/A"}
+                <span className={`font-semibold ${
+                  verificationResult.paymentStatus === 'COMPLETED' ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {verificationResult.paymentStatus || "N/A"}
+                </span>
               </p>
               <p>
                 <span className="font-medium">Merchant Transaction ID:</span>{" "}
-                {params.merchantTransactionId || "N/A"}
+                {params.merchantTransactionId || params.merchantOrderId || "N/A"}
               </p>
             </div>
           </div>
         )}
 
-        {params.merchantTransactionId && !verificationResult && (
+        {(params.merchantTransactionId || params.merchantOrderId) && !verificationResult && (
           <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
             <h3 className="font-semibold mb-2">Transaction Details:</h3>
             <div className="space-y-1 text-sm">
               <p>
                 <span className="font-medium">Merchant Transaction ID:</span>{" "}
-                {params.merchantTransactionId}
+                {params.merchantTransactionId || params.merchantOrderId}
+              </p>
+              <p>
+                <span className="font-medium">Status:</span> Verifying...
               </p>
             </div>
           </div>
@@ -198,7 +223,7 @@ const PhonePeCallback = () => {
         {verificationStatus === "success" && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
             <p className="text-green-800 text-sm">
-              You will be redirected to your orders page automatically in a few seconds.
+              ✅ Your order has been confirmed! Redirecting to orders page...
             </p>
           </div>
         )}
@@ -206,7 +231,7 @@ const PhonePeCallback = () => {
         {verificationStatus === "failed" && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <p className="text-red-800 text-sm">
-              If you were charged, please contact support with your transaction ID.
+              ⚠️ If money was deducted from your account, it will be refunded within 5-7 business days.
             </p>
           </div>
         )}
@@ -223,7 +248,7 @@ const PhonePeCallback = () => {
           disabled={verificationStatus === "verifying"}
         >
           {verificationStatus === "success"
-            ? "View Orders"
+            ? "View My Orders"
             : verificationStatus === "failed"
             ? "Try Again"
             : "Processing..."}
@@ -231,16 +256,17 @@ const PhonePeCallback = () => {
 
         {verificationStatus === "verifying" && (
           <p className="text-sm text-gray-500 mt-4">
-            This may take a few moments...
+            This may take 10-15 seconds...
           </p>
         )}
 
-        {/* Debug information - you can remove this in production */}
+        {/* Enhanced debug information */}
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-left">
             <p className="font-semibold">Debug Info:</p>
             <p>URL Params: {JSON.stringify(params)}</p>
-            <p>Status: {verificationStatus}</p>
+            <p>Verification Status: {verificationStatus}</p>
+            <p>Verification Result: {JSON.stringify(verificationResult)}</p>
           </div>
         )}
       </div>
