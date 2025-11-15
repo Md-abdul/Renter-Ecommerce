@@ -248,6 +248,7 @@ router.post("/createOrder", verifyToken, async (req, res) => {
 });
 
 // ✅ VERIFY PAYMENT STATUS - Updated with dynamic endpoints
+// ✅ VERIFY PAYMENT STATUS - Fixed with correct PhonePe API
 router.post("/verify", async (req, res) => {
   try {
     const { merchantTransactionId } = req.body;
@@ -278,68 +279,69 @@ router.post("/verify", async (req, res) => {
     }
 
     // Get OAuth token first
-    const tokenData = await getPhonePeAccessToken();
+    const accessToken = await getPhonePeAccessToken();
 
-    // Dynamic endpoint based on environment
+    // ✅ FIXED: Use correct PhonePe status API endpoint
     const statusEndpoint =
       process.env.NODE_ENV === "production"
-        ? `/v1/status/${MERCHANT_ID}/${merchantTransactionId}`
-        : `/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`;
+        ? `https://api.phonepe.com/apis/pg/checkout/v2/order/${merchantTransactionId}/status`
+        : `https://api-preprod.phonepe.com/apis/pg-sandbox/checkout/v2/order/${merchantTransactionId}/status`;
 
-    const phonepeUrl = `${PHONEPE_PG_HOST}${statusEndpoint}`;
-
-    console.log("Verification API Call:", {
+    console.log("🔍 Verification API Call:", {
       environment: process.env.NODE_ENV,
-      url: phonepeUrl,
+      url: statusEndpoint,
       merchantTransactionId: merchantTransactionId,
     });
 
-    // Use SALT_KEY for checksum
-    const payload = statusEndpoint + SALT_KEY;
-    const sha = crypto.createHash("sha256").update(payload).digest("hex");
-    const checksum = `${sha}###${SALT_INDEX}`;
-
-    const resp = await axios.get(phonepeUrl, {
+    // ✅ FIXED: Use only OAuth token (no checksum needed for this API)
+    const response = await axios.get(statusEndpoint, {
       headers: {
         "Content-Type": "application/json",
-        "X-VERIFY": checksum,
-        Authorization: `O-Bearer ${tokenData.encryptedAccessToken}`,
+        Authorization: `O-Bearer ${accessToken}`,
         accept: "application/json",
       },
       timeout: 15000,
     });
 
-    const data = resp.data;
-    if (!data || !data.success) {
-      console.error("PhonePe verification failed:", data);
+    const data = response.data;
+    console.log("📥 PhonePe Status Response:", data);
+
+    if (!data) {
+      console.error("PhonePe verification failed: No response data");
       return res
         .status(500)
-        .json({ message: "PhonePe verification failed", phonepe: data });
+        .json({ message: "PhonePe verification failed - no response" });
     }
 
-    const paymentInfo = data.data;
+    const paymentInfo = data;
     const isPaymentSuccessful = paymentInfo.state === "COMPLETED";
 
+    console.log("💰 Payment Status:", {
+      state: paymentInfo.state,
+      isSuccessful: isPaymentSuccessful,
+      amount: paymentInfo.amount,
+      transactionId: paymentInfo.paymentDetails?.[0]?.transactionId
+    });
+
+    // Update payment transaction
     const atomicUpdate = {
       $set: {
         paymentStatus: isPaymentSuccessful ? "COMPLETED" : "FAILED",
-        phonepeTransactionId: paymentInfo.transactionId,
+        phonepeTransactionId: paymentInfo.paymentDetails?.[0]?.transactionId || null,
         verificationResponse: data,
         completedAt: new Date(),
         processedAt: new Date(),
       },
     };
 
-    const updatedPaymentTransaction =
-      await PaymentTransactionModel.findOneAndUpdate(
-        {
-          merchantTransactionId,
-          orderId: { $exists: false },
-          paymentStatus: { $ne: "COMPLETED" },
-        },
-        atomicUpdate,
-        { new: true }
-      );
+    const updatedPaymentTransaction = await PaymentTransactionModel.findOneAndUpdate(
+      {
+        merchantTransactionId,
+        paymentStatus: { $ne: "COMPLETED" }, // Only update if not already completed
+      },
+      atomicUpdate,
+      { new: true }
+    );
 
     if (!updatedPaymentTransaction) {
       const existing = await PaymentTransactionModel.findOne({
@@ -354,97 +356,111 @@ router.post("/verify", async (req, res) => {
     }
 
     let order = null;
+    
+    // ✅ Only create order if payment is successful
     if (isPaymentSuccessful) {
-      const shippingDetails = updatedPaymentTransaction.shippingDetails || {};
-      const shippingAddress = {
-        name: shippingDetails.name || "Not Provided",
-        address: {
-          street: shippingDetails.address?.street || "Not Provided",
-          city: shippingDetails.address?.city || "Not Provided",
-          zipCode: shippingDetails.address?.zipCode || "000000",
-          state: shippingDetails.address?.state || "Not Provided",
-          alternatePhone: shippingDetails.address?.alternatePhone || "",
-          addressType: shippingDetails.address?.addressType || "home",
-        },
-        phoneNumber: shippingDetails.phoneNumber || "Not Provided",
-      };
-
-      const orderNumber = await getNextOrderNumber();
-
-      order = new OrderModel({
-        userId: updatedPaymentTransaction.userId,
-        items: updatedPaymentTransaction.productDetails,
-        totalAmount: updatedPaymentTransaction.amount,
-        shippingAddress,
-        paymentMethod: "prepaid",
-        status: "processing",
-        orderNumber,
-        paymentDetails: {
-          merchantTransactionId,
-          paymentStatus: "COMPLETED",
-          transactionId: paymentInfo.transactionId,
-          verificationResponse: data,
-        },
-        appliedCoupon: updatedPaymentTransaction.appliedCoupon,
-      });
-
-      await order.save();
-
       try {
-        console.log("Generating AWB for online order:", order.orderNumber);
-        const { createShipment } = require("../utils/xpressbeesService");
-        const shipmentRes = await createShipment(order);
-        if (shipmentRes.status && shipmentRes.data?.awb_number) {
-          order.awbNumber = shipmentRes.data.awb_number;
-          order.shippingLabelUrl = shipmentRes.data.label || null;
-          await order.save();
-        }
-      } catch (awbErr) {
-        console.error(
-          "Xpressbees AWB generation error:",
-          awbErr?.message || awbErr
-        );
-      }
+        const shippingDetails = updatedPaymentTransaction.shippingDetails || {};
+        const shippingAddress = {
+          name: shippingDetails.name || "Not Provided",
+          address: {
+            street: shippingDetails.address?.street || "Not Provided",
+            city: shippingDetails.address?.city || "Not Provided",
+            zipCode: shippingDetails.address?.zipCode || "000000",
+            state: shippingDetails.address?.state || "Not Provided",
+            alternatePhone: shippingDetails.address?.alternatePhone || "",
+            addressType: shippingDetails.address?.addressType || "home",
+          },
+          phoneNumber: shippingDetails.phoneNumber || "Not Provided",
+        };
 
-      for (const item of updatedPaymentTransaction.productDetails) {
+        const orderNumber = await getNextOrderNumber();
+
+        order = new OrderModel({
+          userId: updatedPaymentTransaction.userId,
+          items: updatedPaymentTransaction.productDetails,
+          totalAmount: updatedPaymentTransaction.amount,
+          shippingAddress,
+          paymentMethod: "prepaid",
+          status: "processing",
+          orderNumber,
+          paymentDetails: {
+            merchantTransactionId,
+            paymentStatus: "COMPLETED",
+            transactionId: paymentInfo.paymentDetails?.[0]?.transactionId,
+            verificationResponse: data,
+          },
+          appliedCoupon: updatedPaymentTransaction.appliedCoupon,
+        });
+
+        await order.save();
+        console.log("✅ Order created successfully:", order.orderNumber);
+
+        // Update payment transaction with order ID
+        updatedPaymentTransaction.orderId = order._id;
+        await updatedPaymentTransaction.save();
+
+        // Generate AWB
         try {
-          const product = await ProductModal.findById(item.productId);
-          if (!product) continue;
-          const colorIndex = product.colors.findIndex(
-            (c) => c.name === item.color
-          );
-          if (colorIndex === -1) continue;
-          const sizeIndex = product.colors[colorIndex].sizes.findIndex(
-            (s) => s.size === item.size
-          );
-          if (sizeIndex === -1) continue;
-          product.colors[colorIndex].sizes[sizeIndex].quantity -= item.quantity;
-          await product.save();
-        } catch (updateError) {
-          console.error(
-            `Error updating product ${item.productId}:`,
-            updateError
-          );
+          console.log("🚚 Generating AWB for online order:", order.orderNumber);
+          const { createShipment } = require("../utils/xpressbeesService");
+          const shipmentRes = await createShipment(order);
+          if (shipmentRes.status && shipmentRes.data?.awb_number) {
+            order.awbNumber = shipmentRes.data.awb_number;
+            order.shippingLabelUrl = shipmentRes.data.label || null;
+            await order.save();
+            console.log("✅ AWB generated:", shipmentRes.data.awb_number);
+          }
+        } catch (awbErr) {
+          console.error("❌ Xpressbees AWB generation error:", awbErr?.message || awbErr);
         }
-      }
 
-      updatedPaymentTransaction.orderId = order._id;
-      await updatedPaymentTransaction.save();
-
-      try {
-        const user = await UserModel.findById(updatedPaymentTransaction.userId);
-        if (user) {
-          user.cart = new Map();
-          await user.save();
+        // Update product inventory
+        for (const item of updatedPaymentTransaction.productDetails) {
+          try {
+            const product = await ProductModal.findById(item.productId);
+            if (!product) continue;
+            
+            const colorIndex = product.colors.findIndex(
+              (c) => c.name === item.color
+            );
+            if (colorIndex === -1) continue;
+            
+            const sizeIndex = product.colors[colorIndex].sizes.findIndex(
+              (s) => s.size === item.size
+            );
+            if (sizeIndex === -1) continue;
+            
+            product.colors[colorIndex].sizes[sizeIndex].quantity -= item.quantity;
+            await product.save();
+          } catch (updateError) {
+            console.error(`❌ Error updating product ${item.productId}:`, updateError);
+          }
         }
-      } catch (cartErr) {
-        console.error("Failed to clear user cart:", cartErr);
-      }
 
-      try {
-        await sendOrderConfirmationEmail(order._id);
-      } catch (emailError) {
-        console.error("Email sending failed:", emailError);
+        // Clear user cart
+        try {
+          const user = await UserModel.findById(updatedPaymentTransaction.userId);
+          if (user) {
+            user.cart = new Map();
+            await user.save();
+            console.log("✅ User cart cleared");
+          }
+        } catch (cartErr) {
+          console.error("❌ Failed to clear user cart:", cartErr);
+        }
+
+        // Send confirmation email
+        try {
+          await sendOrderConfirmationEmail(order._id);
+          console.log("✅ Order confirmation email sent");
+        } catch (emailError) {
+          console.error("❌ Email sending failed:", emailError);
+        }
+
+      } catch (orderError) {
+        console.error("❌ Error creating order:", orderError);
+        // Don't fail the entire verification if order creation fails
       }
     }
 
@@ -452,23 +468,34 @@ router.post("/verify", async (req, res) => {
       success: isPaymentSuccessful,
       paymentStatus: updatedPaymentTransaction.paymentStatus,
       orderId: updatedPaymentTransaction.orderId || (order && order._id),
-      transactionId: paymentInfo.transactionId,
+      transactionId: paymentInfo.paymentDetails?.[0]?.transactionId,
       data: paymentInfo,
+      message: isPaymentSuccessful ? "Payment verified successfully" : "Payment failed or pending"
     });
+
   } catch (err) {
     console.error(
-      "Payment verification error:",
+      "❌ Payment verification error:",
       err?.response?.data || err.message || err
     );
+    
     if (err?.response?.status === 401 || err?.response?.status === 403) {
       return res.status(401).json({
-        message: "Unauthorized — invalid checksum or credentials",
+        message: "Unauthorized — invalid OAuth token",
         phonepe: err?.response?.data || {},
       });
     }
+    
+    if (err?.response?.status === 404) {
+      return res.status(404).json({
+        message: "Transaction not found at PhonePe",
+        error: err?.response?.data || err.message,
+      });
+    }
+
     return res.status(500).json({
       message: "Server error during payment verification",
-      error: err?.response?.data || err.message,
+      error: err?.response?.data?.message || err.message,
     });
   }
 });
