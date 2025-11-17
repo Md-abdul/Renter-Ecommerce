@@ -116,6 +116,10 @@ router.post("/createOrder", verifyToken, async (req, res) => {
       size: c.size || null,
       image: c.image || c.productId?.image || "",
       sku: c.sku || null,
+      packageWeight: c.packageWeight || 300,
+      packageLength: c.packageLength || 10,
+      packageBreadth: c.packageBreadth || 10,
+      packageHeight: c.packageHeight || 10,
     }));
 
     let totalAmount = items.reduce(
