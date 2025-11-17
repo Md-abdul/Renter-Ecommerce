@@ -8,6 +8,7 @@ import {
   isValid as isDateValid,
 } from "date-fns";
 import * as XLSX from "xlsx";
+import Pagination from "../AdminUtils/Pagination";
 
 const SoldProduct = () => {
   const [soldProducts, setSoldProducts] = useState([]);
@@ -18,6 +19,8 @@ const SoldProduct = () => {
   const [isDefaultDate, setIsDefaultDate] = useState(true);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [totalAmounts, setTotalAmounts] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   // Calculate total amount whenever soldProducts changes
   useEffect(() => {
@@ -134,6 +137,20 @@ const SoldProduct = () => {
 
     XLSX.writeFile(workbook, `SoldProducts_${dateStr}.xlsx`);
   };
+
+    // Pagination logic
+  const totalPages = Math.ceil(soldProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedProducts = soldProducts.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to page 1 when data changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [soldProducts]);
 
   return (
     <div className="container mx-auto px-2 py-4">
@@ -332,8 +349,8 @@ const SoldProduct = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {soldProducts.length > 0 ? (
-                  soldProducts.map((product, index) => (
+                {paginatedProducts.length > 0 ? (
+                  paginatedProducts.map((product, index) => (
                     <tr
                       key={index}
                       className={
@@ -408,6 +425,17 @@ const SoldProduct = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Add Pagination */}
+          {soldProducts.length > 0 && (
+            <div className="px-6 py-4 border-t border-gray-200">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

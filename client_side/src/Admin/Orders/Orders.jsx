@@ -27,6 +27,7 @@ import { toast } from "react-toastify";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Papa from "papaparse";
+import Pagination from "../AdminUtils/Pagination";
 
 export const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -41,6 +42,8 @@ export const Orders = () => {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [viewingBankDetails, setViewingBankDetails] = useState(null);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     fetchOrders();
@@ -394,6 +397,20 @@ export const Orders = () => {
 
     return matchesStatus && matchesSearch;
   });
+
+    // Pagination logic
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to page 1 when filter or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchTerm]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -1181,6 +1198,14 @@ export const Orders = () => {
               </tbody>
             </table>
           </div>
+          {/* Add Pagination for return requests */}
+          <div className="px-6 py-4 border-t border-gray-200">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
         </div>
       ) : (
         <>
@@ -1190,7 +1215,7 @@ export const Orders = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredOrders.length === 0 ? (
+              {paginatedOrders.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-lg p-8 text-center">
                   <FiPackage className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900">
@@ -1208,7 +1233,7 @@ export const Orders = () => {
                   )}
                 </div>
               ) : (
-                filteredOrders.map((order) => (
+                paginatedOrders.map((order) => (
                   <div
                     key={order._id}
                     className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-200"
@@ -1497,6 +1522,16 @@ export const Orders = () => {
                   </div>
                 ))
               )}
+            </div>
+          )}
+          {/* Add Pagination for orders */}
+          {filteredOrders.length > 0 && (
+            <div className="mt-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
             </div>
           )}
         </>

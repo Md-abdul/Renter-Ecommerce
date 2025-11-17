@@ -24,6 +24,7 @@ const AdminHeader = ({ activeTab, sidebarOpen, setSidebarOpen }) => {
               {activeTab === "products" && "Product Management"}
               {activeTab === "users" && "User Management"}
               {activeTab === "orders" && "Order Management"}
+              {activeTab === "paymenttransactions" && "Payment Management"}
               {activeTab === "billingrecords" && "Sold Prodct Billing Records"}
               {activeTab === "coupon" && "Create Coupons"}
               {activeTab === "storelocator_admin" && "Store Locator"}
@@ -35,8 +36,11 @@ const AdminHeader = ({ activeTab, sidebarOpen, setSidebarOpen }) => {
                 "Manage your product inventory and listings"}
               {activeTab === "users" && "View and manage customer accounts"}
               {activeTab === "orders" && "Track and process customer orders"}
+              {activeTab === "paymenttransactions" &&
+                "Monitor all PhonePe payment transactions and their status"}
               {activeTab === "coupon" && "Make Coupons "}
-              {activeTab === "storelocator_admin" && "Add and manage your retail locations"}
+              {activeTab === "storelocator_admin" &&
+                "Add and manage your retail locations"}
               {/* {activeTab === "pageaccess" && "Add and manage your retail locations"} */}
             </p>
           </div>

@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { FiPlus, FiTrash2, FiEdit2, FiX } from "react-icons/fi";
 import Modal from "react-modal";
 import { useNavigate } from "react-router-dom";
+import Pagination from "../AdminUtils/Pagination";
 
 const Coupons = () => {
   const [coupons, setCoupons] = useState([]);
@@ -21,6 +22,8 @@ const Coupons = () => {
   });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     fetchCoupons();
@@ -72,6 +75,15 @@ const Coupons = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  // Pagination logic
+  const totalPages = Math.ceil(coupons.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCoupons = coupons.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   const handleSubmit = async (e) => {
@@ -236,7 +248,7 @@ const Coupons = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {coupons.map((coupon) => (
+            {paginatedCoupons.map((coupon) => (
               <tr key={coupon._id}>
                 <td className="px-6 py-4 whitespace-nowrap font-medium">
                   {coupon.couponCode}
@@ -290,6 +302,16 @@ const Coupons = () => {
             ))}
           </tbody>
         </table>
+        {/* Add Pagination */}
+        {coupons.length > 0 && (
+          <div className="px-6 py-4 border-t border-gray-200">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
       </div>
 
       {/* Create/Edit Coupon Modal */}

@@ -10,13 +10,16 @@ import {
   FiDownload,
   FiRefreshCw,
 } from "react-icons/fi";
+import Pagination from "../AdminUtils/Pagination";
 
 const PaymentTransactions = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [filter, setFilter] = useState("all"); // all, completed, failed, pending
+  const [filter, setFilter] = useState("all"); 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     fetchTransactions();
@@ -86,6 +89,23 @@ const PaymentTransactions = () => {
     return transaction.paymentStatus === filter;
   });
 
+      // Pagination logic
+    const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedTransactions = filteredTransactions.slice(
+      startIndex,
+      startIndex + itemsPerPage
+    );
+
+    const handlePageChange = (page) => {
+      setCurrentPage(page);
+    };
+
+      // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter]);
+
   const exportTransactions = () => {
     const csvContent = [
       [
@@ -150,14 +170,14 @@ const PaymentTransactions = () => {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
           Payment Transactions
         </h1>
         <p className="text-gray-600">
           Monitor all PhonePe payment transactions and their status
         </p>
-      </div>
+      </div> */}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
@@ -307,7 +327,7 @@ const PaymentTransactions = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTransactions.map((transaction) => (
+              {paginatedTransactions.map((transaction) => (
                 <tr key={transaction._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
@@ -361,7 +381,7 @@ const PaymentTransactions = () => {
                         setSelectedTransaction(transaction);
                         setShowModal(true);
                       }}
-                      className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
+                      className="text-blue-600 hover:text-blue-900 flex items-center gap-1 cursor-pointer"
                     >
                       <FiEye className="text-sm" />
                       View
@@ -386,9 +406,18 @@ const PaymentTransactions = () => {
         )}
       </div>
 
+          {/* Add Pagination */}
+    <div className="px-6 py-4 border-t border-gray-200">
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
+    </div>
+
       {/* Transaction Details Modal */}
       {showModal && selectedTransaction && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-4">
@@ -517,7 +546,7 @@ const PaymentTransactions = () => {
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 cursor-pointer"
                 >
                   Close
                 </button>
