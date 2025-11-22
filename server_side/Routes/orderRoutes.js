@@ -26,12 +26,233 @@ const getNextOrderNumber = async () => {
 };
 
 // Create order
+// orderRoutes.post("/", verifyToken, async (req, res) => {
+//   try {
+//     const userId = req.user.userId;
+//     const { shippingAddress, paymentMethod, couponCode } = req.body;
+
+//     // Validate required fields
+//     if (
+//       !shippingAddress ||
+//       !shippingAddress.name ||
+//       !shippingAddress.address ||
+//       !shippingAddress.address.street ||
+//       !shippingAddress.address.city ||
+//       !shippingAddress.address.zipCode ||
+//       !shippingAddress.phoneNumber
+//     ) {
+//       return res.status(400).json({
+//         message: "Missing required shipping information",
+//       });
+//     }
+//     // console.log(shippingAddress)
+//     const user = await UserModel.findById(userId);
+//     if (!user) return res.status(404).json({ message: "User not found" });
+
+//     if (user.cart.size === 0) {
+//       return res.status(400).json({ message: "Cart is empty" });
+//     }
+
+//     // Convert cart items to array
+//     const items = Array.from(user.cart.values()).map((item) => ({
+//       productId: item.productId,
+//       quantity: item.quantity,
+//       price: item.price,
+//       name: item.name,
+//       image: item.image,
+//       size: item.size,
+//       color: item.color,
+//       sku: item.sku,                      
+//       packageWeight: item.packageWeight,  
+//       packageLength: item.packageLength,  
+//       packageBreadth: item.packageBreadth,
+//       packageHeight: item.packageHeight,  
+
+//     }));
+
+//     // Calculate total amount
+//     let totalAmount = items.reduce(
+//       (sum, item) => sum + item.price * item.quantity,
+//       0
+//     );
+
+//     // Apply coupon if provided
+//     let appliedCoupon = null;
+//     let discountAmount = 0;
+
+//     if (couponCode) {
+//       const coupon = await CouponModel.findOne({
+//         couponCode: couponCode.toUpperCase(),
+//         isActive: true,
+//         expiryDate: { $gt: new Date() },
+//       });
+
+//       if (coupon) {
+//         // Check minimum purchase amount
+//         if (totalAmount >= coupon.minimumPurchaseAmount) {
+//           // Calculate discount
+//           discountAmount = (totalAmount * coupon.discountPercentage) / 100;
+//           const finalDiscount = Math.min(
+//             discountAmount,
+//             coupon.maxDiscountAmount
+//           );
+
+//           // Apply discount
+//           totalAmount -= finalDiscount;
+//           appliedCoupon = coupon;
+
+//           // Increment coupon usage
+//           coupon.usedCount += 1;
+//           await coupon.save();
+//         }
+//       }
+//     }
+
+//     const shippingDetails = {
+//       name: shippingAddress.name,
+//       address: {
+//         street: shippingAddress.address.street || "",
+//         city: shippingAddress.address.city || "",
+//         zipCode: shippingAddress.address.zipCode || "",
+//         state: shippingAddress.address.state || "",
+//         alternatePhone: shippingAddress.address.alternatePhone || "",
+//         addressType: shippingAddress.address.addressType || "home",
+//       },
+//       phoneNumber: shippingAddress.phoneNumber || "",
+//     };
+
+//     // Create new order
+//     const order = new OrderModel({
+//       userId,
+//       items,
+//       totalAmount,
+//       shippingAddress: shippingDetails,
+//       paymentMethod,
+//       status: "pending",
+//       orderNumber: await getNextOrderNumber(), // Use the helper function
+//       appliedCoupon: appliedCoupon
+//         ? {
+//             couponCode: appliedCoupon.couponCode,
+//             discountPercentage: appliedCoupon.discountPercentage,
+//             discountAmount: discountAmount,
+//           }
+//         : null,
+//     });
+//     await order.save();
+//     // Update product quantities
+//     for (const item of items) {
+//       try {
+//         const product = await ProductModal.findById(item.productId);
+//         if (!product) {
+//           console.error(`Product ${item.productId} not found`);
+//           continue;
+//         }
+
+//         const colorIndex = product.colors.findIndex(
+//           (c) => c.name === item.color
+//         );
+
+//         if (colorIndex === -1) {
+//           console.error(`Color not found for product ${item.productId}`);
+//           continue;
+//         }
+
+//         const sizeIndex = product.colors[colorIndex].sizes.findIndex(
+//           (s) => s.size === item.size
+//         );
+
+//         if (sizeIndex === -1) {
+//           console.error(
+//             `Size ${item.size} not found for product ${item.productId}`
+//           );
+//           continue;
+//         }
+
+//         product.colors[colorIndex].sizes[sizeIndex].quantity -= item.quantity;
+//         await product.save();
+//       } catch (updateError) {
+//         console.error(`Error updating product ${item.productId}:`, updateError);
+//         throw new Error(`Failed to update product ${item.productId}`);
+//       }
+//     }
+//     console.log('order is prepreaing')
+//     await order.save();
+//     console.log('order is done')
+//     console.log('Generating AWB for order:', order.orderNumber);
+//     try {
+//       const { createShipment } = require("../utils/xpressbeesService");
+//       const shipmentRes = await createShipment(order);
+//       console.log("Xpressbees response:", shipmentRes); // For debugging
+
+//       if (shipmentRes.status && shipmentRes.data?.awb_number) {
+//         order.awbNumber = shipmentRes.data.awb_number;
+//         order.shippingLabelUrl = shipmentRes.data.label || null;
+//         // order.status = "processing"; 
+//         await order.save();
+//         console.log("AWB generated successfully:", order.awbNumber);
+//       } else {
+//         console.error("AWB generation failed:", shipmentRes);
+//       }
+//     } catch (err) {
+//       console.error("Xpressbees AWB generation error:", err.message);
+//     }
+
+
+//     // Clear user's cart
+//     user.cart = new Map();
+//     await user.save();
+
+//     console.log(`Starting email send process for order ${order._id}`);
+//     // Send order confirmation email
+//     try {
+//       const success = await sendOrderConfirmationEmail(order._id);
+//       if (!success) {
+//         console.error("Failed to send order confirmation email");
+//       }
+//     } catch (emailError) {
+//       console.error("Email sending failed with error:", {
+//         orderId: order._id,
+//         error: emailError.message,
+//         stack: emailError.stack,
+//       });
+//     }
+
+//     res.status(201).json({
+//       message: "Order created successfully",
+//       order: {
+//         _id: order._id,
+//         totalAmount: order.totalAmount,
+//         status: order.status,
+//         createdAt: order.createdAt,
+//         items: order.items.map((item) => ({
+//           name: item.name,
+//           quantity: item.quantity,
+//           price: item.price,
+//           image: item.image,
+//         })),
+//         shippingAddress: order.shippingAddress,
+//         paymentMethod: order.paymentMethod,
+//         appliedCoupon: order.appliedCoupon,
+//         awbNumber: order.awbNumber,        
+//         shippingLabelUrl: order.shippingLabelUrl 
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error creating order:", error);
+//     res.status(500).json({
+//       message: "Server error",
+//       error: error.message,
+//     });
+//   }
+// });
+
+// Create order
 orderRoutes.post("/", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     const { shippingAddress, paymentMethod, couponCode } = req.body;
 
-    // Validate required fields
+    // Validate shipping fields
     if (
       !shippingAddress ||
       !shippingAddress.name ||
@@ -41,11 +262,9 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
       !shippingAddress.address.zipCode ||
       !shippingAddress.phoneNumber
     ) {
-      return res.status(400).json({
-        message: "Missing required shipping information",
-      });
+      return res.status(400).json({ message: "Missing required shipping information" });
     }
-    // console.log(shippingAddress)
+
     const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -62,21 +281,17 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
       image: item.image,
       size: item.size,
       color: item.color,
-      sku: item.sku,                      
-      packageWeight: item.packageWeight,  
-      packageLength: item.packageLength,  
+      sku: item.sku,
+      packageWeight: item.packageWeight,
+      packageLength: item.packageLength,
       packageBreadth: item.packageBreadth,
-      packageHeight: item.packageHeight,  
-
+      packageHeight: item.packageHeight,
     }));
 
     // Calculate total amount
-    let totalAmount = items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+    let totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    // Apply coupon if provided
+    // Apply coupon
     let appliedCoupon = null;
     let discountAmount = 0;
 
@@ -87,49 +302,25 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
         expiryDate: { $gt: new Date() },
       });
 
-      if (coupon) {
-        // Check minimum purchase amount
-        if (totalAmount >= coupon.minimumPurchaseAmount) {
-          // Calculate discount
-          discountAmount = (totalAmount * coupon.discountPercentage) / 100;
-          const finalDiscount = Math.min(
-            discountAmount,
-            coupon.maxDiscountAmount
-          );
+      if (coupon && totalAmount >= coupon.minimumPurchaseAmount) {
+        discountAmount = (totalAmount * coupon.discountPercentage) / 100;
+        const finalDiscount = Math.min(discountAmount, coupon.maxDiscountAmount);
+        totalAmount -= finalDiscount;
 
-          // Apply discount
-          totalAmount -= finalDiscount;
-          appliedCoupon = coupon;
-
-          // Increment coupon usage
-          coupon.usedCount += 1;
-          await coupon.save();
-        }
+        appliedCoupon = coupon;
+        coupon.usedCount += 1;
+        await coupon.save();
       }
     }
 
-    const shippingDetails = {
-      name: shippingAddress.name,
-      address: {
-        street: shippingAddress.address.street || "",
-        city: shippingAddress.address.city || "",
-        zipCode: shippingAddress.address.zipCode || "",
-        state: shippingAddress.address.state || "",
-        alternatePhone: shippingAddress.address.alternatePhone || "",
-        addressType: shippingAddress.address.addressType || "home",
-      },
-      phoneNumber: shippingAddress.phoneNumber || "",
-    };
-
-    // Create new order
     const order = new OrderModel({
       userId,
       items,
       totalAmount,
-      shippingAddress: shippingDetails,
-      paymentMethod,
+      shippingAddress,
+      paymentMethod: paymentMethod.toLowerCase(),
       status: "pending",
-      orderNumber: await getNextOrderNumber(), // Use the helper function
+      orderNumber: await getNextOrderNumber(),
       appliedCoupon: appliedCoupon
         ? {
             couponCode: appliedCoupon.couponCode,
@@ -138,112 +329,69 @@ orderRoutes.post("/", verifyToken, async (req, res) => {
           }
         : null,
     });
-    await order.save();
-    // Update product quantities
-    for (const item of items) {
+
+    console.log("🛒 New order created:", order.orderNumber);
+
+    // Generate AWB ONLY for COD orders
+    if (order.paymentMethod === "cod") {
+      console.log("🚚 Generating AWB for COD order:", order.orderNumber);
       try {
-        const product = await ProductModal.findById(item.productId);
-        if (!product) {
-          console.error(`Product ${item.productId} not found`);
-          continue;
+        const { createShipment } = require("../utils/xpressbeesService");
+        const shipmentRes = await createShipment(order);
+
+        if (shipmentRes?.status && shipmentRes.data?.awb_number) {
+          order.awbNumber = shipmentRes.data.awb_number;
+          order.shippingLabelUrl = shipmentRes.data.label || null;
+          order.status = "processing";
+          console.log("✔️ AWB Generated:", order.awbNumber);
+        } else {
+          console.error("⚠️ AWB API returned invalid result:", shipmentRes);
         }
+      } catch (awbError) {
+        console.error("❌ XpressBees Error:", awbError.response?.data || awbError.message);
+      }
+    }
 
-        const colorIndex = product.colors.findIndex(
-          (c) => c.name === item.color
-        );
+    // Save order details once
+    await order.save();
 
-        if (colorIndex === -1) {
-          console.error(`Color not found for product ${item.productId}`);
-          continue;
-        }
+    // Update stock after order saved
+    for (const item of items) {
+      const product = await ProductModal.findById(item.productId);
+      if (!product) continue;
 
-        const sizeIndex = product.colors[colorIndex].sizes.findIndex(
-          (s) => s.size === item.size
-        );
+      const colorIndex = product.colors.findIndex(c => c.name === item.color);
+      const sizeIndex = product.colors[colorIndex]?.sizes
+        .findIndex(s => s.size === item.size);
 
-        if (sizeIndex === -1) {
-          console.error(
-            `Size ${item.size} not found for product ${item.productId}`
-          );
-          continue;
-        }
-
+      if (colorIndex > -1 && sizeIndex > -1) {
         product.colors[colorIndex].sizes[sizeIndex].quantity -= item.quantity;
         await product.save();
-      } catch (updateError) {
-        console.error(`Error updating product ${item.productId}:`, updateError);
-        throw new Error(`Failed to update product ${item.productId}`);
       }
     }
-    console.log('order is prepreaing')
-    await order.save();
-    console.log('order is done')
-    console.log('Generating AWB for order:', order.orderNumber);
-    try {
-      const shipmentRes = await createShipment(order);
-      console.log("Xpressbees response:", shipmentRes); // For debugging
 
-      if (shipmentRes.status && shipmentRes.data?.awb_number) {
-        order.awbNumber = shipmentRes.data.awb_number;
-        order.shippingLabelUrl = shipmentRes.data.label || null;
-        order.status = "processing"; 
-        await order.save();
-        console.log("AWB generated successfully:", order.awbNumber);
-      } else {
-        console.error("AWB generation failed:", shipmentRes);
-      }
-    } catch (err) {
-      console.error("Xpressbees AWB generation error:", err.message);
-    }
-
-
-    // Clear user's cart
+    // Clear cart
     user.cart = new Map();
     await user.save();
 
-    console.log(`Starting email send process for order ${order._id}`);
-    // Send order confirmation email
+    console.log("📨 Sending order confirmation email");
     try {
-      const success = await sendOrderConfirmationEmail(order._id);
-      if (!success) {
-        console.error("Failed to send order confirmation email");
-      }
-    } catch (emailError) {
-      console.error("Email sending failed with error:", {
-        orderId: order._id,
-        error: emailError.message,
-        stack: emailError.stack,
-      });
+      await sendOrderConfirmationEmail(order._id);
+    } catch (emailErr) {
+      console.error("Email Error:", emailErr.message);
     }
 
     res.status(201).json({
       message: "Order created successfully",
-      order: {
-        _id: order._id,
-        totalAmount: order.totalAmount,
-        status: order.status,
-        createdAt: order.createdAt,
-        items: order.items.map((item) => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          image: item.image,
-        })),
-        shippingAddress: order.shippingAddress,
-        paymentMethod: order.paymentMethod,
-        appliedCoupon: order.appliedCoupon,
-        awbNumber: order.awbNumber,        
-        shippingLabelUrl: order.shippingLabelUrl 
-      },
+      order,
     });
+
   } catch (error) {
-    console.error("Error creating order:", error);
-    res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
+    console.error("❌ Order creation failed:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
+
 
 orderRoutes.get("/user", verifyToken, async (req, res) => {
   try {
