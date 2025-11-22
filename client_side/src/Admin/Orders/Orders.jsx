@@ -398,10 +398,13 @@ export const Orders = () => {
     return matchesStatus && matchesSearch;
   });
 
-    // Pagination logic
+  // Pagination logic
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -646,9 +649,13 @@ export const Orders = () => {
       // base row with fixed headers
       let row = {
         // OrderId: "'" + String(order.orderNumber).padStart(4, "0"),
-        OrderId: `="${String(order.orderNumber).padStart(4, "0")}"`,
+        "Order ID": `="${String(order.orderNumber).padStart(4, "0")}"`,
         "Payment Type": order.paymentMethod,
-        "COD Collectable Amount": order.totalAmount || "",
+        "COD Collectable Amount":
+          order.paymentMethod?.toLowerCase() === "cod"
+            ? order.totalAmount || ""
+            : "",
+
         Tags: "", // not mapped
         "First Name": firstName,
         "Last Name": lastName,
