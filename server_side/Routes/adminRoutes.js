@@ -12,8 +12,8 @@ const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
 const TOKEN_EXPIRY = "24h"; 
 
 // Hardcoded admin credentials
-const ADMIN_EMAIL = "admin@ranter.com";
-const ADMIN_PASSWORD = "admin@ranter.com";
+const ADMIN_EMAIL = "info.admin@ranter.com";
+const ADMIN_PASSWORD = "info.admin@ranter.com";
 
 // Admin Login Route
 adminRoutes.post("/login", async (req, res) => {
