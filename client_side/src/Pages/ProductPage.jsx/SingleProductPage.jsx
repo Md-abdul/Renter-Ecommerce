@@ -27,7 +27,22 @@ const SingleProductPage = () => {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Swipe & Auto-slide states
+  const touchStartX = React.useRef(0);
+  const touchEndX = React.useRef(0);
+
   const MAX_CART_TOTAL = 40000;
+
+    // Auto slide every 5 seconds
+useEffect(() => {
+  if (!selectedColor?.images.gallery?.length) return;
+
+  const interval = setInterval(() => {
+    nextGalleryImage();
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, [selectedColor, currentGalleryIndex]);
 
   // useEffect(() => {
   //   const fetchRelatedProducts = async () => {
@@ -120,6 +135,10 @@ const SingleProductPage = () => {
           if (data.colors && data.colors.length > 0) {
             setSelectedColor(data.colors[0]);
             setSelectedImage(data.colors[0].images.main);
+
+             if (data.colors[0].sizes.length > 0) {
+              setSelectedSize(data.colors[0].sizes[0].size);
+            }
           }
         }
         setLoading(false);
@@ -373,6 +392,27 @@ const SingleProductPage = () => {
     (s) => s.size === selectedSize
   );
   const isOutOfStock = selectedSizeObj ? selectedSizeObj.quantity === 0 : false;
+const handleTouchStart = (e) => {
+  touchStartX.current = e.touches[0].clientX;
+};
+
+const handleTouchMove = (e) => {
+  touchEndX.current = e.touches[0].clientX;
+};
+
+const handleTouchEnd = () => {
+  const distance = touchStartX.current - touchEndX.current;
+
+  if (distance > 50) {
+    nextGalleryImage(); // swipe left → next
+  } else if (distance < -50) {
+    prevGalleryImage(); // swipe right → previous
+  }
+};
+
+
+
+
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -405,54 +445,43 @@ const SingleProductPage = () => {
             </div>
 
             {/* Main Image with Navigation */}
-            <div className="flex-1 relative">
-              {/* // Main Image with Navigation */}
-              <div className="flex-1 relative">
-                <div className="bg-gray-50 rounded-xl p-4 shadow-sm aspect-square flex items-center justify-center relative">
-                  <img
-                    src={selectedImage}
-                    alt={product.title}
-                    className="w-full h-full max-h-[600px] object-contain"
-                  />
-                  {isOutOfStock && (
-                    <div className="absolute inset-0 bg-red-500/90 flex items-center justify-center">
-                      <span className="text-white font-bold text-xl bg-red-600 px-4 py-2 rounded-lg">
-                        OUT OF STOCK
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              {/* Mobile Gallery Navigation */}
-              {selectedColor?.images.gallery?.length > 0 && (
-                <div className="lg:hidden flex justify-between mt-4">
-                  <button
-                    onClick={prevGalleryImage}
-                    className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
-                  >
-                    <ChevronLeft size={24} />
-                  </button>
-                  <div className="flex items-center gap-1">
-                    {selectedColor.images.gallery.map((_, index) => (
-                      <div
-                        key={index}
-                        className={`w-2 h-2 rounded-full ${
-                          currentGalleryIndex === index
-                            ? "bg-yellow-500"
-                            : "bg-gray-300"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    onClick={nextGalleryImage}
-                    className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
-                  >
-                    <ChevronRight size={24} />
-                  </button>
-                </div>
-              )}
-            </div>
+          {/* Main Image with Navigation */}
+<div className="flex-1 relative">
+
+  {/* Desktop Image (hidden on mobile) */}
+  <div className="hidden lg:flex bg-gray-50 rounded-xl p-4 shadow-sm aspect-square items-center justify-center relative">
+    <img
+      src={selectedImage}
+      alt={product.title}
+      className="w-full h-full max-h-[600px] object-contain"
+    />
+    {isOutOfStock && (
+      <div className="absolute inset-0 bg-red-500/90 flex items-center justify-center">
+        <span className="text-white font-bold text-xl bg-red-600 px-4 py-2 rounded-lg">
+          OUT OF STOCK
+        </span>
+      </div>
+    )}
+  </div>
+
+  {/* Mobile Swipe Image (hidden on desktop) */}
+  {selectedColor?.images.gallery?.length > 0 && (
+    <div
+      className="bg-gray-50 rounded-xl p-4 shadow-sm aspect-square flex items-center justify-center relative lg:hidden"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <img
+        src={selectedImage}
+        alt={product.title}
+        className="w-full h-full object-contain"
+      />
+    </div>
+  )}
+
+</div>
+
           </div>
         </div>
 
@@ -565,7 +594,7 @@ const SingleProductPage = () => {
                           ? null
                           : handleSizeSelect(sizeObj.size)
                       }
-                      className={`px-2 py-1.5 border rounded text-xs font-medium transition-all flex flex-col items-center ${
+                      className={`px-2 py-1.5 border rounded text-xs font-medium transition-all flex flex-col items-center cursor-pointer ${
                         selectedSize === sizeObj.size
                           ? "bg-gray-900 text-white border-gray-900"
                           : sizeObj.quantity > 0
@@ -595,7 +624,7 @@ const SingleProductPage = () => {
                     <button
                       onClick={decrementQuantity}
                       disabled={selectedQuantity <= 1}
-                      className={`p-2 bg-gray-50 hover:bg-gray-100 transition-colors ${
+                      className={`p-2 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer ${
                         selectedQuantity <= 1
                           ? "opacity-50 cursor-not-allowed"
                           : ""
@@ -617,7 +646,7 @@ const SingleProductPage = () => {
                         selectedQuantity >=
                         Math.min(10, selectedSizeObj?.quantity || 1)
                       }
-                      className={`p-2 bg-gray-50 hover:bg-gray-100 transition-colors ${
+                      className={`p-2 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer ${
                         selectedQuantity >=
                         Math.min(10, selectedSizeObj?.quantity || 1)
                           ? "opacity-50 cursor-not-allowed"
@@ -658,7 +687,7 @@ const SingleProductPage = () => {
               <button
                 onClick={handleBuyNow}
                 disabled={!selectedColor || !selectedSize || isOutOfStock}
-                className={`flex items-center justify-center w-full rounded-lg px-6 py-3 text-sm font-medium transition-colors duration-200 ${
+                className={`flex items-center justify-center w-full rounded-lg px-6 py-3 text-sm font-medium transition-colors duration-200 cursor-pointer ${
                   !selectedColor || !selectedSize || isOutOfStock
                     ? "bg-gray-100 text-gray-500 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700 text-white"

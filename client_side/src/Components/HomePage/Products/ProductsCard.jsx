@@ -195,7 +195,7 @@ const ProductCard = () => {
                     {slide.subtitle}
                   </p>
                   <Link to={"/mens"}>
-                    <button className="bg-yellow-400 text-black px-8 py-3 rounded-lg font-semibold hover:bg-yellow-300 transition-colors shadow-lg">
+                    <button className="bg-yellow-400 text-black px-8 py-3 rounded-lg font-semibold hover:bg-yellow-300 transition-colors shadow-lg cursor-pointer">
                       Shop Collection
                     </button>
                   </Link>
@@ -206,13 +206,13 @@ const ProductCard = () => {
         ))}
         <button
           onClick={prevSlide}
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-yellow-400 p-2 rounded-full hover:bg-yellow-300 transition-colors shadow-lg"
+          className="absolute left-4 top-1/2 -translate-y-1/2 bg-yellow-400 p-2 rounded-full hover:bg-yellow-300 transition-colors shadow-lg cursor-pointer"
         >
           <ChevronLeft className="h-6 w-6 text-black" />
         </button>
         <button
           onClick={nextSlide}
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-yellow-400 p-2 rounded-full hover:bg-yellow-300 transition-colors shadow-lg"
+          className="absolute right-4 top-1/2 -translate-y-1/2 bg-yellow-400 p-2 rounded-full hover:bg-yellow-300 transition-colors shadow-lg cursor-pointer"
         >
           <ChevronRight className="h-6 w-6 text-black" />
         </button>

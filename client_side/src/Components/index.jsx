@@ -478,7 +478,7 @@ const HomePage = () => {
           >
             <Link to={"/womens"}>
               <motion.button
-                className="bg-white text-black px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                className="bg-white text-black px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all cursor-pointer"
                 whileHover={{ scale: 1.05, backgroundColor: "#f0f0f0" }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -555,7 +555,7 @@ const HomePage = () => {
                       }><motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="px-6 py-2 bg-white text-black rounded-full text-sm font-semibold"
+                      className="px-6 py-2 bg-white text-black rounded-full text-sm font-semibold cursor-pointer"
                     >
                       Explore Collection
                     </motion.button>
@@ -615,7 +615,7 @@ const HomePage = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="px-6 py-2 bg-white text-black rounded-full text-sm font-semibold"
+                        className="px-6 py-2 bg-white text-black rounded-full text-sm font-semibold cursor-pointer"
                       >
                         Explore Collection
                       </motion.button>

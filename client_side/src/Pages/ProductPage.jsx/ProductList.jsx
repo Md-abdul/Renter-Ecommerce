@@ -344,14 +344,14 @@ const ProductList = ({ category }) => {
                 </span>
               )}
             </div>
-            <motion.button
+            {/* <motion.button
               onClick={(e) => handleAddToCart(e, product)}
               className="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-1 rounded text-sm font-medium transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               Add to Cart
-            </motion.button>
+            </motion.button> */}
           </div>
         </div>
       </motion.div>
