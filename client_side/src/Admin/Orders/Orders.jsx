@@ -633,75 +633,155 @@ export const Orders = () => {
     setViewingBankDetails(request);
   };
 
+  // const exportOrdersToCSV = () => {
+  //   if (!orders || orders.length === 0) {
+  //     toast.error("No orders to export");
+  //     return;
+  //   }
+
+  //   const rows = orders.map((order) => {
+  //     const shipping = order.shippingAddress || {};
+  //     const address = shipping.address || {};
+  //     const nameParts = (shipping.name || "").split(" ");
+  //     const firstName = nameParts[0] || "";
+  //     const lastName = nameParts.slice(1).join(" ") || "";
+
+  //     // base row with fixed headers
+  //     let row = {
+  //       // OrderId: "'" + String(order.orderNumber).padStart(4, "0"),
+  //       "Order ID": `="${String(order.orderNumber).padStart(4, "0")}"`,
+  //       "Payment Type": order.paymentMethod,
+  //       "COD Collectable Amount":
+  //         order.paymentMethod?.toLowerCase() === "cod"
+  //           ? order.totalAmount || ""
+  //           : "",
+
+  //       Tags: "", // not mapped
+  //       "First Name": firstName,
+  //       "Last Name": lastName,
+  //       "Address 1": address.street || shipping.street || "",
+  //       "Address 2": address.street || shipping.street || "",
+  //       Phone: shipping.phoneNumber || "",
+  //       "Alternate phone":
+  //         address.alternatePhone || shipping.alternatePhone || "",
+  //       City: address.city || shipping.city || "",
+  //       State: address.state || shipping.state || "",
+  //       Pincode: address.zipCode || shipping.zipCode || "",
+  //       "Weight(gm)": order.items[0]?.packageWeight || "",
+  //       "Length(cm)": order.items[0]?.packageLength || "",
+  //       "Height(cm)": order.items[0]?.packageHeight || "",
+  //       "Breadth(cm)": order.items[0]?.packageBreadth || "",
+  //       "Shipping Charges": "",
+  //       "COD Charges": "",
+  //       Discount: order.appliedCoupon?.discountPercentage || "",
+  //     };
+
+  //     // now expand product/item details dynamically
+  //     order.items.forEach((item, idx) => {
+  //       const i = idx + 1;
+  //       row[`SKU(${i})`] = item.sku;
+  //       // row[`Product(${i})`] = item.name ? item.name.substring(0, 3) : "";
+  //       row[`Product(${i})`] = item.name
+  //         ? item.name.split(" ").slice(0, 7).join(" ")
+  //         : "";
+  //       row[`Quantity(${i})`] = item.quantity;
+  //       row[`Per Product Price(${i})`] = item.price;
+  //       row[`Total Price(${i})`] = item.price * item.quantity;
+  //     });
+
+  //     return row;
+  //   });
+
+  //   const csv = Papa.unparse(rows);
+  //   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  //   const link = document.createElement("a");
+  //   link.href = URL.createObjectURL(blob);
+  //   link.download = `orders_samples_${new Date()
+  //     .toISOString()
+  //     .slice(0, 10)}.csv`;
+  //   link.click();
+  //   toast.success("Orders exported successfully!");
+  // };
+
   const exportOrdersToCSV = () => {
-    if (!orders || orders.length === 0) {
-      toast.error("No orders to export");
-      return;
-    }
+  if (!orders || orders.length === 0) {
+    toast.error("No orders to export");
+    return;
+  }
 
-    const rows = orders.map((order) => {
-      const shipping = order.shippingAddress || {};
-      const address = shipping.address || {};
-      const nameParts = (shipping.name || "").split(" ");
-      const firstName = nameParts[0] || "";
-      const lastName = nameParts.slice(1).join(" ") || "";
+  // ✔ Export only pending orders
+  const pendingOrders = orders.filter((o) => o.status === "pending");
 
-      // base row with fixed headers
-      let row = {
-        // OrderId: "'" + String(order.orderNumber).padStart(4, "0"),
-        "Order ID": `="${String(order.orderNumber).padStart(4, "0")}"`,
-        "Payment Type": order.paymentMethod,
-        "COD Collectable Amount":
-          order.paymentMethod?.toLowerCase() === "cod"
-            ? order.totalAmount || ""
-            : "",
+  if (pendingOrders.length === 0) {
+    toast.error("No pending orders found");
+    return;
+  }
 
-        Tags: "", // not mapped
-        "First Name": firstName,
-        "Last Name": lastName,
-        "Address 1": address.street || shipping.street || "",
-        "Address 2": address.street || shipping.street || "",
-        Phone: shipping.phoneNumber || "",
-        "Alternate phone":
-          address.alternatePhone || shipping.alternatePhone || "",
-        City: address.city || shipping.city || "",
-        State: address.state || shipping.state || "",
-        Pincode: address.zipCode || shipping.zipCode || "",
-        "Weight(gm)": order.items[0]?.packageWeight || "",
-        "Length(cm)": order.items[0]?.packageLength || "",
-        "Height(cm)": order.items[0]?.packageHeight || "",
-        "Breadth(cm)": order.items[0]?.packageBreadth || "",
-        "Shipping Charges": "",
-        "COD Charges": "",
-        Discount: order.appliedCoupon?.discountPercentage || "",
-      };
+  const rows = pendingOrders.map((order) => {
+    const shipping = order.shippingAddress || {};
+    const address = shipping.address || {};
 
-      // now expand product/item details dynamically
-      order.items.forEach((item, idx) => {
-        const i = idx + 1;
-        row[`SKU(${i})`] = item.sku;
-        // row[`Product(${i})`] = item.name ? item.name.substring(0, 3) : "";
-        row[`Product(${i})`] = item.name
-          ? item.name.split(" ").slice(0, 7).join(" ")
-          : "";
-        row[`Quantity(${i})`] = item.quantity;
-        row[`Per Product Price(${i})`] = item.price;
-        row[`Total Price(${i})`] = item.price * item.quantity;
-      });
+    const nameParts = (shipping.name || "").split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
 
-      return row;
+    // ✔ Ensure order number keeps leading zeros inside Excel
+    const safeOrderNumber = String(order.orderNumber).padStart(4, "0");
+
+    let row = {
+      // "Order ID": `="\t${safeOrderNumber}"`,
+      // "Order ID": `"${safeOrderNumber}"`,
+      "Order ID": `\t${safeOrderNumber}`,
+      "Payment Type": order.paymentMethod,
+      "COD Collectable Amount":
+        order.paymentMethod?.toLowerCase() === "cod"
+          ? order.totalAmount || ""
+          : "",
+      Tags: "",
+      "First Name": firstName,
+      "Last Name": lastName,
+      "Address 1": address.street || shipping.street || "",
+      "Address 2": address.street || shipping.street || "",
+      Phone: shipping.phoneNumber || "",
+      "Alternate phone":
+        address.alternatePhone || shipping.alternatePhone || "",
+      City: address.city || shipping.city || "",
+      State: address.state || shipping.state || "",
+      Pincode: address.zipCode || shipping.zipCode || "",
+      "Weight(gm)": order.items[0]?.packageWeight || "",
+      "Length(cm)": order.items[0]?.packageLength || "",
+      "Height(cm)": order.items[0]?.packageHeight || "",
+      "Breadth(cm)": order.items[0]?.packageBreadth || "",
+      "Shipping Charges": "",
+      "COD Charges": "",
+      Discount: order.appliedCoupon?.discountPercentage || "",
+    };
+
+    order.items.forEach((item, idx) => {
+      const i = idx + 1;
+      row[`SKU(${i})`] = item.sku;
+      row[`Product(${i})`] = item.name
+        ? item.name.split(" ").slice(0, 7).join(" ")
+        : "";
+      row[`Quantity(${i})`] = item.quantity;
+      row[`Per Product Price(${i})`] = item.price;
+      row[`Total Price(${i})`] = item.price * item.quantity;
     });
 
-    const csv = Papa.unparse(rows);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `orders_samples_${new Date()
-      .toISOString()
-      .slice(0, 10)}.csv`;
-    link.click();
-    toast.success("Orders exported successfully!");
-  };
+    return row;
+  });
+
+  const csv = Papa.unparse(rows);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `pending_orders_${new Date()
+    .toISOString()
+    .slice(0, 10)}.csv`;
+  link.click();
+
+  toast.success("Pending orders exported successfully!");
+};
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-50 min-h-screen">

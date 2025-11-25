@@ -169,7 +169,7 @@ const PaymentTransactions = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-2">
       {/* <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
           Payment Transactions
@@ -298,7 +298,7 @@ const PaymentTransactions = () => {
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden w-fit">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
